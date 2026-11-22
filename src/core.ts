@@ -1429,8 +1429,12 @@ export class LocalCore implements Core {
 
   async muse_open_login({ show }: Args<"muse_open_login">) {
     const mod = await import("./providers/muse/muse-driver.js");
-    if (show) await mod.openMuseBrowser();
-    mod.getMuse(show);
+    if (show) {
+      await mod.openMuseBrowser();
+      mod.getMuse(true);
+      // Return quickly — status() can block 30s+ on Chrome/Muse lock; Safari shows "Load failed" on slow POST.
+      return { opened: true, connected: false, email: null as string | null };
+    }
     return mod.museStatus().catch((e: Error) => ({ connected: false, email: null, error: e.message }));
   }
 

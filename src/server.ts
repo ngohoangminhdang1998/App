@@ -80,12 +80,15 @@ export type ServerRole = "owner" | "client" | "none";
 export async function startServer(core: Core): Promise<ServerRole> {
   mkdirSync(UPLOAD_DIR, { recursive: true });
   const token = loadOrCreateToken();
-  const allowedHosts = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
+  const allowedHost = (host: string | undefined) => {
+    const h = (host ?? "").toLowerCase();
+    return h === `127.0.0.1:${PORT}` || h === `localhost:${PORT}` || h === `[::1]:${PORT}`;
+  };
 
   const server = createServer(async (req, res) => {
     try {
       // The Host check blocks DNS-rebinding; the token blocks other local pages from driving the queue.
-      if (!allowedHosts.has(req.headers.host ?? "")) return json(res, 403, { error: "Bad host." });
+      if (!allowedHost(req.headers.host)) return json(res, 403, { error: "Bad host." });
       const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
 
       if (req.method === "GET" && url.pathname === "/api/health") return json(res, 200, { name: "flow-mcp" });

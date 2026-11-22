@@ -3569,14 +3569,13 @@ async function refreshStatus({ detailed = false, force = false } = {}) {
     lastSt = await api("status", { detailed });
     const fromStatus = lastSt.active_provider || lastSt.provider?.active;
     if (fromStatus) syncProviderFromPayload(fromStatus, lastSt.provider?.capabilities);
-    if (detailed) {
-      if (ACTIVE_PROVIDER === "muse") {
-        flowSignedIn = !!lastSt.muse?.connected;
-        flowInProject = flowSignedIn;
-      } else {
-        flowSignedIn = !!lastSt.flow?.signedIn;
-        flowInProject = !!lastSt.flow?.inProject;
-      }
+    if (ACTIVE_PROVIDER === "muse" && lastSt.muse) {
+      flowSignedIn = !!lastSt.muse.connected;
+      flowInProject = flowSignedIn;
+      flowLinked = flowSignedIn;
+    } else if (detailed) {
+      flowSignedIn = !!lastSt.flow?.signedIn;
+      flowInProject = !!lastSt.flow?.inProject;
       flowLinked = flowSignedIn;
     }
     const active = renderStatus(lastSt);
@@ -3614,6 +3613,7 @@ async function connectFlow({ silent = false } = {}) {
   try {
     if (ACTIVE_PROVIDER === "muse" && !silent) {
       await api("muse_open_login", { show: true });
+      await new Promise((r) => setTimeout(r, 800));
     }
     const out = await refreshStatus({ detailed: true, force: true });
     if (flowSignedIn) {
