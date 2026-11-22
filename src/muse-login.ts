@@ -8,8 +8,8 @@ import { museProfileDir } from "./providers/platform-config.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const KIT = join(ROOT, "third-party", "ai-media-batch-kit");
-const kitRequire = createRequire(join(KIT, "package.json"));
-const { ensureProfileChrome } = kitRequire("./src/core/chrome.js");
+const kitRequire = createRequire(import.meta.url);
+const { ensureProfileChrome } = kitRequire(join(KIT, "chrome.cjs"));
 
 const profileDir = museProfileDir();
 mkdirSync(profileDir, { recursive: true });

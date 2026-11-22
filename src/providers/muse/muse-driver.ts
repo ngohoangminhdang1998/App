@@ -5,8 +5,7 @@ import { museProfileDir } from "../platform-config.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const KIT = join(ROOT, "third-party", "ai-media-batch-kit");
-/** Kit sources are CommonJS; scope require to their package.json, not the ESM flow-mcp root. */
-const kitRequire = createRequire(join(KIT, "package.json"));
+const kitRequire = createRequire(import.meta.url);
 
 type MuseFacade = {
   status(): Promise<{ connected: boolean; connecting?: boolean; email: string | null }>;
@@ -33,7 +32,7 @@ type CreateMuse = (o: { profileDir: string; show?: boolean; lang?: "vi" | "en"; 
 let facade: MuseFacade | null = null;
 
 function loadCreateMuse(): CreateMuse {
-  const mod = kitRequire("./src/providers/muse.js") as { createMuse: CreateMuse };
+  const mod = kitRequire(join(KIT, "muse.cjs")) as { createMuse: CreateMuse };
   return mod.createMuse;
 }
 
