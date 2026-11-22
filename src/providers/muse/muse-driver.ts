@@ -1,3 +1,4 @@
+import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,6 +48,16 @@ export function getMuse(show = false, lang: "vi" | "en" = "en"): MuseFacade {
     });
   }
   return facade;
+}
+
+/** Opens the Muse Chrome profile on muse.ai (visible window) without waiting on Muse chat status. */
+export async function openMuseBrowser() {
+  const { ensureProfileChrome } = kitRequire(join(KIT, "chrome.cjs")) as {
+    ensureProfileChrome: (o: { profileDir: string; url?: string; offscreen?: boolean }) => Promise<number>;
+  };
+  const profileDir = museProfileDir();
+  mkdirSync(profileDir, { recursive: true });
+  await ensureProfileChrome({ profileDir, url: "https://muse.ai/", offscreen: false });
 }
 
 export async function museStatus() {

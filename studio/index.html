@@ -959,12 +959,27 @@ async function syncSessionToken() {
   return false;
 }
 const api = async (method, body = {}, retried = false) => {
-  const res = await fetch(`/api/${method}`, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-flow-token": SESSION_TOKEN },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
+  let res;
+  try {
+    res = await fetch(`/api/${method}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-flow-token": SESSION_TOKEN },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    const msg = String(e?.message || "");
+    throw new Error(
+      /load failed|failed to fetch|network/i.test(msg)
+        ? "TedVerse server is not running. Double-click Flow Studio.command (or run npm run studio), then refresh this page (F5)."
+        : msg || "Could not reach the Studio server.",
+    );
+  }
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error("Studio server sent a bad response — refresh this page (F5) and try again.");
+  }
   if (res.status === 401 && !retried && /token/i.test(data.error || "")) {
     if (await syncSessionToken()) return api(method, body, true);
     throw new Error("Session expired — refresh this page (F5) at http://127.0.0.1:8787 and retry.");
@@ -3597,7 +3612,7 @@ async function connectFlow({ silent = false } = {}) {
   statusLinkBusy = true;
   if (btn) startBtnBusy(btn, "Connecting…");
   try {
-    if (ACTIVE_PROVIDER === "muse") {
+    if (ACTIVE_PROVIDER === "muse" && !silent) {
       await api("muse_open_login", { show: true });
     }
     const out = await refreshStatus({ detailed: true, force: true });

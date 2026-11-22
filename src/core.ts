@@ -1429,8 +1429,9 @@ export class LocalCore implements Core {
 
   async muse_open_login({ show }: Args<"muse_open_login">) {
     const mod = await import("./providers/muse/muse-driver.js");
+    if (show) await mod.openMuseBrowser();
     mod.getMuse(show);
-    return mod.museStatus();
+    return mod.museStatus().catch((e: Error) => ({ connected: false, email: null, error: e.message }));
   }
 
 }
