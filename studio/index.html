@@ -416,13 +416,13 @@ body[data-provider=muse] .af-merge-note{display:block}
   </nav>
   </div>
 
-  <div id="offline"></div>
+  <div id="offline" hidden></div>
   <div id="hint"></div>
 
   <div class="cols">
     <main>
       <!-- CAST -->
-      <section class="panel on" data-panel="cast">
+      <section class="panel" data-panel="cast">
         <details class="studio-sect" id="cast_sect" open>
           <summary><span class="sect-title">Cast</span></summary>
           <div class="studio-sect-body">
@@ -605,7 +605,7 @@ body[data-provider=muse] .af-merge-note{display:block}
       </section>
 
       <!-- AUTO FILM -->
-      <section class="panel" data-panel="film">
+      <section class="panel on" data-panel="film">
         <details class="studio-sect" id="af_film_sect" open>
           <summary><span class="sect-title">Film</span></summary>
           <div class="studio-sect-body">
@@ -1049,7 +1049,7 @@ const guard = (needOpenProject = true) => {
 const VIDEO_COST = { "Omni 1.1 Flash": { "360p": { 4: 4, 6: 5, 8: 6, 10: 7 }, "720p": { 4: 7, 6: 10, 8: 12, 10: 15 } }, "Veo 3.1 - Lite": 10, "Veo 3.1 - Fast": 20, "Veo 3.1 - Quality": 100 };
 const blank = () => ({ prompt: "", technique: "", chain: false, match: false, first: null, last: null, refs: [] });
 const DEFAULTS = {
-  tab: "cast",
+  tab: "film",
   frames: { project: "MyFilm", aspect: "16:9", variants: 1, engine: "exact", scenes: [blank()] },
   shots: { project: "MyFilm", model: "Omni 1.1 Flash", aspect: "16:9", duration: 8, resolution: "720p", variants: 1, quality: "original", max: 25, scenes: [blank()] },
   narrate: { project: "MyFilm", engine: "kokoro", kokoroVoice: "am_michael", speed: 100, geminiVoice: "Charon", text: "", style: "" },
@@ -1105,7 +1105,7 @@ const S = {
 const save = () => localStorage.setItem("flow-studio-v2", JSON.stringify(S));
 if (!["kokoro", "gemini"].includes(S.narrate.engine)) S.narrate.engine = "kokoro"; // the computer-voice engine is gone
 const REMOVED_TABS = new Set(["restyle", "cut", "captions", "library"]);
-if (REMOVED_TABS.has(S.tab)) S.tab = "cast";
+if (REMOVED_TABS.has(S.tab)) S.tab = "film";
 let TECH = [], VOICES = { kokoro: [], gemini: [] }, CAST = [], LIB = [], GAL = [], castImage = null, pickTarget = null, busy = false;
 const filmBlank = () => ({
   project: "MyFilm", script: "", parsedFromScript: "", preamble: "", warnings: [], scenes: [], page: 0, open: -1, draft: "", scroll: 0,
@@ -3685,12 +3685,11 @@ window.addEventListener("resize", () => syncAutoFilmCardHeights());
 $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
 (async () => {
   if (!LIVE) {
-    $("#offline").innerHTML = `<div class="hint" style="border-color:var(--bad)"><img src="/assets/tedverse-logo.png" alt="TedVerse" style="height:72px;width:auto;display:block;margin:0 0 12px;object-fit:contain" width="689" height="784"><b>Welcome to TedVerse — preview mode.</b><br>Nothing here is connected. Start the app: run <b>npm run studio</b> or double-click <b>Flow Studio.cmd</b>, then open <b>http://127.0.0.1:8787</b>.<br><span style="color:var(--text-muted);font-size:13px">One Prompt. Infinite Worlds.</span></div>`;
     $("#status").innerHTML = `<span class="pill"><i class="tally down"></i>Not connected</span>`;
     if ($("#statusConnect")) $("#statusConnect").hidden = true;
     await loadFilm();
     await whenFilmScript();
-    renderAll(); showTab(hashTab() ?? S.tab); return;
+    renderAll(); showTab(hashTab() ?? "film"); return;
   }
   await syncSessionToken();
   await syncProviderFromServer();
