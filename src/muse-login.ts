@@ -6,9 +6,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { museProfileDir } from "./providers/platform-config.js";
 
-const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const { ensureProfileChrome } = require(join(ROOT, "third-party", "ai-media-batch-kit", "src", "core", "chrome.js"));
+const KIT = join(ROOT, "third-party", "ai-media-batch-kit");
+const kitRequire = createRequire(join(KIT, "package.json"));
+const { ensureProfileChrome } = kitRequire("./src/core/chrome.js");
 
 const profileDir = museProfileDir();
 mkdirSync(profileDir, { recursive: true });

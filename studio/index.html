@@ -3492,10 +3492,12 @@ function renderStatus(st) {
     const freshUser = sanitizeUserDisplayName(f.user_display_name);
     if (freshUser) renderStatus.user = freshUser;
   }
-  const userName = flowSignedIn ? sanitizeUserDisplayName(renderStatus.user ?? f.user_display_name) : "";
-  const showUserPending = flowSignedIn && statusLinkBusy && !userName;
-  const acct =
-    flowSignedIn && (renderStatus.plan || renderStatus.credits !== undefined || userName || showUserPending)
+  const museEmail = museMode && flowSignedIn ? String(st.muse?.email || "").trim() : "";
+  const userName = flowSignedIn && !museMode ? sanitizeUserDisplayName(renderStatus.user ?? f.user_display_name) : "";
+  const showUserPending = flowSignedIn && statusLinkBusy && !userName && !museEmail;
+  const acct = museMode && flowSignedIn && museEmail
+    ? `<span class="pill">${esc(museEmail)}</span>`
+    : flowSignedIn && (renderStatus.plan || renderStatus.credits !== undefined || userName || showUserPending)
       ? `${renderStatus.plan ? `<span class="pill">${esc(renderStatus.plan)}</span>` : ""}${
           renderStatus.credits !== undefined ? `<span class="pill">${renderStatus.credits.toLocaleString()} credits</span>` : ""
         }${userPillHtml(userName, { pending: showUserPending })}`
@@ -3505,9 +3507,11 @@ function renderStatus(st) {
     ? (museMode
       ? `<div class="hint">Sign in at <b>muse.ai</b> in the Muse Chrome profile (<code>npm run login:muse</code>), then press <b>Muse login</b>.</div>`
       : `<div class="hint">Sign in to Google Flow in the Flow Chrome window, then refresh or press <b>Connect</b>.</div>`)
-    : !flowInProject
-      ? `<div class="hint">Signed in. <b>Publish</b> can list every Flow project; open one project in Flow before generating clips.</div>`
-      : f.hint
+    : museMode
+      ? `<div class="hint">Muse is connected. Auto Film saves clips to your project folder on this Mac.</div>`
+      : !flowInProject
+        ? `<div class="hint">Signed in. <b>Publish</b> can list every Flow project; open one project in Flow before generating clips.</div>`
+        : f.hint
         ? `<div class="hint">${esc(f.hint)}</div>`
         : "";
   $("#pacing").innerHTML = st.pacing ? `<div class="pacing">⏱ ${esc(st.pacing)}</div>` : "";
