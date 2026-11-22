@@ -1,0 +1,37 @@
+{
+  "name": "flow-mcp",
+  "version": "0.1.0",
+  "description": "TedVerse — AI Creative Studio (One Prompt. Infinite Worlds.) Local MCP server for Google Flow.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node scripts/film-script.test.mjs && node scripts/film-oneclick.test.mjs && node scripts/film-autofilm.test.mjs && node scripts/flow-scene-builder.test.mjs && node scripts/character-ref.test.mjs && node scripts/media-download.test.mjs && node scripts/publish.test.mjs && node scripts/flow-composition.test.mjs && node scripts/provider.test.mjs",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "login": "node dist/login.js",
+    "login:muse": "node dist/muse-login.js",
+    "studio": "node dist/studio.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bin": {
+    "flow-mcp": "dist/index.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "kokoro-js": "^1.2.1",
+    "playwright-core": "^1.63.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "onnxruntime-node@1.21.0": true,
+    "protobufjs@7.6.6": true,
+    "sharp@0.34.5": true
+  }
+}
