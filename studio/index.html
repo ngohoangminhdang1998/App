@@ -3518,17 +3518,21 @@ function renderStatus(st) {
         }${userPillHtml(userName, { pending: showUserPending })}`
       : "";
   $("#status").innerHTML = `<span class="pill"><i class="tally ${cls}"></i>${text}</span>${acct}`;
+  const connBtn = $("#statusConnect");
+  if (connBtn && LIVE) connBtn.hidden = !!flowSignedIn;
   $("#hint").innerHTML = !flowSignedIn
     ? (museMode
       ? `<div class="hint">Sign in at <b>muse.ai</b> in the Muse Chrome profile (<code>npm run login:muse</code>), then press <b>Muse login</b>.</div>`
       : `<div class="hint">Sign in to Google Flow in the Flow Chrome window, then refresh or press <b>Connect</b>.</div>`)
     : museMode
-      ? `<div class="hint">Muse is connected. Auto Film saves clips to your project folder on this Mac.</div>`
+      ? `<div class="hint">Muse is connected. Clips save under <code id="outputRootHint"></code> — project name in Auto Film is the subfolder.</div>`
       : !flowInProject
         ? `<div class="hint">Signed in. <b>Publish</b> can list every Flow project; open one project in Flow before generating clips.</div>`
         : f.hint
         ? `<div class="hint">${esc(f.hint)}</div>`
         : "";
+  const rootEl = $("#outputRootHint");
+  if (rootEl && st?.output_root) rootEl.textContent = st.output_root;
   $("#pacing").innerHTML = st.pacing ? `<div class="pacing">⏱ ${esc(st.pacing)}</div>` : "";
   const jobs = [...st.jobs].reverse();
   const sig = JSON.stringify(jobs.map((j) => [j.id, j.status, j.progress, j.files.length, j.credits, j.attempts, j.failed_scenes?.length ?? 0]));
@@ -3595,6 +3599,8 @@ async function refreshStatus({ detailed = false, force = false } = {}) {
       flowInProject = false;
       flowLinked = false;
     }
+    const connBtn = $("#statusConnect");
+    if (connBtn && LIVE) connBtn.hidden = false;
     $("#status").innerHTML = `<span class="pill"><i class="tally down"></i>Server offline</span>`;
     $("#hint").innerHTML = `<div class="hint">${esc(err?.message || "Studio server not reachable.")}</div>`;
     timer = setTimeout(() => refreshStatus({ detailed: false }), 5000);
@@ -3705,7 +3711,7 @@ $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
 (async () => {
   if (!LIVE) {
     $("#status").innerHTML = `<span class="pill"><i class="tally down"></i>Not connected</span>`;
-    if ($("#statusConnect")) $("#statusConnect").hidden = true;
+    if ($("#statusConnect")) $("#statusConnect").hidden = true; /* preview / static mode */
     await loadFilm();
     await whenFilmScript();
     renderAll(); showTab(hashTab() ?? "film"); return;

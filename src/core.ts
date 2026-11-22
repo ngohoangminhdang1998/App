@@ -64,6 +64,13 @@ const words = (s: string) => s.split(/[^a-z0-9]+/i).filter((w) => w.length > 3).
 
 export const projectDir = (project: string) => resolve(OUTPUT_ROOT, project.replace(/[^\w.-]+/g, "_"));
 
+/** Creates ~/flow-mcp-out (or FLOW_MCP_OUTPUT) and the project folder before Muse/Flow write clips. */
+export function ensureProjectDir(project: string): string {
+  const output_dir = projectDir(project);
+  mkdirSync(output_dir, { recursive: true });
+  return output_dir;
+}
+
 /** AUTO FILM may store a basename, a stale path, or a path under another output root — always prefer the project folder. */
 export function resolveClipPaths(dir: string, clips: string[]): string[] {
   return clips.map((c) => {
@@ -749,9 +756,9 @@ export class LocalCore implements Core {
     const unknown = scenes.find((s) => s.technique && !techniqueById(s.technique));
     if (unknown) throw new Error(`Unknown technique "${unknown.technique}". Call flow_techniques for valid ids.`);
 
-    const output_dir = projectDir(project);
+    const output_dir = ensureProjectDir(project);
     // Continue numbering after whatever is already on disk or queued, so reruns never overwrite earlier scenes.
-    const onDisk = existsSync(output_dir) ? readdirSync(output_dir).map((f) => Number(f.match(/^scene-(\d+)/)?.[1] ?? 0)) : [];
+    const onDisk = readdirSync(output_dir).map((f) => Number(f.match(/^scene-(\d+)/)?.[1] ?? 0));
     const queued = this.queue.list().filter((j) => j.params.output_dir === output_dir).map((j) => Number(j.params.file_stem.match(/\d+/)?.[0] ?? 0));
     const offset = Math.max(0, ...onDisk, ...queued);
     const jobs: Job[] = [];

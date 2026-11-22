@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Job } from "../../queue.js";
 import { getMuse } from "./muse-driver.js";
@@ -20,6 +20,7 @@ function refsFromJob(job: Job): { path: string }[] {
 
 /** Queue runner path for Muse — serial chat automation, files written under output_dir. */
 export async function runMuseJob(job: Job): Promise<string[]> {
+  mkdirSync(job.params.output_dir, { recursive: true });
   const muse = getMuse(false, "en");
   const aspect = job.params.aspect_ratio === "9:16" ? "9:16" : job.params.aspect_ratio === "1:1" ? "1:1" : "16:9";
   const carry = Boolean(job.params.chain_from || job.params.reference_from);
