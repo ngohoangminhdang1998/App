@@ -40,35 +40,6 @@ const json = (res: ServerResponse, code: number, data: unknown) => {
   res.end(JSON.stringify(data));
 };
 
-/** HTTPS Studio on Vercel may call this loopback API (Private Network Access + token). */
-function studioCorsAllowed(origin: string | undefined): boolean {
-  if (!origin) return false;
-  if (/^https:\/\/([\w-]+\.)*vercel\.app$/i.test(origin)) return true;
-  const extra = (process.env.FLOW_MCP_STUDIO_ORIGINS ?? "https://tedverse.vercel.app")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return extra.includes(origin);
-}
-
-function applyStudioCors(req: IncomingMessage, res: ServerResponse): boolean {
-  const origin = req.headers.origin;
-  if (origin && studioCorsAllowed(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "content-type, x-flow-token, range");
-    res.setHeader("Access-Control-Allow-Private-Network", "true");
-    res.setHeader("Access-Control-Max-Age", "86400");
-  }
-  if (req.method === "OPTIONS") {
-    res.writeHead(origin && studioCorsAllowed(origin) ? 204 : 403);
-    res.end();
-    return true;
-  }
-  return false;
-}
-
 function readBody(req: IncomingMessage, limit: number): Promise<Buffer> {
   return new Promise((ok, fail) => {
     const chunks: Buffer[] = [];
@@ -115,7 +86,6 @@ export async function startServer(core: Core): Promise<ServerRole> {
     try {
       // The Host check blocks DNS-rebinding; the token blocks other local pages from driving the queue.
       if (!allowedHosts.has(req.headers.host ?? "")) return json(res, 403, { error: "Bad host." });
-      if (applyStudioCors(req, res)) return;
       const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
 
       if (req.method === "GET" && url.pathname === "/api/health") return json(res, 200, { name: "flow-mcp" });

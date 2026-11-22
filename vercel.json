@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm ci && npm run build && node scripts/prepare-studio-static.mjs",
+  "buildCommand": "",
   "outputDirectory": "studio",
   "framework": null,
   "cleanUrls": true,

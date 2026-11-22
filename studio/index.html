@@ -805,35 +805,6 @@ window.FilmScript = { parseFilmScript, shotCost, omniModel, sceneAction, queueGa
 </script>
 <script>
 let SESSION_TOKEN = "__FLOW_TOKEN__";
-let API_ORIGIN = "";
-const STATIC_DEPLOY = SESSION_TOKEN === "__FLOW_TOKEN__";
-let LIVE = location.protocol.startsWith("http") && !STATIC_DEPLOY;
-function apiPath(path) {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_ORIGIN}${p}`;
-}
-async function tryAttachLocalEngine() {
-  if (!STATIC_DEPLOY && LIVE) return true;
-  const saved = localStorage.getItem("tedverse-engine");
-  const port = localStorage.getItem("tedverse-engine-port") || "8787";
-  const bases = [...new Set([saved, `http://127.0.0.1:${port}`, `http://localhost:${port}`].filter(Boolean))];
-  for (const raw of bases) {
-    const base = String(raw).replace(/\/$/, "");
-    try {
-      const r = await fetch(`${base}/api/bootstrap`, { cache: "no-store", mode: "cors", credentials: "omit" });
-      if (!r.ok) continue;
-      const d = await r.json();
-      if (!d?.token) continue;
-      API_ORIGIN = base;
-      SESSION_TOKEN = d.token;
-      LIVE = true;
-      localStorage.setItem("tedverse-engine", API_ORIGIN);
-      if (d.port) localStorage.setItem("tedverse-engine-port", String(d.port));
-      return true;
-    } catch { /* studio off, mixed content, or PNA blocked */ }
-  }
-  return false;
-}
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -876,6 +847,7 @@ function confirmApp(message, opts = {}) {
     (danger ? cancelBtn : okBtn).focus();
   });
 }
+const LIVE = location.protocol.startsWith("http") && SESSION_TOKEN !== "__FLOW_" + "TOKEN__";
 let ACTIVE_PROVIDER = "google-flow";
 let PROVIDER_CAPS = null;
 let platformGateResolve = null;
@@ -904,7 +876,7 @@ async function syncProviderFromServer() {
     const pinfo = await api("provider_info");
     syncProviderFromPayload(pinfo.active, pinfo.capabilities);
   } catch {
-    const boot = await fetch(apiPath("/api/bootstrap"), { cache: "no-store", mode: "cors" }).then((r) => r.json()).catch(() => null);
+    const boot = await fetch("/api/bootstrap", { cache: "no-store" }).then((r) => r.json()).catch(() => null);
     if (boot?.provider) syncProviderFromPayload(boot.provider, boot.capabilities);
   }
 }
@@ -976,7 +948,7 @@ $("#platformSwitch")?.addEventListener("click", () => openPlatformGate());
 async function syncSessionToken() {
   if (!LIVE) return false;
   try {
-    const r = await fetch(apiPath("/api/bootstrap"), { cache: "no-store", mode: "cors" });
+    const r = await fetch("/api/bootstrap", { cache: "no-store" });
     const d = await r.json();
     if (r.ok && d.token) {
       SESSION_TOKEN = d.token;
@@ -987,12 +959,10 @@ async function syncSessionToken() {
   return false;
 }
 const api = async (method, body = {}, retried = false) => {
-  const res = await fetch(apiPath(`/api/${method}`), {
+  const res = await fetch(`/api/${method}`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-flow-token": SESSION_TOKEN },
     body: JSON.stringify(body),
-    mode: "cors",
-    credentials: "omit",
   });
   const data = await res.json();
   if (res.status === 401 && !retried && /token/i.test(data.error || "")) {
@@ -1063,13 +1033,10 @@ function setPublishFieldsBusy(on) {
     else vid.removeAttribute("aria-busy");
   }
 }
-const media = (path) => `${apiPath("/media")}?token=${encodeURIComponent(SESSION_TOKEN)}&path=${encodeURIComponent(path)}`;
+const media = (path) => `/media?token=${SESSION_TOKEN}&path=${encodeURIComponent(path)}`;
 const toast = (msg, bad) => { const t = Object.assign(document.createElement("div"), { className: "toast" + (bad ? " bad" : ""), textContent: msg }); document.body.append(t); setTimeout(() => t.remove(), bad ? 7000 : 3200); };
 const guard = (needOpenProject = true) => {
-  if (!LIVE) {
-    toast(STATIC_DEPLOY ? "Chưa liên kết máy — chạy npm run studio rồi bấm Link this Mac." : "Not connected — start TedVerse first.", true);
-    return false;
-  }
+  if (!LIVE) { toast("Not connected — start TedVerse first.", true); return false; }
   if (!flowSignedIn) { toast("Sign in to Google Flow in the Flow Chrome window, then refresh this page.", true); return false; }
   if (needOpenProject && !flowInProject) {
     toast("Open a Flow project in the Flow Chrome window before generating clips.", true);
@@ -1292,7 +1259,7 @@ document.addEventListener("click", (e) => {
 $("#file").addEventListener("change", async (e) => {
   const f = e.target.files[0]; e.target.value = ""; if (!f || !pickTarget || !guard()) return;
   try {
-    const res = await fetch(`${apiPath("/api/upload")}?name=${encodeURIComponent(f.name)}`, { method: "POST", headers: { "x-flow-token": SESSION_TOKEN }, body: f, mode: "cors", credentials: "omit" });
+    const res = await fetch(`/api/upload?name=${encodeURIComponent(f.name)}`, { method: "POST", headers: { "x-flow-token": SESSION_TOKEN }, body: f });
     const data = await res.json(); if (!res.ok) throw new Error(data.error);
     setSlot(pickTarget.kind, pickTarget.i, { path: data.path, name: f.name });
   } catch (err) { toast(err.message, true); }
@@ -3663,32 +3630,7 @@ async function connectFlow({ silent = false } = {}) {
     if (btn) endBtnBusy(btn);
   }
 }
-$("#statusConnect")?.addEventListener("click", async () => {
-  if (!LIVE) {
-    const ok = await tryAttachLocalEngine();
-    if (!ok) {
-      toast("Không thấy TedVerse trên máy. Chạy npm run studio, rồi thử lại — hoặc mở http://127.0.0.1:8787", true);
-      return;
-    }
-    try {
-      await syncSessionToken();
-      await syncProviderFromServer();
-      try {
-        [TECH, VOICES] = await Promise.all([api("techniques"), api("voices")]);
-      } catch {
-        VOICES = { kokoro: [], gemini: [] };
-      }
-      applyPlace(VOICES.place);
-      $("#statusConnect").textContent = "Connect";
-      $("#statusConnect").hidden = false;
-      if ($("#platformPill")) $("#platformPill").hidden = false;
-    } catch (err) {
-      toast(err?.message || "Linked, but setup failed. Refresh.", true);
-      return;
-    }
-  }
-  await connectFlow({ silent: false });
-});
+$("#statusConnect")?.addEventListener("click", () => connectFlow({ silent: false }));
 
 /* ---------- boot ---------- */
 function renderAll() {
@@ -3742,14 +3684,9 @@ for (const id of ["af_film_sect", "af_scenes_sect"]) {
 window.addEventListener("resize", () => syncAutoFilmCardHeights());
 $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
 (async () => {
-  if (!LIVE) LIVE = await tryAttachLocalEngine();
   if (!LIVE) {
     $("#status").innerHTML = `<span class="pill"><i class="tally down"></i>Not connected</span>`;
-    if ($("#statusConnect")) {
-      $("#statusConnect").hidden = false;
-      $("#statusConnect").textContent = "Link this Mac";
-      $("#statusConnect").title = "Kết nối với TedVerse đang chạy trên máy (npm run studio)";
-    }
+    if ($("#statusConnect")) $("#statusConnect").hidden = true;
     await loadFilm();
     await whenFilmScript();
     renderAll(); showTab(hashTab() ?? "film"); return;
