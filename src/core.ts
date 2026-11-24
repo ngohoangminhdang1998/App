@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { z } from "zod";
 import { assemble, voiceTrack } from "./assemble.js";
+import { openPath } from "./platform.js";
 import { GEMINI_VOICES, geminiKey, saveGeminiKey, speakWithGemini } from "./gemini.js";
 import { KOKORO_DEFAULT_VOICE, KOKORO_MB, KOKORO_VOICES, kokoroReady, speakWithKokoro } from "./kokoro.js";
 import { extractFirstFrame, extractFrameAt, extractLastFrame } from "./chain.js";
@@ -33,6 +34,8 @@ import {
   editCharacter,
   getFlowState,
   listAssets,
+  listAssetsForPicker,
+  listCharactersForPicker,
   forgetCharacter,
   listCharacters,
   rememberCharacter,
@@ -42,12 +45,18 @@ import {
   listFlowProjects,
   mergeClipsIntoFlowScene,
   openFlowProject,
+  refreshFlowCreditsOnce,
   runAgentBatch,
   runContinue,
   runEdit,
   runGeneration,
 } from "./flow.js";
+import { buildFilmHistory, deleteFilmHistory, recordFilmMerge } from "./film-history.js";
 import { buildPublishHistory, prunePublishHistoryStores, PUBLISH_HISTORY_KEEP } from "./publish-history.js";
+import { filmFinalSceneName, isFilmNo } from "./film-numbers.js";
+import { isPromptFormatV2, ensurePromptVisualTextRestriction, promptHasNoSubtitlesClause } from "./film-script.js";
+import { publishOAuthBegin } from "./publish-api/connect.js";
+import { clearPlatformTokens, publicPublishApiSettings, savePublishApiSettings } from "./publish-api/settings.js";
 import { guessDefaultVideo, listPublishableVideos, publishManager, summarizeClipPublish } from "./publish.js";
 import { normalizeHashtags } from "./publish-text.js";
 import { JobQueue, type Job } from "./queue.js";
@@ -57,6 +66,7 @@ import { writeProviderConfig } from "./providers/platform-config.js";
 import { providerPayload } from "./providers/registry.js";
 import { BIN, COMPUTER, moveToBin } from "./platform.js";
 import { cleanMediaRef, cleanMediaRefs, describeJobAssets as formatJobAssets, encodeFlowRef, isLocalClip } from "./media-ref.js";
+import { allocateFilmNo, ensureFilmSerialNext, listFilmNumbers, peekFilmNo } from "./film-numbers.js";
 import { TECHNIQUES, techniqueById } from "./techniques.js";
 
 export const OUTPUT_ROOT = process.env.FLOW_MCP_OUTPUT ?? join(homedir(), "flow-mcp-out");
@@ -64,7 +74,6 @@ const words = (s: string) => s.split(/[^a-z0-9]+/i).filter((w) => w.length > 3).
 
 export const projectDir = (project: string) => resolve(OUTPUT_ROOT, project.replace(/[^\w.-]+/g, "_"));
 
-/** Creates ~/flow-mcp-out (or FLOW_MCP_OUTPUT) and the project folder before Muse/Flow write clips. */
 export function ensureProjectDir(project: string): string {
   const output_dir = projectDir(project);
   mkdirSync(output_dir, { recursive: true });
@@ -225,7 +234,7 @@ const captionFields = {
 };
 
 export const shapes = {
-  status: { detailed: z.boolean().default(true).describe("false skips the plan/credits readout, which briefly opens Flow's account panel.") },
+  status: { detailed: z.boolean().default(false).describe("When true, reads plan/name from Flow's header (never opens the account panel). Credits refresh only if that panel is already open.") },
   generate: {
     project: z.string().min(1).describe("Folder name for the downloaded clips, e.g. 'HotelPromo'."),
     scenes: z.array(sceneSchema).min(1).max(100),
@@ -482,6 +491,7 @@ export const shapes = {
   discard: { path: z.string().min(1).describe("A saved film, still, narration or whole project folder inside the films folder, to move to this computer's bin (Mac Trash, Windows Recycle Bin).") },
   outputs: {},
   characters: {},
+  picker_list: {},
   character_edit: {
     name: z.string().min(1).describe("Character to change, as listed by flow_characters."),
     change: z
@@ -575,13 +585,49 @@ export const shapes = {
     confirm_uncertain: z.boolean().optional(),
   },
   publish_history: { limit: z.number().int().min(1).max(500).optional() },
+  publish_settings_get: {},
+  publish_settings_save: {
+    engine: z.enum(["browser", "api"]).optional(),
+    youtube: z
+      .object({
+        clientId: z.string().optional(),
+        clientSecret: z.string().optional(),
+      })
+      .optional(),
+    facebook: z
+      .object({
+        appId: z.string().optional(),
+        appSecret: z.string().optional(),
+        pageId: z.string().optional(),
+      })
+      .optional(),
+    tiktok: z
+      .object({
+        clientKey: z.string().optional(),
+        clientSecret: z.string().optional(),
+      })
+      .optional(),
+  },
+  publish_oauth_begin: { platform: z.enum(["tiktok", "youtube", "facebook"]) },
+  publish_oauth_disconnect: { platform: z.enum(["tiktok", "youtube", "facebook"]) },
   flow_merge: {
     project: z.string().min(1),
     clips: z
       .array(z.object({ stem: z.string().min(1), flow_title: z.string().optional() }))
       .min(1)
       .describe("Scene stems in play order; flow_title defaults to <project>-<stem> in Flow."),
-    force: z.boolean().optional().describe("Rebuild the Flow composition even when the clip list matches a saved merge."),
+    force: z
+      .boolean()
+      .optional()
+      .describe(
+        "Re-download scene clips and re-stitch even when the clip list matches a saved merge. Default merge is local (download + ffmpeg), not Flow's scene timeline.",
+      ),
+    hook: z.string().max(500).optional().describe("Auto Film hook / chủ đề (stored in film history after merge)."),
+  },
+  film_history: { limit: z.number().int().min(1).max(500).optional() },
+  film_history_delete: {
+    all: z.boolean().optional().describe("Clear every film history row."),
+    nos: z.array(z.string().min(1)).max(500).optional().describe("4-digit batch numbers to remove."),
   },
   flow_composition: { project: z.string().min(1) },
   flow_recover_film_scenes: {
@@ -594,6 +640,13 @@ export const shapes = {
   },
   muse_status: {},
   muse_open_login: { show: z.boolean().default(true).describe("Open a visible Chrome window on muse.ai for manual login.") },
+  film_allocate: {},
+  film_numbers: {},
+  film_peek_no: {},
+  film_ensure_next: { min_next: z.number().int().min(1) },
+  open_local_path: {
+    path: z.string().min(1).describe("Absolute path to a file under the films output folder."),
+  },
 };
 
 type Args<K extends keyof typeof shapes> = z.infer<z.ZodObject<(typeof shapes)[K]>>;
@@ -644,6 +697,7 @@ export interface Core {
   new_project(a: Args<"new_project">): Promise<unknown>;
   character(a: Args<"character">): Promise<unknown>;
   characters(): Promise<unknown>;
+  picker_list(): Promise<unknown>;
   character_edit(a: Args<"character_edit">): Promise<unknown>;
   edit(a: Args<"edit">): Promise<unknown>;
   trash(a: Args<"trash">): Promise<unknown>;
@@ -662,6 +716,10 @@ export interface Core {
   publish_status(a: Args<"publish_status">): Promise<unknown>;
   publish_retry(a: Args<"publish_retry">): Promise<unknown>;
   publish_history(a?: Args<"publish_history">): Promise<unknown>;
+  publish_settings_get(a?: Args<"publish_settings_get">): Promise<unknown>;
+  publish_settings_save(a: Args<"publish_settings_save">): Promise<unknown>;
+  publish_oauth_begin(a: Args<"publish_oauth_begin">): Promise<unknown>;
+  publish_oauth_disconnect(a: Args<"publish_oauth_disconnect">): Promise<unknown>;
   flow_merge(a: Args<"flow_merge">): Promise<unknown>;
   flow_composition(a: Args<"flow_composition">): Promise<unknown>;
   flow_recover_film_scenes(a: Args<"flow_recover_film_scenes">): Promise<unknown>;
@@ -670,6 +728,13 @@ export interface Core {
   provider_select(a: Args<"provider_select">): Promise<unknown>;
   muse_status(a: Args<"muse_status">): Promise<unknown>;
   muse_open_login(a: Args<"muse_open_login">): Promise<unknown>;
+  film_allocate(a: Args<"film_allocate">): Promise<unknown>;
+  film_numbers(a: Args<"film_numbers">): Promise<unknown>;
+  film_peek_no(a: Args<"film_peek_no">): Promise<unknown>;
+  film_ensure_next(a: Args<"film_ensure_next">): Promise<unknown>;
+  film_history(a?: Args<"film_history">): Promise<unknown>;
+  film_history_delete(a?: Args<"film_history_delete">): Promise<unknown>;
+  open_local_path(a: Args<"open_local_path">): Promise<unknown>;
 }
 
 // Flow's own voices: still offered when giving a character a voice, but narration no longer goes through Flow.
@@ -775,21 +840,28 @@ export class LocalCore implements Core {
         .filter((r) => r.startsWith("asset:"))
         .map((r) => r.slice(6).trim())
         .filter((n) => characterLook(n) !== undefined || /^[\w .'-]{1,60}$/.test(n));
-      // With an outfit the lock still pins face, hair and build, but the clothes come from the scene: otherwise the
-      // saved look (Skye's denim shirt) fights a costume the prompt asks for.
-      const lock = cast.length
-        ? ` CHARACTER LOCK — ${cast.join(" and ")} must match the reference image exactly, as if copying it: same head shape and size, same face, same eyes, same hair, same skin, same build and proportions,${outfit ? "" : " same clothing items in the same colours,"} same hands, and the same rendering style and level of realism as the reference. Never redesign, ${outfit ? "" : "restyle, "}re-proportion, re-age or re-colour them${outfit ? "" : ", and never swap an item for a similar one"}.${cast
-            .map((n) => (characterLook(n) ? ` ${n} is exactly: ${characterLook(n)}.` : ""))
-            .join("")}${outfit ? ` WARDROBE IN THIS SCENE: ${outfit.trim().replace(/\.$/, "")}. This replaces any clothing in the reference image or the description above, and stays identical for the whole scene.` : ""}`
-        : "";
+      const v2 = isPromptFormatV2(scene.prompt);
+      // V2 scripts already carry a short CHARACTER block; attaching the chip is enough without the old CHARACTER LOCK paragraph.
+      const lock =
+        !v2 && cast.length
+          ? ` CHARACTER LOCK — ${cast.join(" and ")} must match the reference image exactly, as if copying it: same head shape and size, same face, same eyes, same hair, same skin, same build and proportions,${outfit ? "" : " same clothing items in the same colours,"} same hands, and the same rendering style and level of realism as the reference. Never redesign, ${outfit ? "" : "restyle, "}re-proportion, re-age or re-colour them${outfit ? "" : ", and never swap an item for a similar one"}.${cast
+              .map((n) => (characterLook(n) ? ` ${n} is exactly: ${characterLook(n)}.` : ""))
+              .join("")}${outfit ? ` WARDROBE IN THIS SCENE: ${outfit.trim().replace(/\.$/, "")}. This replaces any clothing in the reference image or the description above, and stays identical for the whole scene.` : ""}`
+          : outfit
+            ? ` WARDROBE IN THIS SCENE: ${outfit.trim().replace(/\.$/, "")}. This replaces any clothing in the reference image or the description above, and stays identical for the whole scene.`
+            : "";
       // Omni burns its own subtitles into talking clips now and then, garbled ("thyel", "voch"), even when the prompt
       // says "no captions" near the end (protein soda clip 1, 15 credits). Every video therefore opens AND closes on it,
       // unless the scene really wants words in the picture. Captions are added afterwards by flow_captions.
       const noText = scene.type !== "image" && !on_screen_text;
-      const textFirst = noText ? "NO SUBTITLES, NO CAPTIONS, NO TEXT OF ANY KIND ON SCREEN. " : "";
-      const textLast = noText
-        ? " NO TEXT ON SCREEN: never add subtitles, captions, titles, speech transcripts, words or letters anywhere in the picture, at any moment; any speech is heard only, never written."
-        : "";
+      let promptBody = scene.prompt.trim();
+      if (noText) promptBody = ensurePromptVisualTextRestriction(promptBody);
+      const hasNoSubs = promptHasNoSubtitlesClause(promptBody);
+      const textFirst = noText && !hasNoSubs ? "NO SUBTITLES, NO CAPTIONS, NO TEXT OF ANY KIND ON SCREEN. " : "";
+      const textLast =
+        noText && !hasNoSubs
+          ? " NO TEXT ON SCREEN: never add subtitles, captions, titles, speech transcripts, words or letters anywhere in the picture, at any moment; any speech is heard only, never written."
+          : "";
       const inherit = reference_previous
         ? " Match the previous image exactly for the subject's appearance, colour palette, lighting and rendering style; this is the same scene a moment later."
         : "";
@@ -799,7 +871,7 @@ export class LocalCore implements Core {
         last_frame,
         reference_images,
         skip_download: scene.skip_download ?? scene.type === "video",
-        prompt: `${textFirst}${scene.prompt.trim().replace(/\.?$/, ".")}${phrase ? ` ${phrase}` : ""}${lock}${inherit}${textLast}`,
+        prompt: `${textFirst}${promptBody.replace(/\.?$/, ".")}${phrase ? ` ${phrase}` : ""}${lock}${inherit}${textLast}`,
         chain_from: chain_previous ? jobs[i - 1].id : undefined,
         reference_from: reference_previous ? jobs[i - 1].id : undefined,
         output_dir,
@@ -1069,9 +1141,8 @@ export class LocalCore implements Core {
     return { ...out, use_as: `asset:${name}` };
   }
 
-  async characters() {
-    if (this.queue.busy) throw new Error(BUSY);
-    return (await listCharacters()).map((c) => ({
+  private mapCharactersForPicker(chars: Awaited<ReturnType<typeof listCharacters>>) {
+    return chars.map((c) => ({
       name: c.displayName,
       displayName: c.displayName,
       assetId: c.characterId,
@@ -1079,9 +1150,9 @@ export class LocalCore implements Core {
       projectId: c.projectId,
       thumbnail: c.thumbnail,
       voice: c.voice,
-      source: "character",
-      kind: "character",
-      assetType: "character",
+      source: "character" as const,
+      kind: "character" as const,
+      assetType: "character" as const,
       use_as: encodeFlowRef({
         assetId: c.characterId,
         assetName: c.displayName,
@@ -1089,6 +1160,37 @@ export class LocalCore implements Core {
         assetType: "character",
       }),
     }));
+  }
+
+  async characters() {
+    if (this.queue.busy) throw new Error(BUSY);
+    return this.mapCharactersForPicker(await listCharacters());
+  }
+
+  /** One Chrome pass: characters first (needs Characters nav), then grid assets — for Studio's From Flow picker. */
+  async picker_list() {
+    if (this.queue.busy) throw new Error(BUSY);
+    let cast: Awaited<ReturnType<typeof listCharactersForPicker>> = [];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        cast = await listCharactersForPicker();
+        if (cast.length) break;
+      } catch (err) {
+        if (attempt) throw err;
+      }
+      if (!cast.length) await new Promise((r) => setTimeout(r, 1500));
+    }
+    const characters = this.mapCharactersForPicker(cast);
+    const assets = (await listAssetsForPicker()).map(({ name, kind, id, projectId, thumbnail }) => ({
+      name,
+      kind,
+      assetId: id,
+      assetName: name,
+      projectId,
+      assetType: kind,
+      thumbnail,
+    }));
+    return { characters, assets };
   }
 
   // Panel only: deliberately NOT registered as an MCP tool, so a key typed into Flow Studio never reaches Claude.
@@ -1106,9 +1208,12 @@ export class LocalCore implements Core {
   async ensureCompositionDownload(project: string, comp?: FlowCompositionRecord): Promise<string> {
     const record = comp ?? getComposition(project);
     if (!record || record.publish_status !== "ready_to_publish") {
-      throw new Error("No merged Final composition is ready on Google Flow for this project.");
+      throw new Error("No merged film is ready for this project. Run Merge in Auto Film first.");
     }
     if (cacheIsValid(record)) return record.cached_video_path!;
+    if (record.composition_id === "local" && record.cached_video_path && existsSync(record.cached_video_path)) {
+      return record.cached_video_path;
+    }
     if (this.queue.busy) throw new Error(BUSY);
     const dir = projectDir(project);
     mkdirSync(dir, { recursive: true });
@@ -1206,21 +1311,34 @@ export class LocalCore implements Core {
       };
     });
 
-    const prefer = (a: { name: string; kind: string }) =>
-      /^final$/i.test(a.name.trim()) ? 0 : a.kind === "scene" ? 1 : 2;
+    const wantScene = filmFinalSceneName(folder);
+    const prefer = (a: { name: string; kind: string }) => {
+      if (a.name === wantScene) return 0;
+      if (/^final$/i.test(a.name.trim())) return 1;
+      return a.kind === "scene" ? 2 : 3;
+    };
     flow_videos.sort((a, b) => prefer(a) - prefer(b) || a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 
+    const finalsOnly = flow_videos.filter(
+      (v) => v.name === wantScene || /^final$/i.test(v.name.trim()),
+    );
+    const publishable = finalsOnly.length ? finalsOnly : flow_videos;
+
     let default_flow_video_handle =
-      flow_videos.find((v) => /^final$/i.test(v.name.trim()))?.handle ?? flow_videos[0]?.handle;
+      publishable.find((v) => v.name === wantScene)?.handle ??
+      publishable.find((v) => /^final$/i.test(v.name.trim()))?.handle ??
+      publishable[0]?.handle;
     let downloaded_path: string | undefined;
-    let note = flow_videos.length
-      ? `${flow_videos.length} video(s) / scene(s) in Flow project ${flow_project_id.slice(0, 8)}….`
-      : `No videos found in Flow project ${flow_project_id.slice(0, 8)}… — check the Flow Chrome window is on that project's All media grid, then change project or press Refresh videos.`;
+    let note = publishable.length
+      ? finalsOnly.length
+        ? `${publishable.length} merged film(s) in Flow (${wantScene}).`
+        : `${publishable.length} video(s) / scene(s) in Flow project ${flow_project_id.slice(0, 8)}…. No ${wantScene} yet — merge in Auto Film first.`
+      : `No merged film in Flow project ${flow_project_id.slice(0, 8)}… — open that project in Chrome, or merge clips in Auto Film first.`;
 
     const want = flow_video_id || default_flow_video_handle;
     if (download && want) {
       downloaded_path = await downloadFlowAssetForPublish(flow_project_id, want, dir);
-      const row = flow_videos.find((v) => v.handle === want);
+      const row = publishable.find((v) => v.handle === want);
       if (row) row.local_path = downloaded_path;
       note = `Saved to ${basename(downloaded_path)} on this PC.`;
     }
@@ -1228,7 +1346,7 @@ export class LocalCore implements Core {
     return {
       project: folder,
       flow_project_id,
-      flow_videos,
+      flow_videos: publishable,
       default_flow_video_handle,
       downloaded_path,
       note,
@@ -1241,6 +1359,8 @@ export class LocalCore implements Core {
 
   async flow_recover_film_scenes({ project, clips }: Args<"flow_recover_film_scenes">) {
     if (this.queue.busy) throw new Error(BUSY);
+    const { repairMissingFilmTitles } = await import("./flow.js");
+    const renamed = await repairMissingFilmTitles(project, clips).catch(() => []);
     const grid = await listAssets();
     const flowProjectId = grid.find((a) => a.projectId)?.projectId;
     const scenes = clips.map((clip, order) => {
@@ -1265,12 +1385,12 @@ export class LocalCore implements Core {
         kind: hit.kind,
       };
     });
-    return { project, flow_project_id: flowProjectId, scenes };
+    return { project, flow_project_id: flowProjectId, scenes, renamed_on_flow: renamed };
   }
 
-  async flow_merge({ project, clips, force }: Args<"flow_merge">) {
+  async flow_merge({ project, clips, force, hook }: Args<"flow_merge">) {
     if (isMuseProvider()) {
-      throw new Error("Merge in Google Flow is unavailable while Muse AI is selected. Use local Cut/assemble, or switch to Google Flow.");
+      throw new Error("Merge while Muse is selected: clips must already be in the project folder; use the same merge API after generate.");
     }
     if (this.queue.busy) throw new Error(BUSY);
     const { sortClipsForMerge } = await import("./film-script.js");
@@ -1278,23 +1398,46 @@ export class LocalCore implements Core {
     const titles = orderedClips.map((c) => c.flow_title?.trim() || `${project}-${c.stem}`);
     const hash = contentHashFromTitles(titles);
     const existing = getComposition(project);
+    const maybeRecordHistory = (composition: FlowCompositionRecord | undefined) => {
+      if (composition?.merge_status === "completed" && isFilmNo(project)) {
+        try {
+          recordFilmMerge({ no: project.trim(), hook, video_path: composition?.cached_video_path });
+        } catch {
+          /* history is best-effort */
+        }
+      }
+    };
     if (!force && existing?.merge_status === "completed" && existing.content_hash === hash) {
+      maybeRecordHistory(existing);
       return {
         composition: existing,
         merge_status: existing.merge_status,
         publish_status: existing.publish_status,
+        local_video: existing.cached_video_path,
         reused: true,
       };
     }
-    const composition = await mergeClipsIntoFlowScene({
-      tedverseProject: project,
-      clips: orderedClips,
-      aspect_ratio: "9:16",
-    });
+    const credits_remaining = await refreshFlowCreditsOnce().catch(() => undefined);
+    const useFlowTimeline = process.env.FLOW_MCP_MERGE_IN_FLOW === "1";
+    const composition = useFlowTimeline
+      ? await mergeClipsIntoFlowScene({
+          tedverseProject: project,
+          clips: orderedClips,
+          aspect_ratio: "9:16",
+        })
+      : await (await import("./film-merge-local.js")).mergeClipsLocally({
+          tedverseProject: project,
+          clips: orderedClips,
+          aspect_ratio: "9:16",
+          force: Boolean(force),
+        });
+    maybeRecordHistory(composition);
     return {
       composition,
       merge_status: composition.merge_status,
       publish_status: composition.publish_status,
+      local_video: composition.cached_video_path,
+      credits_remaining,
     };
   }
 
@@ -1324,10 +1467,14 @@ export class LocalCore implements Core {
       resolved = await fetchFlowVideoStaging(flow_project_id, flow_video_id);
       ephemeral = true;
     }
-    if (!resolved) throw new Error("Pick a video from Flow, then Publish — TedVerse downloads it briefly for upload.");
+    if (!resolved) throw new Error("Pick a merged film from Film Histories (local .mp4), then Publish.");
     if (resolved && !ephemeral) {
-      const rel = relative(dir, resolved);
-      if (rel.startsWith("..") || isAbsolute(rel)) throw new Error("Video must be in this project's folder.");
+      const root = resolve(OUTPUT_ROOT);
+      const underRoot = !relative(root, resolved).startsWith("..") && !isAbsolute(relative(root, resolved));
+      const underProject = !relative(dir, resolved).startsWith("..") && !isAbsolute(relative(dir, resolved));
+      if (!underRoot && !underProject) {
+        throw new Error("Video must be in your flow-mcp-out folder on this PC.");
+      }
     }
     const flowTitle =
       flow_video_name?.trim() ||
@@ -1381,7 +1528,11 @@ export class LocalCore implements Core {
     let resolved: string | undefined;
     let ephemeral = false;
     const flowId = flow_project_id ?? composition?.flow_project_id;
-    const handle = flow_video_id ?? (composition?.publish_status === "ready_to_publish" ? "title:Final" : undefined);
+    const handle =
+      flow_video_id ??
+      (composition?.publish_status === "ready_to_publish"
+        ? `title:${composition.composition_name || filmFinalSceneName(project)}`
+        : undefined);
     if (flowId && handle) {
       resolved = await fetchFlowVideoStaging(flowId, handle);
       ephemeral = true;
@@ -1403,6 +1554,42 @@ export class LocalCore implements Core {
     } finally {
       if (ephemeral) releaseEphemeralFile(resolved);
     }
+  }
+
+  async publish_settings_get() {
+    return publicPublishApiSettings();
+  }
+
+  async publish_settings_save(a: Args<"publish_settings_save">) {
+    const patch: Parameters<typeof savePublishApiSettings>[0] = {};
+    if (a.engine) patch.engine = a.engine;
+    if (a.youtube) {
+      patch.youtube = {};
+      if (a.youtube.clientId !== undefined) patch.youtube.clientId = a.youtube.clientId;
+      if (a.youtube.clientSecret) patch.youtube.clientSecret = a.youtube.clientSecret;
+    }
+    if (a.facebook) {
+      patch.facebook = {};
+      if (a.facebook.appId !== undefined) patch.facebook.appId = a.facebook.appId;
+      if (a.facebook.appSecret) patch.facebook.appSecret = a.facebook.appSecret;
+      if (a.facebook.pageId !== undefined) patch.facebook.pageId = a.facebook.pageId;
+    }
+    if (a.tiktok) {
+      patch.tiktok = {};
+      if (a.tiktok.clientKey !== undefined) patch.tiktok.clientKey = a.tiktok.clientKey;
+      if (a.tiktok.clientSecret) patch.tiktok.clientSecret = a.tiktok.clientSecret;
+    }
+    savePublishApiSettings(patch);
+    return publicPublishApiSettings();
+  }
+
+  async publish_oauth_begin({ platform }: Args<"publish_oauth_begin">) {
+    return publishOAuthBegin(platform);
+  }
+
+  async publish_oauth_disconnect({ platform }: Args<"publish_oauth_disconnect">) {
+    clearPlatformTokens(platform);
+    return publicPublishApiSettings();
   }
 
   async publish_history({ limit }: Args<"publish_history"> = {}) {
@@ -1443,6 +1630,42 @@ export class LocalCore implements Core {
       return { opened: true, connected: false, email: null as string | null };
     }
     return mod.museStatus().catch((e: Error) => ({ connected: false, email: null, error: e.message }));
+  }
+
+  async film_allocate() {
+    return allocateFilmNo();
+  }
+
+  async film_numbers() {
+    return listFilmNumbers();
+  }
+
+  async film_peek_no() {
+    return peekFilmNo();
+  }
+
+  async film_ensure_next({ min_next }: Args<"film_ensure_next">) {
+    return ensureFilmSerialNext(min_next);
+  }
+
+  async film_history({ limit }: Args<"film_history"> = {}) {
+    return { rows: buildFilmHistory(limit ?? 100) };
+  }
+
+  async open_local_path({ path }: Args<"open_local_path">) {
+    const resolved = resolve(path.trim());
+    const root = resolve(OUTPUT_ROOT);
+    const rel = relative(root, resolved);
+    if (rel.startsWith("..") || isAbsolute(rel)) {
+      throw new Error("Path must be under your films folder (flow-mcp-out).");
+    }
+    if (!existsSync(resolved)) throw new Error(`File not found: ${basename(resolved)}`);
+    openPath(resolved);
+    return { path: resolved };
+  }
+
+  async film_history_delete({ all, nos }: Args<"film_history_delete"> = {}) {
+    return deleteFilmHistory({ all, nos });
   }
 
 }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TedVerse — AI Creative Studio with Teddy</title>
 <meta name="application-name" content="TedVerse">
-<meta name="description" content="TedVerse — AI Creative Studio with Teddy. One Prompt. Infinite Worlds. Crafted by Teddy Dang.">
+<meta name="description" content="TedVerse — AI Creative Studio with Teddy. One Prompt. Infinite Worlds. Crafted by Teddy Ngo.">
 <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="/assets/favicon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
@@ -27,6 +27,7 @@
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px; --space-6:32px;
   --ease:150ms ease;
   --app-chrome:10.5rem;
+  --page-pad-x:var(--space-4);
   /* legacy aliases (unchanged markup / inline styles) */
   --ink:var(--bg); --ink2:var(--surface); --ink3:var(--surface-2); --line:var(--border);
   --bone:var(--text); --dim:var(--text-muted); --tally:var(--primary); --go:var(--success);
@@ -38,12 +39,12 @@ html{background:var(--bg);color:var(--text);font:400 14px/1.5 var(--font);-webki
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--surface-2);border-radius:var(--r-pill);border:2px solid var(--bg)}
-body{padding:0 var(--space-4) calc(76px + env(safe-area-inset-bottom,0px));min-height:100dvh;display:flex;flex-direction:column;background:var(--bg)}
-.wrap{max-width:1240px;margin:0 auto;width:100%;flex:1;display:flex;flex-direction:column;min-height:0}
-.clapper{height:3px;margin:0 calc(var(--space-4) * -1);background:linear-gradient(90deg,var(--primary),var(--accent));opacity:.85}
+body{padding:0 var(--page-pad-x) calc(76px + env(safe-area-inset-bottom,0px));min-height:100dvh;display:flex;flex-direction:column;background:var(--bg)}
+.wrap{margin:0 auto;width:100%;max-width:none;flex:1;display:flex;flex-direction:column;min-height:0}
+.clapper{height:3px;margin:0 calc(var(--page-pad-x) * -1);background:linear-gradient(90deg,var(--primary),var(--accent));opacity:.85}
 /* Logo + credits + tab row stay on screen while the page scrolls (CSS only — no overlay). */
-.app-chrome{position:sticky;top:0;z-index:30;margin:0 calc(var(--space-4) * -1) var(--space-3);padding:env(safe-area-inset-top,0) var(--space-4) 0;background:var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.35)}
-.app-chrome .clapper{margin:0 calc(var(--space-4) * -1)}
+.app-chrome{position:sticky;top:0;z-index:30;margin:0 calc(var(--page-pad-x) * -1) var(--space-3);padding:env(safe-area-inset-top,0) var(--page-pad-x) 0;background:var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.app-chrome .clapper{margin:0 calc(var(--page-pad-x) * -1)}
 header.app-header{display:flex;flex-wrap:wrap;gap:var(--space-3) var(--space-5);align-items:center;justify-content:space-between;padding:var(--space-4) 0 var(--space-2)}
 .brand{display:flex;align-items:center;gap:var(--space-3);flex:1;min-width:0}
 .brand-link{display:flex;align-items:center;flex:none;text-decoration:none;line-height:0}
@@ -87,10 +88,25 @@ header.app-header{display:flex;flex-wrap:wrap;gap:var(--space-3) var(--space-5);
 .tally.ready{background:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.25)}
 .tally.rolling{background:var(--primary);box-shadow:0 0 0 3px rgba(124,92,255,.35);animation:pulse-dot 1.2s ease-in-out infinite}
 .tally.down{background:var(--danger);box-shadow:0 0 0 3px rgba(239,68,68,.25)}
+.tally.warn{background:var(--warning);box-shadow:0 0 0 3px rgba(245,158,11,.3)}
 @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.45}}
 .hint{margin-top:var(--space-3);padding:var(--space-3) var(--space-4);border-left:3px solid var(--warning);background:var(--surface);border-radius:var(--r-control);font-size:14px;color:var(--text)}
-.cols{display:grid;gap:var(--space-5);margin-top:var(--space-4)}
-@media(min-width:1040px){.cols{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}.side{padding-right:var(--space-1)}}
+.cols{display:grid;gap:var(--space-5);margin-top:var(--space-4);width:100%}
+@media(min-width:900px){:root{--page-pad-x:clamp(16px,2.2vw,40px)}}
+@media(min-width:1040px){.cols{grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);align-items:start}.side{padding-right:var(--space-1)}}
+@media(min-width:1440px){.cols{grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);gap:var(--space-6)}}
+@media(min-width:1920px){.cols{grid-template-columns:minmax(0,1.65fr) minmax(380px,1fr)}}
+.cols.cols-single{grid-template-columns:1fr !important}
+.cols.cols-single .side{display:none !important}
+.panel[data-panel="settings"] .lede{max-width:none}
+.settings-publish-layout{width:100%}
+.settings-publish-pair{display:grid;gap:var(--space-4);margin-top:var(--space-3);grid-template-columns:1fr;width:100%}
+@media(min-width:720px){.settings-publish-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.settings-publish-pair .card,.settings-publish-fb .card{margin-top:0;box-sizing:border-box}
+.settings-publish-fb{display:grid;grid-template-columns:1fr;gap:var(--space-4);margin-top:var(--space-4);width:100%}
+@media(min-width:720px){.settings-publish-fb{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.settings-publish-fb .card{grid-column:1;margin-top:0}
+.settings-engine-card{margin-bottom:0}
 h2{font:600 15px/1.3 var(--font);margin:0 0 var(--space-3);display:flex;align-items:baseline;gap:var(--space-2);color:var(--text)}
 h2 small{font:500 12px var(--font);color:var(--text-muted)}
 section{margin-bottom:var(--space-5)}
@@ -98,7 +114,14 @@ section{margin-bottom:var(--space-5)}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}}
 label.f{display:block;font:500 12px/1.3 var(--font);color:var(--text-muted);margin:var(--space-3) 0 var(--space-1)}
 label.f:first-child{margin-top:0}
-input[type=text],input[type=number],input[type=date],input[type=time],input[type=datetime-local],select,textarea{width:100%;font:400 14px var(--font);color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-control);padding:10px 12px;outline:none;-webkit-appearance:none;appearance:none;color-scheme:dark;transition:border-color var(--ease),box-shadow var(--ease)}
+input[type=text],input[type=password],input[type=number],input[type=date],input[type=time],input[type=datetime-local],select,textarea{width:100%;font:400 14px var(--font);color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-control);padding:10px 12px;outline:none;-webkit-appearance:none;appearance:none;color-scheme:dark;transition:border-color var(--ease),box-shadow var(--ease)}
+input[type=text]::placeholder,input[type=password]::placeholder,textarea::placeholder{color:var(--text-muted);opacity:.85}
+input[type=text]:-webkit-autofill,input[type=password]:-webkit-autofill,textarea:-webkit-autofill{
+  -webkit-text-fill-color:var(--text);
+  box-shadow:0 0 0 1000px var(--surface-2) inset;
+  border:1px solid var(--border);
+  caret-color:var(--text);
+}
 input[type=date],input[type=time],input[type=datetime-local]{min-height:44px;line-height:1.4}
 input[type=date]::-webkit-calendar-picker-indicator,input[type=time]::-webkit-calendar-picker-indicator,input[type=datetime-local]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.75;filter:brightness(1.15);padding:4px;margin-left:4px;border-radius:4px;transition:opacity var(--ease),background var(--ease)}
 input[type=date]::-webkit-calendar-picker-indicator:hover,input[type=time]::-webkit-calendar-picker-indicator:hover,input[type=datetime-local]::-webkit-calendar-picker-indicator:hover{opacity:1;background:rgba(168,85,247,.15)}
@@ -108,7 +131,7 @@ input[type=datetime-local]::-webkit-datetime-edit-text{color:var(--text-muted)}
 #af_script,textarea#af_script{font-size:13px;line-height:1.55;font-family:var(--mono)}
 select{background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
 textarea{min-height:96px;resize:vertical;line-height:1.5}
-input:focus,select:focus,textarea:focus,input[type=date]:focus,input[type=time]:focus,input[type=datetime-local]:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,92,255,.35)}
+input:focus,select:focus,textarea:focus,input[type=password]:focus,input[type=date]:focus,input[type=time]:focus,input[type=datetime-local]:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,92,255,.35)}
 .seg{display:flex;flex-wrap:wrap;gap:var(--space-1);padding:3px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-pill)}
 .seg button{flex:1 1 0;min-width:0;min-height:36px;padding:0 12px;font:500 13px var(--font);color:var(--text-muted);background:transparent;border:0;border-radius:var(--r-pill);cursor:pointer;transition:background var(--ease),color var(--ease)}
 .seg button.on{background:var(--primary);color:#fff;box-shadow:0 1px 4px rgba(124,92,255,.4)}
@@ -154,6 +177,33 @@ table.pub-history td.plat{text-align:center;font-weight:600;white-space:nowrap}
 table.pub-history td.plat.ok{color:var(--good)}
 table.pub-history td.plat.fail{color:var(--bad)}
 table.pub-history td.plat.muted{color:var(--text-muted);font-weight:400}
+#af_film_history{table-layout:fixed;width:100%}
+#af_film_history col.col-sel{width:2.35rem}
+#af_film_history th.col-sel,#af_film_history td.col-sel{width:2.35rem;text-align:center;padding:4px 6px;vertical-align:middle}
+#af_film_history col.col-no{width:3.25rem}
+#af_film_history col.col-date{width:10.25rem}
+#af_film_history col.col-plat{width:4rem}
+#af_film_history{table-layout:auto;min-width:100%;width:max-content;max-width:none}
+#af_film_history col.col-hook{min-width:10rem}
+#af_film_history col.col-path{min-width:22rem;width:auto}
+#af_film_history th.col-path,#af_film_history td.col-path{font-size:11px;line-height:1.35;white-space:nowrap;vertical-align:middle;padding:6px 10px;font-family:ui-monospace,Consolas,monospace;max-width:none}
+#af_film_history_card .pub-history-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+a.hist-path-link{color:var(--primary);text-decoration:underline;text-decoration-color:rgba(168,85,247,.45);text-underline-offset:2px;cursor:pointer;font-weight:500}
+a.hist-path-link:hover{text-decoration-color:var(--primary)}
+#af_film_history th.col-no,#af_film_history td.col-no{width:3.25rem;padding-left:10px;padding-right:6px;text-align:center;white-space:nowrap}
+#af_film_history th.col-date,#af_film_history td.col-date{width:10.25rem;min-width:10.25rem;font-size:12px;white-space:nowrap;padding-right:8px}
+#af_film_history th.col-hook,#af_film_history td.col-hook{width:auto;line-height:1.4;word-break:break-word}
+#af_film_history th.col-plat,#af_film_history td.col-plat{width:4rem;padding-left:4px;padding-right:4px;font-size:11px;white-space:nowrap}
+table.pub-history.is-empty thead{display:none}
+table.pub-history tbody.empty-state tr{display:block;width:100%}
+table.pub-history tbody.empty-state td.empty-row-cell{display:block;width:100%;box-sizing:border-box;white-space:normal;text-align:left;line-height:1.45;padding:14px 12px;border-bottom:0;color:var(--text-muted)}
+table.pub-history tbody.empty-state td.empty-row-cell.err{color:var(--bad)}
+#af_film_history_card .empty{margin:0;display:block;line-height:1.5;color:var(--text-muted)}
+#af_film_history_card .empty.err{color:var(--bad)}
+.af-no-hook-row{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:var(--space-3) var(--space-4);align-items:end;margin-bottom:var(--space-2)}
+.af-no-hook-row .f{margin-bottom:6px}
+.af-no-hook-row #af_project{text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.04em;padding-left:8px;padding-right:8px}
+@media (max-width:520px){.af-no-hook-row{grid-template-columns:1fr}}
 .phrase{margin-top:var(--space-2);padding:var(--space-3);border-radius:var(--r-control);background:var(--surface-2);border:1px dashed var(--border);color:var(--text-muted);font-size:13px}
 .phrase b{color:var(--warning);font-weight:600}
 .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:var(--space-2)}
@@ -183,8 +233,8 @@ table.pub-history td.plat.muted{color:var(--text-muted);font-weight:400}
 .check{display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-3);font-size:14px;cursor:pointer;color:var(--text)}
 .check input{width:18px;height:18px;flex:none;accent-color:var(--primary)}
 .add{width:100%;min-height:44px;border-style:dashed;font-size:14px}
-.rollbar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));background:rgba(18,21,28,.88);backdrop-filter:blur(12px);border-top:1px solid var(--border);box-shadow:0 -8px 32px rgba(0,0,0,.35)}
-.rollbar .in{max-width:1240px;margin:0 auto;display:flex;gap:var(--space-4);align-items:center}
+.rollbar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:var(--space-3) var(--page-pad-x) calc(var(--space-3) + env(safe-area-inset-bottom));background:rgba(18,21,28,.88);backdrop-filter:blur(12px);border-top:1px solid var(--border);box-shadow:0 -8px 32px rgba(0,0,0,.35)}
+.rollbar .in{width:100%;max-width:none;margin:0 auto;display:flex;gap:var(--space-4);align-items:center}
 .rollact{display:flex;align-items:center;gap:var(--space-2);flex-shrink:0}
 .rollhint{font:500 12px var(--font);color:var(--warning);max-width:min(42vw,280px);text-align:right;line-height:1.35}
 .est{flex:1;min-width:0;font:500 12px var(--font);color:var(--text-muted)}
@@ -241,7 +291,7 @@ dialog h2{font:600 18px var(--font)}
 input[type=range]{width:100%;accent-color:var(--primary);height:28px}
 </style>
 <style>
-.tabs{position:relative;display:flex;gap:var(--space-1);overflow-x:auto;padding:var(--space-2) 0 var(--space-3);margin:0 calc(var(--space-4) * -1);padding-left:var(--space-4);padding-right:var(--space-4);background:transparent;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch}
+.tabs{position:relative;display:flex;gap:var(--space-1);overflow-x:auto;padding:var(--space-2) 0 var(--space-3);margin:0 calc(var(--page-pad-x) * -1);padding-left:var(--page-pad-x);padding-right:var(--page-pad-x);background:transparent;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch}
 .tabs button{flex:0 0 auto;min-height:40px;padding:0 var(--space-3);font:500 13px var(--font);color:var(--text-muted);background:transparent;border:0;border-radius:var(--r-control);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:var(--space-2);transition:color var(--ease),background var(--ease)}
 .tabs button .tab-ico{display:flex;opacity:.75}
 .tabs button .tab-ico svg{width:16px;height:16px}
@@ -262,6 +312,8 @@ input[type=range]{width:100%;accent-color:var(--primary);height:28px}
 .film-table th.c-prompt{white-space:normal}
 .film-table .num{font:600 12px var(--mono);color:var(--text-muted)}
 .film-prompt{white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media(min-width:1440px){.film-prompt{-webkit-line-clamp:3}.film-table .c-status{width:108px}.film-table .c-act{width:168px}}
+@media(min-width:1920px){.film-prompt{-webkit-line-clamp:4}.film-table .c-prompt{min-width:280px}}
 .film-table tbody tr:not(.film-expand):not(.spacer){height:72px}
 .film-table td:last-child{overflow:visible}
 .film-expand td{overflow:visible}
@@ -274,6 +326,9 @@ input[type=range]{width:100%;accent-color:var(--primary);height:28px}
 .st.generating{background:rgba(124,92,255,.2);color:#c4b5fd}.st.generating::before{animation:pulse-dot 1.2s ease-in-out infinite}
 .st.completed{background:rgba(34,197,94,.15);color:#86efac}.st.failed{background:rgba(239,68,68,.18);color:#fca5a5}
 .st.download_failed{background:rgba(245,158,11,.15);color:#fcd34d}.st.generated_on_flow{background:rgba(34,197,94,.12);color:#86efac}.st.waiting_flow{background:rgba(59,130,246,.12);color:#93c5fd}.st.skipped{background:transparent;border:1px solid var(--border)}
+.st.policy-pass{background:rgba(34,197,94,.12);color:#86efac;font-size:11px;padding:2px 6px;border-radius:4px}
+.st.policy-warn{background:rgba(245,158,11,.15);color:#fcd34d;font-size:11px;padding:2px 6px;border-radius:4px}
+.st.policy-block{background:rgba(239,68,68,.18);color:#fca5a5;font-size:11px;padding:2px 6px;border-radius:4px}
 .refchip{display:block;max-width:100%;margin:0 0 3px;padding:2px 6px;border-radius:var(--r-pill);background:var(--surface-2);font:500 10px var(--font);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--border)}
 .refchip i{font-style:normal;color:var(--text-muted)}
 .film-act{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
@@ -346,6 +401,9 @@ audio{width:100%;margin-top:8px;filter:invert(1) hue-rotate(180deg)}
 body[data-provider=muse] [data-flow-only]{opacity:.42;pointer-events:none}
 body[data-provider=muse] .af-merge-note{display:block}
 .af-merge-note{display:none;color:var(--warn);font-size:13px;margin:8px 0 0}
+.af-create-scene-note{margin:10px 0 6px;padding:10px 12px;border-radius:var(--r-control);border:1px solid rgba(168,85,247,.45);background:rgba(168,85,247,.12);color:var(--text);font-size:13px;line-height:1.45}
+.af-create-scene-note strong{color:var(--primary)}
+#af_preview.pulse{box-shadow:0 0 0 2px var(--primary),0 0 18px rgba(168,85,247,.4)}
 #platformGate{width:min(640px,calc(100vw - 24px));max-height:92vh;padding:0;overflow:hidden auto;border-color:rgba(168,85,247,.4);box-shadow:0 32px 80px rgba(0,0,0,.65),0 0 0 1px rgba(6,182,212,.15)}
 #platformGate::backdrop{background:rgba(5,5,8,.82);backdrop-filter:blur(10px)}
 .platform-gate-hero{padding:var(--space-5) var(--space-5) var(--space-4);background:linear-gradient(165deg,var(--surface-2) 0%,var(--surface) 55%,var(--bg) 100%);border-bottom:1px solid var(--border);position:relative}
@@ -403,7 +461,7 @@ body[data-provider=muse] .af-merge-note{display:block}
       <div class="status" id="status"><span class="pill"><i class="tally down"></i>Not connected</span></div>
       <span class="pill ghost" id="platformPill" hidden>Google Flow</span>
       <button type="button" class="btn small ghost" id="platformSwitch" title="Change AI platform (blocked while jobs run)">Platform</button>
-      <button type="button" class="btn small ghost status-connect" id="statusConnect" title="Refresh credits, plan, and your Google name from Flow">Connect</button>
+      <button type="button" class="btn small ghost status-connect" id="statusConnect" title="Check Flow sign-in, plan, and name (does not open the Google account panel)">Connect</button>
     </div>
   </header>
   <nav class="tabs" id="tabs">
@@ -413,6 +471,7 @@ body[data-provider=muse] .af-merge-note{display:block}
     <button type="button" data-tab="publish" title="Share finished film"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg></span>Publish<small>share film</small></button>
     <button type="button" data-tab="cast" data-flow-only title="Characters"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Cast<small>characters</small></button>
     <button type="button" data-tab="narrate" title="Narration"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></span>Voice<small>narration</small></button>
+    <button type="button" data-tab="settings" title="API keys &amp; publish"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></span>Settings<small>API</small></button>
   </nav>
   </div>
 
@@ -556,25 +615,73 @@ body[data-provider=muse] .af-merge-note{display:block}
         </details>
       </section>
 
+      <!-- SETTINGS -->
+      <section class="panel" data-panel="settings">
+        <details class="studio-sect" id="settings_publish_sect" open>
+          <summary><span class="sect-title">Publish API</span><small class="sect-sum-end">OAuth</small></summary>
+          <div class="studio-sect-body">
+            <p class="lede">Đăng TikTok, YouTube Shorts, Facebook Reels qua <strong>API</strong> (không mở Chrome upload tay). Tạo app trên console từng nền tảng là <strong>miễn phí</strong>, nhưng TikTok/Meta thường cần <strong>duyệt quyền</strong>. Chi tiết: <code>docs/PUBLISH-API.md</code>.</p>
+            <div class="settings-publish-layout">
+            <div class="card settings-engine-card">
+              <label class="f">Publish engine</label>
+              <div class="seg" data-seg="pub_engine"></div>
+              <p class="empty" id="pub_engine_note" style="margin-top:6px">API = upload HTTPS + OAuth. Browser = Playwright như cũ.</p>
+            </div>
+            <div class="settings-publish-pair">
+            <div class="card">
+              <h2 style="font-size:18px;margin:0 0 10px">YouTube (Google Cloud)</h2>
+              <p class="empty">OAuth redirect: <code id="pub_redir_yt">http://127.0.0.1:8787/oauth/callback/youtube</code></p>
+              <label class="f" for="set_yt_id">Client ID</label>
+              <input type="text" id="set_yt_id" autocomplete="off" spellcheck="false">
+              <label class="f" for="set_yt_secret">Client secret</label>
+              <input type="password" id="set_yt_secret" autocomplete="off" placeholder="Nhập mới để đổi — không gửi lên MCP">
+              <p class="empty" id="set_yt_status"></p>
+              <div class="rowbtns"><button type="button" class="btn small" id="set_yt_connect">Connect Google / YouTube</button><button type="button" class="btn small ghost" id="set_yt_disconnect">Disconnect</button></div>
+            </div>
+            <div class="card">
+              <h2 style="font-size:18px;margin:0 0 10px">TikTok</h2>
+              <p class="empty">Redirect: <code id="pub_redir_tt">http://127.0.0.1:8787/oauth/callback/tiktok</code></p>
+              <label class="f" for="set_tt_key">Client key</label>
+              <input type="text" id="set_tt_key" autocomplete="off">
+              <label class="f" for="set_tt_secret">Client secret</label>
+              <input type="password" id="set_tt_secret" autocomplete="off">
+              <p class="empty" id="set_tt_status"></p>
+              <div class="rowbtns"><button type="button" class="btn small" id="set_tt_connect">Connect TikTok</button><button type="button" class="btn small ghost" id="set_tt_disconnect">Disconnect</button></div>
+            </div>
+            </div>
+            <div class="settings-publish-fb">
+            <div class="card">
+              <h2 style="font-size:18px;margin:0 0 10px">Facebook Page (Meta)</h2>
+              <p class="empty">Redirect: <code id="pub_redir_fb">http://127.0.0.1:8787/oauth/callback/facebook</code></p>
+              <div class="grid2">
+                <div><label class="f" for="set_fb_id">App ID</label><input type="text" id="set_fb_id" autocomplete="off"></div>
+                <div><label class="f" for="set_fb_page">Facebook Page ID (optional)</label><input type="text" id="set_fb_page" autocomplete="off" placeholder="Để trống = trang đầu tiên của bạn"></div>
+              </div>
+              <label class="f" for="set_fb_secret">App secret</label>
+              <input type="password" id="set_fb_secret" autocomplete="off">
+              <p class="empty" id="set_fb_status"></p>
+              <div class="rowbtns"><button type="button" class="btn small" id="set_fb_connect">Connect Facebook</button><button type="button" class="btn small ghost" id="set_fb_disconnect">Disconnect</button></div>
+            </div>
+            </div>
+            <div class="rowbtns" style="margin-top:16px"><button type="button" class="btn primary" id="set_publish_save">Save settings</button></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
       <!-- PUBLISH -->
       <section class="panel" data-panel="publish">
         <details class="studio-sect" id="publish_sect" open>
           <summary><span class="sect-title">Publish</span><small class="sect-sum-end">manual · browser</small></summary>
           <div class="studio-sect-body">
-        <p class="lede">Download <strong>Final</strong> once from Google Flow, then Playwright uploads to TikTok, YouTube Shorts, or Facebook Reels in the Chrome profile you sign into. Schedule posts on each platform — not on this PC.</p>
+        <p class="lede">Pick a merged film from <strong>Film Histories</strong> on this PC. Upload qua <strong>Settings → Publish API</strong> hoặc Playwright (browser). API: <strong>Publish now</strong> only; lên lịch vẫn dùng browser.</p>
         <div class="card">
-          <label class="f" for="pub_project">Project (Google Flow)</label>
-          <div class="rowbtns" style="margin-top:0;margin-bottom:6px;align-items:stretch">
-            <select id="pub_project" style="flex:1;min-width:0"></select>
-            <button type="button" class="btn small ghost" id="pub_projects_refresh">Refresh list</button>
-          </div>
-          <p class="empty" id="pub_project_hint" style="margin-top:0;margin-bottom:10px">Lists every project on flow.google.com (TedVerse opens that screen for you). Pick one, then choose a video or scene from that project.</p>
-          <label class="f" for="pub_video">Video</label>
+          <label class="f" for="pub_video">Film</label>
           <select id="pub_video"></select>
-          <p class="empty" id="pub_videohint" style="margin-top:6px">Videos and scenes from the selected Flow project. TedVerse downloads briefly only when you publish.</p>
+          <p class="empty" id="pub_videohint" style="margin-top:6px">Local merged films (Film Histories). Display name and caption use the hook.</p>
           <div id="pub_clip_posted" class="pub-chips" aria-live="polite" hidden></div>
           <label class="f" for="pub_caption">Caption</label>
-          <input type="text" id="pub_caption" spellcheck="false" autocomplete="off" title="Main caption / description text.">
+          <input type="text" id="pub_caption" spellcheck="false" autocomplete="off" title="Caption for social posts — filled from the film hook when you pick a merged final.">
           <label class="f" for="pub_tags">Hashtags (optional)</label>
           <input type="text" id="pub_tags" placeholder="#AI #ShortFilm #TedVerse" spellcheck="false" autocomplete="off">
           <p class="empty" style="margin-top:4px">Remembered per project.</p>
@@ -596,10 +703,35 @@ body[data-provider=muse] .af-merge-note{display:block}
           <div class="publish-status" id="pub_status"></div>
           <div class="rowbtns" style="margin-top:16px">
             <button type="button" class="btn primary" id="pub_go" disabled>Publish Now</button>
-            <button type="button" class="btn small ghost" id="pub_refresh">Refresh list</button>
+            <button type="button" class="btn small ghost" id="pub_refresh">Refresh films</button>
           </div>
           <p class="empty" id="pub_out" style="margin-top:12px"></p>
         </div>
+          </div>
+        </details>
+        <details class="studio-sect" id="pub_history_sect" open>
+          <summary><span class="sect-title">Publish history</span><small class="sect-sum-end">local log</small></summary>
+          <div class="studio-sect-body">
+            <div class="card" style="padding:0;overflow:hidden">
+              <div class="pub-history-wrap" style="margin:0;border:0;border-radius:0">
+                <table class="pub-history is-empty" id="pub_history">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Created</th>
+                      <th>Project</th>
+                      <th>Publish date</th>
+                      <th>TikTok</th>
+                      <th>YouTube</th>
+                      <th>Facebook</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pub_history_body" class="empty-state">
+                    <tr class="pub-history-empty"><td colspan="7" class="empty-row-cell">Loading…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </details>
       </section>
@@ -609,22 +741,32 @@ body[data-provider=muse] .af-merge-note{display:block}
         <details class="studio-sect" id="af_film_sect" open>
           <summary><span class="sect-title">Film</span></summary>
           <div class="studio-sect-body">
-            <p class="lede af-film-lede">Paste script → <strong>Generate film</strong>. Clips stay in Google Flow.<br>TedVerse merges there. Download only when you publish.</p>
-            <p class="af-merge-note">Muse AI mode: clips save locally in your project folder. Google Flow timeline merge is disabled — use Publish or local Cut when ready.</p>
+            <p class="lede af-film-lede">Paste script → <strong>Create scene</strong> → <strong>Generate film</strong>. Clips stay on Google Flow.<br><strong>Merge film</strong> downloads each scene and stitches on this PC (ffmpeg) — no Flow scene timeline.</p>
+            <p class="af-merge-note">Need the old Flow timeline merge? Set env <code>FLOW_MCP_MERGE_IN_FLOW=1</code> before starting Studio (advanced).</p>
             <div class="card">
-              <label class="f" for="af_project">Project name</label>
-              <input type="text" id="af_project" placeholder="MyFilm" autocomplete="off">
+              <div class="af-no-hook-row">
+                <div>
+                  <label class="f" for="af_project">No</label>
+                  <input type="text" id="af_project" placeholder="0001" autocomplete="off" maxlength="4" inputmode="numeric" title="Film number (4 digits). Each Create scene allocates the next new No; New film does the same without parsing.">
+                </div>
+                <div>
+                  <label class="f" for="af_hook">Hook</label>
+                  <input type="text" id="af_hook" placeholder="Filled on Create scene — edit if needed" title="Opening hook (first line of Scene 1, Vietnamese preferred). Suggested on Create scene; you can edit.">
+                </div>
+              </div>
               <label class="f" for="af_script">Full script</label>
-              <textarea id="af_script" style="min-height:220px" placeholder="=== SCENE 001 ===&#10;A cinematic shot of Teddy walking through a futuristic city.&#10;&#10;Teddy says in Vietnamese:&#10;&quot;Đây là đâu?&quot;&#10;&#10;=== SCENE 002 ===&#10;..."></textarea>
+              <textarea id="af_script" style="min-height:220px" placeholder="=== SCENE 001 ===&#10;Create a photorealistic cinematic comedy video.&#10;Vertical 9:16. EXACTLY 6 SECONDS.&#10;…&#10;&#10;Need the template? Use Copy format."></textarea>
+              <p class="af-create-scene-note" id="af_create_note">Required: press <strong>Create scene</strong> to split scenes, fill <strong>Hook</strong>, then <strong>Generate film</strong>.</p>
               <div class="rowbtns">
+                <button type="button" class="btn small go" id="af_preview">Create scene</button>
                 <button type="button" class="btn small" id="af_paste">Paste script</button>
                 <button type="button" class="btn small ghost" id="af_import">Import TXT</button>
-                <button type="button" class="btn small ghost" id="af_preview">Create scene</button>
-                <button type="button" class="btn small ghost" id="af_copy_format" title="Copy a sample for ChatGPT or Copilot">Copy format</button>
+                <button type="button" class="btn small ghost" id="af_copy_format" title="Copy Prompt Format V3 for ChatGPT or Copilot">Copy format</button>
                 <button type="button" class="btn small ghost" id="af_clear">Clear</button>
               </div>
               <input type="file" id="af_file" accept=".txt,text/plain" hidden>
               <p class="empty" id="af_warn" style="margin-top:10px"></p>
+              <p class="empty" id="af_policy" style="margin-top:6px;display:none"></p>
             </div>
           </div>
         </details>
@@ -665,11 +807,11 @@ body[data-provider=muse] .af-merge-note{display:block}
       </section>
     </main>
 
-    <aside class="side">
+    <aside class="side" id="film_side">
       <details class="studio-sect" id="af_scenes_sect" open>
         <summary><span class="sect-title">Scenes</span><small id="af_count" class="sect-sum-end"></small></summary>
         <div class="studio-sect-body">
-          <p class="lede af-scenes-lede">One row = one shot. Tick scenes, then <strong>Generate film</strong>.<br>Clips are named <strong>1, 2, 3…</strong> in Google Flow.</p>
+          <p class="lede af-scenes-lede">One row = one shot. Tick scenes, then <strong>Generate film</strong>.<br>Clips are named <strong>No-1, No-2…</strong> in Google Flow (e.g. <strong>0001-1</strong>).</p>
           <div class="card af-scenes-card">
             <div class="rowbtns">
               <button type="button" class="btn small ghost" id="af_all">Select all</button>
@@ -704,35 +846,18 @@ body[data-provider=muse] .af-merge-note{display:block}
           <div class="card"><div id="pacing"></div><div id="jobs"><p class="empty">Nothing queued yet.</p></div></div>
         </div>
       </details>
-      <details class="studio-sect" id="pub_history_sect">
-        <summary><span class="sect-title">Publish history</span><small class="sect-sum-end">local log</small></summary>
+      <details class="studio-sect" id="af_film_history_sect">
+        <summary><span class="sect-title">Film Histories</span><small class="sect-sum-end">after merge</small></summary>
         <div class="studio-sect-body">
-          <div class="card" style="padding:0;overflow:hidden">
-            <div class="pub-history-wrap" style="margin:0;border:0;border-radius:0">
-              <table class="pub-history" id="pub_history">
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Ngày tạo</th>
-                    <th>Project</th>
-                    <th>Publish date</th>
-                    <th>TikTok</th>
-                    <th>YouTube</th>
-                    <th>Facebook</th>
-                  </tr>
-                </thead>
-                <tbody id="pub_history_body">
-                  <tr><td colspan="7" class="empty">Loading…</td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="card" id="af_film_history_card">
+            <div id="af_film_history_host"><p class="empty">Loading…</p></div>
           </div>
         </div>
       </details>
     </aside>
   </div>
   <footer class="app-footer">
-    <p>© 2026 TedVerse. Crafted by Teddy Dang.</p>
+    <p>© 2026 TedVerse. Crafted by Teddy Ngo.</p>
     <p class="app-footer-contact">Contact via phone: <a href="tel:+84986057498">0986.057.498</a> or email <a href="mailto:ngohoangminhdang63@gmail.com">ngohoangminhdang63@gmail.com</a></p>
   </footer>
 </div>
@@ -752,8 +877,8 @@ body[data-provider=muse] .af-merge-note{display:block}
         <p class="platform-gate-tagline">One Prompt. Infinite Worlds.</p>
       </div>
     </div>
-    <p class="platform-gate-intro" id="platformGateIntro"><strong>TedVerse</strong> biến một kịch bản thành phim ngắn: tách <strong>Auto Film</strong> thành cảnh, tạo clip bằng AI, ghép timeline, lồng <strong>Voice</strong>, rồi <strong>Publish</strong> lên TikTok / YouTube / Facebook — tất cả chạy trên máy bạn qua Chrome automation.</p>
-    <p class="platform-gate-intro" style="margin-top:10px">Chọn <strong>một</strong> nền tạo video (Google Flow hoặc Muse AI). Đổi lại bất cứ lúc nào bằng nút <strong>Platform</strong> (không đổi khi đang generate).</p>
+    <p class="platform-gate-intro" id="platformGateIntro"><strong>TedVerse</strong> turns a script into a short film: split scenes in <strong>Auto Film</strong>, generate clips with AI, merge the timeline, add <strong>Voice</strong>, then <strong>Publish</strong> to TikTok / YouTube / Facebook — all on your PC via Chrome automation.</p>
+    <p class="platform-gate-intro" style="margin-top:10px">Pick <strong>one</strong> video provider (Google Flow or Muse AI). Switch anytime with <strong>Platform</strong> (not while a generate job is running).</p>
   </div>
   <div class="platform-gate-body">
     <p class="platform-gate-step">Step 1 · Choose platform</p>
@@ -766,7 +891,7 @@ body[data-provider=muse] .af-merge-note{display:block}
         <p class="platform-card-lede">Veo on flow.google.com — full TedVerse workflow you already use.</p>
         <ul class="platform-card-list">
           <li>Flow project grid, credits, Cast characters</li>
-          <li>Auto Film merge in Flow timeline</li>
+          <li>Auto Film merge: download clips + stitch locally (ffmpeg)</li>
           <li>Publish from Flow exports</li>
         </ul>
       </button>
@@ -800,8 +925,8 @@ body[data-provider=muse] .af-merge-note{display:block}
 <dialog id="viewer"><div class="viewbar"><button type="button" class="btn small ghost" id="viewerTrash" style="border-color:var(--bad);color:var(--bad)">Move to <span data-place="bin">the Mac's Trash</span></button><button type="button" class="btn small" onclick="viewer.close()" autofocus>Close</button></div><div id="viewerBody"></div><p class="empty" id="viewerPath"></p></dialog>
 <input type="file" id="file" hidden>
 <script type="module">
-import { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey } from "/film-script.js";
-window.FilmScript = { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey };
+import { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey, hookFromFilmScript, extractFirstVietnameseSentence, isPromptFormatV2, isPromptFormatV3, promptHasNoSubtitlesClause, promptHasVisualTextRestrictionBlock, promptHasFullNoTextPolicy, ensurePromptVisualTextRestriction, validateFilmScript, validateScenePolicy, policyStatusLabel } from "/film-script.js";
+window.FilmScript = { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey, hookFromFilmScript, extractFirstVietnameseSentence, isPromptFormatV2, isPromptFormatV3, promptHasNoSubtitlesClause, promptHasVisualTextRestrictionBlock, promptHasFullNoTextPolicy, ensurePromptVisualTextRestriction, validateFilmScript, validateScenePolicy, policyStatusLabel };
 </script>
 <script>
 let SESSION_TOKEN = "__FLOW_TOKEN__";
@@ -892,11 +1017,11 @@ function applyProviderUi() {
   const conn = $("#statusConnect");
   if (conn) {
     conn.textContent = muse ? "Muse login" : "Connect";
-    conn.title = muse ? "Open muse.ai in the Muse Chrome profile and check connection" : "Refresh credits, plan, and your Google name from Flow";
+    conn.title = muse ? "Open muse.ai in the Muse Chrome profile and check connection" : "Check Flow sign-in, plan, and name (does not open the Google account panel)";
   }
   const lede = document.querySelector(".af-film-lede");
   if (lede && muse) lede.innerHTML = "Paste script → <strong>Generate film</strong>. Muse saves each scene to this PC.<br>Merge in Flow is off in Muse mode.";
-  else if (lede) lede.innerHTML = "Paste script → <strong>Generate film</strong>. Clips stay in Google Flow.<br>TedVerse merges there. Download only when you publish.";
+  else if (lede) lede.innerHTML = "Paste script → <strong>Generate film</strong>. Clips stay on Google Flow.<br><strong>Merge film</strong> downloads scenes and stitches on this PC.";
 }
 async function selectProvider(id) {
   if (!LIVE) {
@@ -911,7 +1036,8 @@ async function selectProvider(id) {
   $("#platformGate")?.close();
   finishPlatformGate();
   toast(ACTIVE_PROVIDER === "muse" ? "Muse AI selected — run npm run login:muse if needed, then Muse login." : "Google Flow selected.");
-  await refreshStatus({ detailed: true, force: true }).catch(() => {});
+  void ensureFlowConnected();
+  showTab(S.tab);
 }
 
 function finishPlatformGate() {
@@ -958,13 +1084,14 @@ async function syncSessionToken() {
   } catch { /* owner not up */ }
   return false;
 }
-const api = async (method, body = {}, retried = false) => {
+const api = async (method, body = {}, retried = false, init = {}) => {
   let res;
   try {
     res = await fetch(`/api/${method}`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-flow-token": SESSION_TOKEN },
       body: JSON.stringify(body),
+      signal: init.signal,
     });
   } catch (e) {
     const msg = String(e?.message || "");
@@ -1031,7 +1158,7 @@ let publishFieldsBusyDepth = 0;
 function setPublishFieldsBusy(on) {
   publishFieldsBusyDepth = Math.max(0, publishFieldsBusyDepth + (on ? 1 : -1));
   const locked = publishFieldsBusyDepth > 0;
-  for (const id of ["pub_video", "pub_refresh", "pub_projects_refresh", "pub_project", "pub_go", "pub_caption", "pub_tags", "pub_schedule_at"]) {
+  for (const id of ["pub_video", "pub_refresh", "pub_go", "pub_caption", "pub_tags", "pub_schedule_at"]) {
     const el = $(`#${id}`);
     if (!el) continue;
     if (locked) {
@@ -1054,7 +1181,12 @@ const guard = (needOpenProject = true) => {
   if (!LIVE) { toast("Not connected — start TedVerse first.", true); return false; }
   if (!flowSignedIn) { toast("Sign in to Google Flow in the Flow Chrome window, then refresh this page.", true); return false; }
   if (needOpenProject && !flowInProject) {
-    toast("Open a Flow project in the Flow Chrome window before generating clips.", true);
+    toast(
+      flowSignedIn
+        ? "Open a Flow project in the Flow Chrome window, then press Connect."
+        : "Open a Flow project in the Flow Chrome window before generating clips.",
+      true,
+    );
     return false;
   }
   return true;
@@ -1123,7 +1255,7 @@ const REMOVED_TABS = new Set(["restyle", "cut", "captions", "library"]);
 if (REMOVED_TABS.has(S.tab)) S.tab = "film";
 let TECH = [], VOICES = { kokoro: [], gemini: [] }, CAST = [], LIB = [], GAL = [], castImage = null, pickTarget = null, busy = false;
 const filmBlank = () => ({
-  project: "MyFilm", script: "", parsedFromScript: "", preamble: "", warnings: [], scenes: [], page: 0, open: -1, draft: "", scroll: 0,
+  project: "", script: "", hook: "", parsedFromScript: "", preamble: "", warnings: [], scenes: [], page: 0, open: -1, draft: "", scroll: 0,
   applyRefs: true, refs: [],
   settings: { model: "Omni 1.1 Flash", aspect: "9:16", duration: 8, resolution: "720p", variants: 1, budget: 300, autoRetry: false, autoMerge: true },
   finalOutput: "",
@@ -1133,7 +1265,7 @@ const filmBlank = () => ({
   lastMergeError: "",
 });
 let film = filmBlank();
-const filmRun = { running: false, paused: false, stop: false };
+const filmRun = { running: false, paused: false, stop: false, merging: false, mergeAbort: null };
 const filmStep = { label: "Ready", pct: 0 };
 let filmSaveTimer = 0;
 let filmRefsHydrated = false;
@@ -1142,8 +1274,7 @@ async function hydrateFilmRefs() {
   if (!LIVE || !window.FilmScript || filmRefsHydrated || filmRefsHydrating) return;
   filmRefsHydrating = true;
   try {
-    const assets = await api("assets");
-    const cast = await api("characters");
+    const { characters: cast, assets } = await api("picker_list");
     LIB = window.FilmScript.mergePickerRows(cast, assets);
     film.refs = (film.refs || []).map((r) => window.FilmScript.migrateRefSlot(r, LIB));
     for (const scene of film.scenes) {
@@ -1162,11 +1293,17 @@ function showTab(name) {
   $$("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
   $$(".panel").forEach((p) => p.classList.toggle("on", p.dataset.panel === name));
   const filmSide = name === "film";
-  if ($("#af_scenes_sect")) $("#af_scenes_sect").hidden = !filmSide;
-  if ($("#af_progress_sect")) $("#af_progress_sect").hidden = !filmSide;
-  if ($("#pub_history_sect")) $("#pub_history_sect").hidden = name !== "publish";
-  if (name === "film") renderFilm();
+  const side = $("#film_side");
+  if (side) side.hidden = !filmSide;
+  const cols = $(".cols");
+  if (cols) cols.classList.toggle("cols-single", !filmSide);
+  if (name === "film") {
+    renderFilm();
+    void loadFilmHistory();
+    if (flowSignedIn && ACTIVE_PROVIDER !== "muse") schedulePublishPrefetch(800);
+  }
   if (name === "publish") refreshPublishTab();
+  if (name === "settings") void loadPublishApiSettingsUI();
   if (name === "narrate") loadNarrationOutputs();
   estimate();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1195,6 +1332,12 @@ const SEGS = {
   af_duration: { get: () => film.settings.duration, set: (v) => { film.settings.duration = +v; scheduleFilmSave(); }, opts: [4, 6, 8, 10] },
   af_resolution: { get: () => film.settings.resolution, set: (v) => { film.settings.resolution = v; scheduleFilmSave(); }, opts: ["360p", "720p"] },
   af_variants: { get: () => film.settings.variants, set: (v) => { film.settings.variants = +v; scheduleFilmSave(); }, opts: [1, 2, 3, 4] },
+  pub_engine: {
+    get: () => publishApiEngine,
+    set: (v) => { publishApiEngine = v; },
+    opts: ["api", "browser"],
+    labels: { api: "API (OAuth)", browser: "Browser (Playwright)" },
+  },
 };
 function renderSegs() {
   for (const [key, cfg] of Object.entries(SEGS)) {
@@ -1292,23 +1435,16 @@ async function openPicker(audioOnly) {
     return;
   }
   try {
-    // Always re-read the open Flow project so a month-old upload is not the only cached row.
-    const assets = await api("assets");
-    const cast = await api("characters").catch(() => []);
+    const { characters: cast, assets } = await api("picker_list");
     LIB = window.FilmScript ? window.FilmScript.mergePickerRows(cast, assets) : assets;
-    const labels = LIB.map((a) => a.assetName || a.name);
-    const dups = new Set(labels.filter((n, i) => labels.indexOf(n) !== i));
-    const characterNames = new Set(LIB.filter((a) => a.source === "character").map((a) => a.name));
     $("#pickList").innerHTML = LIB.map((a, n) => {
       const name = a.displayName || a.assetName || a.name;
-      const shown = a.assetId ? `${name} · ${String(a.assetId).slice(0, 8)}` : dups.has(name) ? `${name} (duplicate name)` : name;
       const kind = window.FilmScript ? window.FilmScript.listedAssetKind(a) : "unknown";
       const label = window.FilmScript ? window.FilmScript.assetKindLabel(kind) : (a.assetType || a.kind || "UNKNOWN");
       const voice = window.FilmScript ? window.FilmScript.voiceStatus(a) : null;
       const portrait = kind === "character" ? CAST.find((c) => c.name === name)?.portrait : "";
       const thumb = portrait ? media(portrait) : (typeof a.thumbnail === "string" && /^https?:/i.test(a.thumbnail) ? a.thumbnail : "");
-      const sameName = a.source === "grid" && characterNames.has(name) ? "Image tile. A character with this name is listed above." : "";
-      return `<button class="pick-row" data-n="${n}">${thumb ? `<img alt="" src="${esc(thumb)}" onerror="this.remove()">` : ""}<span><b>${esc(shown)}</b><small>${esc(label)}</small>${voice ? `<small>${esc(voice)}</small>` : ""}${sameName ? `<small>${esc(sameName)}</small>` : ""}</span></button>`;
+      return `<button class="pick-row" data-n="${n}">${thumb ? `<img alt="" src="${esc(thumb)}" onerror="this.remove()">` : ""}<span><b>${esc(name)}</b><small>${esc(label)}</small>${voice ? `<small>${esc(voice)}</small>` : ""}</span></button>`;
     }).join("") || `<p class="empty">Nothing in the project yet.</p>`;
   } catch (err) { $("#pickList").innerHTML = `<p class="empty" style="color:var(--bad)">${esc(err.message)}</p>`; }
 }
@@ -1608,14 +1744,74 @@ const sceneCost = (sc) => {
 function filmScriptText() {
   return ($("#af_script")?.value ?? film.script ?? "").trim();
 }
+function filmNeedsCreateScene() {
+  const script = filmScriptText();
+  if (!script) return false;
+  if (!film.scenes.length) return true;
+  return script !== String(film.parsedFromScript || "").trim();
+}
 function filmHasFailed() {
   return film.scenes.some((s) => s.selected && s.status === "failed");
+}
+function isFilmBatchNo(p) {
+  return /^\d{4}$/.test(String(p || "").trim());
+}
+function filmNoClipTitle(scene, i) {
+  const no = String(film.project || "").trim();
+  const seq = scene.number ?? i + 1;
+  if (isFilmBatchNo(no)) return `${no}-${seq}`;
+  const n = scene.number ?? i + 1;
+  return String(n);
 }
 function sceneFlowTitle(scene, i) {
   const stored = (scene.flowTitle || "").trim();
   if (stored) return stored;
-  const n = scene.number ?? i + 1;
-  return String(n);
+  return filmNoClipTitle(scene, i);
+}
+const FILM_NO_LOCAL_KEY = "tedverse-film-no-next";
+function localFilmAllocate() {
+  let n = Number(localStorage.getItem(FILM_NO_LOCAL_KEY) || "0");
+  if (!Number.isFinite(n) || n < 1) n = 1;
+  const no = String(n).padStart(4, "0");
+  localStorage.setItem(FILM_NO_LOCAL_KEY, String(n + 1));
+  return no;
+}
+function syncLocalFilmNoCounter(serverNext) {
+  const sn = Number(serverNext);
+  if (!Number.isFinite(sn) || sn < 1) return;
+  const local = Number(localStorage.getItem(FILM_NO_LOCAL_KEY) || "0");
+  const merged = Math.max(sn, Number.isFinite(local) ? local : 0);
+  localStorage.setItem(FILM_NO_LOCAL_KEY, String(merged));
+}
+async function ensureFilmNumber({ force = false } = {}) {
+  const p = String(film.project || "").trim();
+  if (!force && isFilmBatchNo(p)) return;
+  const applyNo = (no, note) => {
+    if (!no || !isFilmBatchNo(no)) return false;
+    film.project = no;
+    setFilmField("#af_project", film.project);
+    scheduleFilmSave();
+    if (note) toast(note, true);
+    return true;
+  };
+  if (LIVE) {
+    try {
+      const out = await api("film_allocate", {});
+      if (out?.no && applyNo(out.no)) {
+        if (out.next) syncLocalFilmNoCounter(out.next);
+        return;
+      }
+    } catch (err) {
+      console.warn("[TedVerse] film_allocate failed:", err);
+    }
+    try {
+      const reg = await api("film_numbers", {});
+      if (reg?.next) syncLocalFilmNoCounter(reg.next);
+    } catch { /* optional */ }
+  }
+  if (!applyNo(localFilmAllocate(), LIVE ? "No assigned locally only. Run npm run build and restart Studio (npm run studio) to persist in ~/.flow-mcp/film-numbers.json." : null)) {
+    toast("Could not assign film No.", true);
+  }
 }
 function sceneReadyForMerge(scene) {
   return window.FilmScript?.sceneReadyOnFlow(scene);
@@ -1673,12 +1869,17 @@ function filmRollState() {
   const ex = filmExecutionMode();
   const hint = (t) => ({ label: "Generate film", disabled: true, hint: t, act: null, secondary: null, mode: ex.mode });
   if (filmRun.running) {
-    if (filmRun.stop) return { label: "Stopping…", disabled: true, hint: "Finishing the scene now on Flow", act: null, secondary: null, mode: ex.mode };
-    return { label: "Stop", disabled: false, hint: "Stops after the current scene", act: "stop", secondary: null, mode: ex.mode };
+    if (filmRun.stop) {
+      const hint = filmRun.merging ? "Merge winding down" : "Finishing the scene now on Flow";
+      return { label: "Stopping…", disabled: true, hint, act: null, secondary: null, mode: ex.mode };
+    }
+    const hint = filmRun.merging ? "Stops merge (may take a moment)" : "Stops after the current scene";
+    return { label: "Stop", disabled: false, hint, act: "stop", secondary: null, mode: ex.mode };
   }
   if (!LIVE) return hint("Not connected — start TedVerse first.");
   if (!window.FilmScript) return hint("Script tools not loaded — refresh after build.");
   if (!script && !film.scenes.length) return hint("Paste a script");
+  if (filmNeedsCreateScene()) return hint("Press Create scene before generating");
   if (!ex.selected) return hint("Select at least one scene");
   if (failedN) {
     if (ex.needGen > 0) {
@@ -1746,9 +1947,12 @@ async function retryFilmFailed() {
 async function startNewFilm() {
   if (filmRun.running) return toast("Wait until generation stops.", true);
   if (!(await confirmApp("Start a new film? The script and scene list reset on this page. Clips in Google Flow are not deleted.", { ok: "Start new", title: "New film" }))) return;
-  const project = film.project;
   film = filmBlank();
-  film.project = project;
+  await ensureFilmNumber({ force: true });
+  if (!isFilmBatchNo(film.project)) {
+    toast("Could not allocate film No.", true);
+    return;
+  }
   filmRefsHydrated = false;
   $("#af_script").value = "";
   scheduleFilmSave();
@@ -1768,7 +1972,9 @@ function setFilmStep(label, pct) {
   if (step) step.textContent = label;
   if (fill) fill.style.width = `${filmStep.pct}%`;
 }
-async function analyzeFilmScript({ preview = false, force = false } = {}) {
+async function analyzeFilmScript({ preview = false, force = false, newBatch = false } = {}) {
+  if (newBatch) await ensureFilmNumber({ force: true });
+  else await ensureFilmNumber();
   const lib = window.FilmScript;
   if (!lib) return { ok: false, error: "The script parser has not loaded. Refresh after build." };
   film.script = $("#af_script").value;
@@ -1776,17 +1982,38 @@ async function analyzeFilmScript({ preview = false, force = false } = {}) {
   const text = film.script.trim();
   if (!text) return { ok: false, error: "The script is empty." };
   const changed = text !== film.parsedFromScript;
-  if (changed && film.scenes.some((s) => s.file || s.status === "completed") && !force) {
+  if (changed && film.scenes.some((s) => s.file || s.status === "completed") && !force && !newBatch) {
     if (!(await confirmApp("The script changed since the last analysis. Re-parse scenes? Clips on Google Flow stay; completed rows may move.", { ok: "Re-parse", title: "Script changed" }))) return { ok: false, cancelled: true };
   }
-  if (!changed && film.scenes.length && !force) return { ok: true };
+  if (!changed && film.scenes.length && !force && !newBatch) {
+    if (typeof lib.hookFromFilmScript === "function") film.hook = lib.hookFromFilmScript(text);
+    if (preview) {
+      scheduleFilmSave();
+      renderFilm();
+      return { ok: true, scenes: film.scenes.length, warnings: film.warnings || [] };
+    }
+    return { ok: true };
+  }
+  if (newBatch) {
+    film.finalOutput = "";
+    film.composition = null;
+    film.publishStatus = "";
+    film.mergeFailed = false;
+    film.lastMergeError = "";
+  }
   setFilmStep(preview ? "Parsing preview…" : "Analyzing script…", 8);
   const result = lib.parseFilmScript(text);
   film.warnings = result.warnings;
   film.preamble = result.preamble;
   if (!result.scenes.length) return { ok: false, error: "No scenes found. Check scene headers (=== SCENE 001 ===)." };
-  film.scenes = result.scenes.map((s) => filmScene(s));
+  film.scenes = result.scenes.map((s) =>
+    filmScene({
+      ...s,
+      prompt: typeof lib.ensurePromptVisualTextRestriction === "function" ? lib.ensurePromptVisualTextRestriction(s.prompt) : s.prompt,
+    }),
+  );
   film.parsedFromScript = text;
+  film.hook = lib.hookFromFilmScript ? lib.hookFromFilmScript(text) : "";
   if (preview) {
     scheduleFilmSave();
     renderFilm();
@@ -1807,7 +2034,17 @@ async function confirmFilmStart(plan) {
     toast(`About ${plan.estimate} credits still to run and ${plan.spent} already spent. Budget is ${budget}.`, true);
     return false;
   }
-  const msg = `${plan.todo.length} scenes · ${seconds}s each · ${res} · ${aspect} · ≈ ${plan.estimate ?? "?"} credits (budget ${budget})`;
+  const policy = selectedPolicySummary(plan.selected);
+  if (policy.block) {
+    toast(`${policy.block} selected scene(s) blocked by policy check. Edit the script or deselect those scenes.`, true);
+    return false;
+  }
+  let policyLine = "";
+  if (policy.warn) policyLine = `\n\nPolicy: ${policy.warn} scene(s) have warnings — satire should stay clearly fictional.`;
+  const msg = `${plan.todo.length} scenes · ${seconds}s each · ${res} · ${aspect} · ≈ ${plan.estimate ?? "?"} credits (budget ${budget})${policyLine}`;
+  if (policy.warn) {
+    return confirmApp(`${msg}\n\nGenerate anyway? Completed scenes are never sent again.`, { ok: "Generate anyway", title: "Policy warnings" });
+  }
   return confirmApp(`${msg}\n\nStart generation? Completed scenes are never sent again.`, { ok: "Generate", title: "Generate film" });
 }
 function setRollHint(text) {
@@ -1873,8 +2110,16 @@ $("#roll").onclick = async () => {
     if (state.act === "stop") {
       filmRun.stop = true;
       filmRun.paused = false;
-      setFilmStep("Stopping after this scene…", filmStep.pct);
-      toast("Stopping after the current scene finishes on Flow.");
+      const merging = filmRun.merging;
+      setFilmStep(merging ? "Stopping merge…" : "Stopping after this scene…", filmStep.pct);
+      toast(
+        merging
+          ? "Stop requested. Merge may take a moment to wind down on Flow."
+          : "Stopping after the current scene finishes on Flow.",
+      );
+      try {
+        filmRun.mergeAbort?.abort();
+      } catch { /* ignore */ }
       renderFilm();
       estimate();
       return;
@@ -1892,7 +2137,7 @@ $("#roll").onclick = async () => {
     }
     if (state.act === "merge" || state.act === "retry_merge") {
       if (!guard()) return;
-      await runBtn($("#roll"), "Merging…", () => runMergeOnly({ force: state.act === "retry_merge" }));
+      await runMergeOnly({ force: state.act === "retry_merge" });
       return;
     }
     if (state.act === "generate" || state.act === "continue") {
@@ -1970,39 +2215,170 @@ $("#roll").onclick = async () => {
 
 /* ---------- auto film ---------- */
 const FILM_ROW = 72, FILM_VIEW = 320, FILM_EXPAND = 300;
-const FILM_SCRIPT_FORMAT_SAMPLE = `You are writing a script for TedVerse Auto Film. Follow these rules exactly.
+const FILM_SCRIPT_FORMAT_SAMPLE = `You are writing a script for TedVerse Auto Film (Prompt Format V3). Follow these rules exactly.
 
 RULES:
-- Each scene starts on its own line with a header only: === SCENE 001 === then === SCENE 002 === (three-digit numbers).
-- Everything from one header until the next header is ONE shot prompt sent to Google Flow unchanged (Vietnamese speech, camera, lighting, actions).
-- Use @CharacterName when a Flow character reference will be attached in TedVerse (e.g. @Teddy Ngo).
-- Put spoken lines in quotes after a short lead-in (e.g. "He says in Vietnamese:").
-- End every scene with: No subtitles, no captions, no text on screen.
-- Do not use markdown (# headings). Do not merge two scenes into one block.
-- Do NOT write "breaking news", "news report", "live bulletin", or real-world current events — Flow refuses many of those. Use clearly fictional comedy (e.g. "satire sketch", "impossible fantasy weather").
+- Each scene starts on its own line: === SCENE 001 ===, === SCENE 002 === (three-digit numbers only).
+- Everything from one header until the next is ONE prompt for one video clip (~6 seconds). Headers are not sent to the AI.
+- Use @CharacterName when TedVerse will attach a Flow character (e.g. @Teddy Ngo). Replace with the user's character when needed.
+- Keep ALL-CAPS section labels exactly: SCENE:, CHARACTER:, LANGUAGE AND AUDIO:, DIALOGUE:, PERFORMANCE:, CAMERA:, AUDIO:
+- Every speaking scene MUST include LANGUAGE AND AUDIO and AUDIO sections (see template). Do not translate Vietnamese dialogue.
+- Dialogue is ONLY in Vietnamese inside straight double quotes. No English spoken lines.
+- Identify who speaks in DIALOGUE. No overlapping speech. ~6 seconds per scene — one or two short lines fit best.
+- Policy-aware fictional satire: include "This is a fictional alternate-universe social comedy scenario." and "All policies and events depicted are imaginary." No fake breaking news or verified real-world claims.
+- Prefer: "Clearly fictional comedy sketch." and "No news broadcast or documentary presentation."
+- Every scene MUST include the VISUAL TEXT RESTRICTION block (below) and end with: No subtitles, no captions, no text on screen.
+- No markdown (# headings). One block per scene.
 
-EXAMPLE (match this shape; write a new story when asked):
+SCENE BODY TEMPLATE (fill [brackets]; copy section labels verbatim):
 
-=== SCENE 001 ===
-A photorealistic cinematic video inside a cozy coffee shop in the morning.
+=== SCENE [NNN] ===
 
-@Teddy Ngo sits at a wooden table by the window, holding a cup of coffee and looking at his laptop. Soft sunlight shines through the glass, steam rises from the cup.
+Create a photorealistic cinematic comedy video.
+Vertical 9:16. EXACTLY [6] SECONDS.
 
-He looks up at the camera, smiles and says in Vietnamese:
-"Hôm nay là ngày quan trọng, mình phải hoàn thành dự án này."
+SCENE:
+[Location, environment, characters, clothing, actions.]
 
-Medium front-facing shot, slow push-in, warm natural lighting, realistic movement.
+CHARACTER:
+Use the attached @[Character name] character reference.
+Preserve [name]'s original facial identity.
+Allow natural facial expressions and clothing changes.
+
+LANGUAGE AND AUDIO:
+All spoken dialogue must be in Vietnamese.
+Natural Southern Vietnamese accent.
+Speak the exact Vietnamese dialogue below.
+Do not translate or paraphrase the dialogue.
+No English speech.
+No English narration.
+No background music.
+
+DIALOGUE:
+[Who speaks, in order.]
+
+[Character] says:
+"[Vietnamese line]"
+
+[Other character] replies:
+"[Vietnamese line]"
+
+PERFORMANCE:
+Natural Vietnamese comedic timing.
+Realistic facial expressions.
+Characters speak clearly without overlapping.
+
+CAMERA:
+Fixed eye-level medium shot.
+Keep speaking characters visible.
+No zoom, no tracking, no camera shake.
+
+AUDIO:
+Natural Vietnamese speech only.
+Accurate Vietnamese lip synchronization.
+Clear dialogue.
+
+VISUAL TEXT RESTRICTION:
+ABSOLUTELY NO TEXT ON SCREEN.
+
+Do not generate any subtitles, captions,
+titles, labels, logos, watermarks, signs,
+letters, numbers, or written words.
+
+No text on clothing, walls, objects,
+phones, computer screens, or backgrounds.
+
+Phone and computer screens must display
+blank interfaces without readable text.
+
+Only show characters, environments,
+physical objects, and natural actions.
+
+All dialogue must be spoken aloud,
+never displayed as text.
+
+This is a fictional alternate-universe social comedy scenario.
+All policies and events depicted are imaginary.
+Clearly fictional comedy sketch.
+No news broadcast or documentary presentation.
+
 No subtitles, no captions, no text on screen.
 
-=== SCENE 002 ===
-A photorealistic cinematic continuation in the same coffee shop.
+EXAMPLE (match this shape; write a NEW story and NEW Vietnamese dialogue when asked):
 
-@Teddy Ngo closes his laptop, stands up, puts on his dark navy blazer and walks toward the glass door. The morning street outside is bright and busy.
+=== SCENE 001 ===
 
-At the door, he turns back toward the camera and says confidently in Vietnamese:
-"Được rồi, bắt đầu thôi!"
+Create a photorealistic cinematic comedy video.
+Vertical 9:16. EXACTLY 6 SECONDS.
 
-Smooth tracking shot from behind, then he turns to face the camera. Warm sunlight, realistic movement, seamless continuity.
+SCENE:
+Inside a cozy Vietnamese sidewalk coffee shop in Ho Chi Minh City.
+This is a fictional alternate-universe social comedy scenario.
+In this imaginary world, everyone's monthly salary is publicly accessible.
+@Teddy Ngo sits at a wooden table with a male friend.
+Both characters have iced Vietnamese coffee.
+
+CHARACTER:
+Use the attached @Teddy Ngo character reference.
+Preserve Teddy's original facial identity.
+Allow natural facial expressions and clothing changes.
+
+LANGUAGE AND AUDIO:
+All spoken dialogue must be in Vietnamese.
+Natural Southern Vietnamese accent.
+Speak the exact Vietnamese dialogue below.
+Do not translate or paraphrase the dialogue.
+No English speech.
+No English narration.
+No background music.
+
+DIALOGUE:
+
+@Teddy Ngo looks directly at the camera and says:
+"Nếu Việt Nam bắt buộc công khai lương thì sao?"
+
+His friend raises his phone and says:
+"Ê Teddy! Tao biết lương mày rồi!"
+
+PERFORMANCE:
+Natural Vietnamese comedic timing.
+Teddy reacts with a surprised facial expression.
+Both characters speak clearly without overlapping.
+
+CAMERA:
+Fixed eye-level medium shot.
+Keep both characters visible.
+No zoom, no tracking, no camera shake.
+
+AUDIO:
+Natural Vietnamese speech only.
+Accurate Vietnamese lip synchronization.
+Clear dialogue.
+
+VISUAL TEXT RESTRICTION:
+ABSOLUTELY NO TEXT ON SCREEN.
+
+Do not generate any subtitles, captions,
+titles, labels, logos, watermarks, signs,
+letters, numbers, or written words.
+
+No text on clothing, walls, objects,
+phones, computer screens, or backgrounds.
+
+Phone and computer screens must display
+blank interfaces without readable text.
+
+Only show characters, environments,
+physical objects, and natural actions.
+
+All dialogue must be spoken aloud,
+never displayed as text.
+
+This is a fictional alternate-universe social comedy scenario.
+All policies and events depicted are imaginary.
+Clearly fictional comedy sketch.
+No news broadcast or documentary presentation.
+
 No subtitles, no captions, no text on screen.`;
 let filmForce = false, filmSig = "", filmPaint = false;
 function filmDb() {
@@ -2043,7 +2419,9 @@ async function syncFilmCompositionFromServer() {
     if (!c) return;
     film.composition = c;
     film.publishStatus = c.publish_status ?? "";
-    if (c.publish_status === "ready_to_publish") film.finalOutput = "";
+    if (c.publish_status === "ready_to_publish" && c.cached_video_path) {
+      film.finalOutput = c.cached_video_path;
+    }
     if (c.merge_status === "failed") {
       film.mergeFailed = true;
       film.lastMergeError = c.error || film.lastMergeError;
@@ -2085,6 +2463,10 @@ async function loadFilm() {
           scene.refMode = "custom";
           scene.refs = [scene.override, scene.support].filter((name) => name && name !== "none").map((name) => ({ asset: name, assetName: name, assetType: "character", kind: "character" }));
         } else scene.refMode = "film";
+      }
+      if (!isFilmBatchNo(String(film.project || "").trim())) film.project = "";
+      if (!film.hook && film.script?.trim() && window.FilmScript?.hookFromFilmScript) {
+        film.hook = window.FilmScript.hookFromFilmScript(film.script.trim());
       }
     }
   } catch { /* a blocked database keeps the empty film */ }
@@ -2134,7 +2516,45 @@ function filmScene(partial) {
     refs: Array.isArray(partial.refs) ? partial.refs.map((r) => ({ ...r })) : [],
     jobId: "", file: "", files: [], error: "", actualCredits: null,
     flowTitle: "", flowAssetId: "", flowProjectId: "", sequence: partial.number ?? partial.sequence ?? 0,
+    policyStatus: partial.policyStatus || "pass",
+    policyFormat: partial.policyFormat || "",
+    policyNote: partial.policyNote || "",
   };
+}
+function syncFilmPolicy() {
+  const lib = window.FilmScript;
+  const box = $("#af_policy");
+  if (!lib?.validateFilmScript || !film.scenes?.length) {
+    if (box) {
+      box.hidden = true;
+      box.textContent = "";
+    }
+    return { pass: 0, warn: 0, block: 0, scenes: [] };
+  }
+  const val = lib.validateFilmScript(film.scenes.map((s, i) => ({ number: s.number ?? i + 1, prompt: s.prompt })));
+  film.policySummary = val;
+  val.scenes.forEach((v, i) => {
+    if (!film.scenes[i]) return;
+    film.scenes[i].policyStatus = v.status;
+    film.scenes[i].policyFormat = v.format;
+    film.scenes[i].policyNote = v.findings.map((f) => f.message).join(" · ");
+  });
+  if (box) {
+    const parts = [];
+    if (val.pass) parts.push(`${val.pass} OK`);
+    if (val.warn) parts.push(`${val.warn} warn`);
+    if (val.block) parts.push(`${val.block} blocked`);
+    box.textContent = parts.length
+      ? `Policy check (Format V3): ${parts.join(" · ")}. Blocked scenes cannot generate until the prompt is fixed.`
+      : "";
+    box.hidden = !parts.length;
+  }
+  return val;
+}
+function selectedPolicySummary(scenes) {
+  const lib = window.FilmScript;
+  if (!lib?.validateFilmScript) return { pass: 0, warn: 0, block: 0, scenes: [] };
+  return lib.validateFilmScript(scenes.map((s, i) => ({ number: s.number ?? i + 1, prompt: s.prompt })));
 }
 async function recoverFilmScenesFromFlow() {
   if (!LIVE || !film.project?.trim() || !film.scenes.length) return;
@@ -2144,6 +2564,9 @@ async function recoverFilmScenesFromFlow() {
   if (!clips.length) return;
   try {
     const out = await api("flow_recover_film_scenes", { project: film.project.trim(), clips });
+    if (out.renamed_on_flow?.length) {
+      toast(`Renamed ${out.renamed_on_flow.length} clip(s) on Flow (${out.renamed_on_flow.join(", ")})`);
+    }
     for (const row of out.scenes || []) {
       if (!row.found) continue;
       const scene = film.scenes.find((s, i) => filmSceneStem(s, i) === row.stem);
@@ -2184,7 +2607,13 @@ function syncAutoFilmCardHeights() {
 function renderFilm() {
   if (!$("#af_script")) return;
   setFilmField("#af_project", film.project);
+  setFilmField("#af_hook", film.hook || "");
   setFilmField("#af_script", film.script);
+  const createNote = $("#af_create_note");
+  const previewBtn = $("#af_preview");
+  const needsCreate = filmNeedsCreateScene() && !!filmScriptText();
+  if (createNote) createNote.hidden = !needsCreate;
+  if (previewBtn) previewBtn.classList.toggle("pulse", needsCreate);
   setFilmField("#af_budget", String(film.settings.budget));
   const sum = $("#af_settings_sum");
   if (sum) sum.textContent = filmSettingsSummary();
@@ -2204,6 +2633,7 @@ function renderFilm() {
   }
   if (retry) retry.checked = !!film.settings.autoRetry;
   film.settings.autoMerge = true;
+  renderSegs();
   const model = $("#af_model");
   if (model && document.activeElement !== model) {
     const models = Object.keys(VIDEO_COST);
@@ -2216,6 +2646,7 @@ function renderFilm() {
   const cnt = $("#af_count");
   if (cnt) cnt.textContent = nSc ? `${planN.selected.length}/${nSc} selected` : "";
   $("#af_warn").textContent = (film.warnings || []).join(" ");
+  syncFilmPolicy();
   $("#af_preamble").textContent = film.preamble ? `Text before the first scene (not used as a shot):\n${film.preamble}` : "";
   filmForce = true;
   renderFilmTable();
@@ -2233,6 +2664,11 @@ function filmTableRows(scene, i, per, seconds) {
   const lib = window.FilmScript;
   const preview = lib ? lib.promptPreview(scene.prompt) : String(scene.prompt || "").slice(0, 160);
   const badge = lib ? lib.statusBadge(scene.status) : String(scene.status || "pending").toUpperCase();
+  const pol = scene.policyStatus || (lib?.validateScenePolicy ? lib.validateScenePolicy(scene.prompt, scene.number).status : "pass");
+  const polBadge =
+    pol !== "pass" && lib?.policyStatusLabel
+      ? `<span class="st ${pol === "block" ? "policy-block" : "policy-warn"}" title="${esc(scene.policyNote || "")}">${esc(lib.policyStatusLabel(pol))}</span>`
+      : "";
   const refs = filmRefs(scene);
   const credit = sceneCredit(scene, per);
   const busy = scene.status === "generating";
@@ -2244,7 +2680,7 @@ function filmTableRows(scene, i, per, seconds) {
     <td><div class="film-prompt" title="${esc(scene.prompt)}">${esc(preview) || "Empty prompt"}</div></td>
     <td>${seconds}s</td>
     <td>${credit == null ? "—" : credit}</td>
-    <td><span class="st ${esc(scene.status || "pending")}">${esc(badge)}</span></td>
+    <td><span class="st ${esc(scene.status || "pending")}">${esc(badge)}</span>${polBadge ? ` ${polBadge}` : ""}</td>
     <td><div class="film-act">
       <div class="film-act-row">
         <button type="button" data-af="edit" data-i="${i}" title="Edit" ${busy ? "disabled" : ""}>✎</button>
@@ -2297,7 +2733,7 @@ function renderFilmTable() {
   if (!host) return;
   const n = film.scenes.length;
   if (!n) {
-    host.innerHTML = `<p class="empty">No scenes yet. Press Create scene or Generate film to parse the script.</p>`;
+    host.innerHTML = `<p class="empty">No scenes yet. Press <strong>Create scene</strong> to parse the script (required before Generate film).</p>`;
     filmSig = "empty";
     return;
   }
@@ -2382,12 +2818,16 @@ function renderFilmSummary() {
   const doneBox = $("#af_prog_done");
   const pathEl = $("#af_prog_path");
   if (doneBox && pathEl) {
-    if (film.finalOutput) {
+    const localFinal = film.finalOutput || film.composition?.cached_video_path || "";
+    if (localFinal || film.publishStatus === "ready_to_publish" || film.composition?.publish_status === "ready_to_publish") {
       doneBox.hidden = false;
-      pathEl.textContent = film.finalOutput;
-    } else if (film.publishStatus === "ready_to_publish" || film.composition?.publish_status === "ready_to_publish") {
-      doneBox.hidden = false;
-      pathEl.textContent = `Ready to Publish — Final composition saved in Google Flow (not downloaded yet).`;
+      if (localFinal) {
+        pathEl.textContent = localFinal;
+      } else {
+        const finalName = /^\d{4}$/.test(String(film.project || "").trim()) ? `${film.project}-Final` : "Final";
+        const home = film.composition?.tedverse_project === film.project ? film.project : film.project;
+        pathEl.textContent = `Ready — look in %USERPROFILE%\\flow-mcp-out\\${home}\\${finalName}.mp4 (or open Publish).`;
+      }
     } else doneBox.hidden = true;
   }
   if (S.tab === "film") estimate();
@@ -2498,18 +2938,21 @@ $("#af_list").addEventListener("input", (e) => {
   film.draft = el.value;
 });
 $("#af_preview").addEventListener("click", async () => {
-  const out = await analyzeFilmScript({ preview: true });
+  const out = await analyzeFilmScript({ preview: true, newBatch: true });
   if (out.cancelled) return;
   if (!out.ok) return toast(out.error || "Could not parse script.", true);
   if (out.warnings?.length) toast(out.warnings.join(" "), true);
-  toast(`${film.scenes.length} scene(s) ready. Nothing was sent to Flow.`);
+  const hookMsg = film.hook ? ` Hook: “${film.hook.slice(0, 80)}${film.hook.length > 80 ? "…" : ""}”.` : "";
+  const noMsg = isFilmBatchNo(film.project) ? ` No ${film.project}.` : "";
+  toast(`${film.scenes.length} scene(s) ready.${noMsg}${hookMsg} Nothing was sent to Flow.`);
 });
 $("#af_open_film")?.addEventListener("click", () => showTab("publish"));
 $("#af_clear").addEventListener("click", async () => {
   if (!(await confirmApp("Clear the script and the scene list on this computer?", { ok: "Clear", danger: true, title: "Clear script" }))) return;
-  const project = film.project;
+  const project = isFilmBatchNo(film.project) ? film.project : "";
   film = filmBlank();
   film.project = project;
+  if (!film.project) await ensureFilmNumber();
   scheduleFilmSave();
   renderFilm();
 });
@@ -2531,10 +2974,16 @@ $("#af_file").addEventListener("change", async () => {
   film.script = await file.text();
   $("#af_script").value = film.script;
   scheduleFilmSave();
-  toast("Script imported. Press Generate film when ready.");
+  toast("Script imported. Press Create scene, then Generate film.");
 });
-for (const [id, apply] of [["#af_project", (v) => (film.project = v.trim() || "MyFilm")], ["#af_script", (v) => (film.script = v)], ["#af_budget", (v) => (film.settings.budget = Math.max(0, Number(v) || 0))]]) {
-  $(id).addEventListener("input", (e) => { apply(e.target.value); scheduleFilmSave(); if (id === "#af_budget") renderFilmSummary(); });
+for (const [id, apply] of [["#af_project", (v) => (film.project = v.trim())], ["#af_hook", (v) => (film.hook = v.trim())], ["#af_script", (v) => (film.script = v)], ["#af_budget", (v) => (film.settings.budget = Math.max(0, Number(v) || 0))]]) {
+  $(id).addEventListener("input", (e) => {
+    apply(e.target.value);
+    if (id === "#af_script" && filmNeedsCreateScene()) { film.hook = ""; setFilmField("#af_hook", ""); }
+    scheduleFilmSave();
+    if (id === "#af_budget") renderFilmSummary();
+    else if (id === "#af_script") { renderFilm(); estimate(); }
+  });
 }
 $("#af_model").addEventListener("change", (e) => { film.settings.model = e.target.value; scheduleFilmSave(); renderAll(); });
 for (const [id, apply] of [["#af_apply", (v) => (film.applyRefs = v)], ["#af_retry", (v) => (film.settings.autoRetry = v)]]) {
@@ -2609,20 +3058,36 @@ async function runMergeOnly(opts = {}) {
   filmLogAutoFilm("merge-only start", { force: !!opts.force, skippedGeneration: true });
   if (!ex.onFlow) return toast("No selected scenes are on Google Flow yet.", true);
   filmRun.running = true;
+  filmRun.merging = true;
   filmRun.stop = false;
-  setFilmStep("Preparing Flow merge…", 85);
+  setFilmStep("Downloading and stitching on this PC…", 85);
   renderFilm();
+  estimate();
+  const uiTick = setInterval(() => {
+    renderFilm();
+    estimate();
+  }, 800);
   try {
     await mergeFilm({ auto: false, force: !!opts.force });
-    film.mergeFailed = false;
-    film.lastMergeError = "";
-    filmLogAutoFilm("merge-only done", { mergeStatus: film.publishStatus, skippedGeneration: true });
+    if (!filmRun.stop) {
+      film.mergeFailed = false;
+      film.lastMergeError = "";
+      filmLogAutoFilm("merge-only done", { mergeStatus: film.publishStatus, skippedGeneration: true });
+    }
   } catch (err) {
-    film.mergeFailed = true;
-    film.lastMergeError = err.message || String(err);
-    filmLogAutoFilm("merge-only failed", { error: film.lastMergeError, skippedGeneration: true });
+    if (filmRun.stop && /abort/i.test(String(err?.message || err))) {
+      filmLogAutoFilm("merge-only aborted", { skippedGeneration: true });
+    } else {
+      film.mergeFailed = true;
+      film.lastMergeError = err.message || String(err);
+      filmLogAutoFilm("merge-only failed", { error: film.lastMergeError, skippedGeneration: true });
+    }
   } finally {
+    clearInterval(uiTick);
+    filmRun.merging = false;
+    filmRun.mergeAbort = null;
     filmRun.running = false;
+    filmRun.stop = false;
     renderFilm();
     estimate();
   }
@@ -2634,6 +3099,8 @@ async function runFilm(onlyIds, opts = {}) {
   await recoverFilmScenesFromFlow();
   const plan = filmPlan(onlyIds);
   if (!plan.selected.length) return toast("Select at least one scene.", true);
+  const policy = selectedPolicySummary(plan.selected);
+  if (policy.block) return toast(`${policy.block} selected scene(s) blocked by policy check. Fix prompts first.`, true);
   const ex = filmExecutionMode();
   filmLogAutoFilm("generate run start", { skippedGeneration: false });
   if (plan.todo.length && plan.per == null) return toast("This model and length have no price in the credit table.", true);
@@ -2712,7 +3179,7 @@ async function runFilm(onlyIds, opts = {}) {
           max_credits: fresh.per,
           skip_download: true,
           file_stem: filmSceneStem(scene, sceneIdx),
-          flow_title: String(sceneNum),
+          flow_title: filmNoClipTitle(scene, sceneIdx),
           reference_images: refs.length ? refs : undefined,
           ...(omni ? { duration: Number(film.settings.duration), resolution: film.settings.resolution } : {}),
         }],
@@ -2742,14 +3209,17 @@ async function runFilm(onlyIds, opts = {}) {
   const allReady =
     selected.length > 0 && selected.every((s) => s.status === "skipped" || sceneReadyForMerge(s));
   if (!stopped && !filmRun.stop && allReady && !anyFailed && !filmHasFailed()) {
-    setFilmStep("Preparing Flow merge…", 88);
+    setFilmStep("Downloading and stitching on this PC…", 88);
     filmLogAutoFilm("auto-merge after generation", { onFlow: ex.onFlow, needGen: 0 });
     try {
       await mergeFilm({ auto: true });
       film.mergeFailed = false;
       film.lastMergeError = "";
       setFilmStep(film.publishStatus === "ready_to_publish" ? "Ready to Publish" : "Done", 100);
-      if (film.publishStatus === "ready_to_publish") showTab("publish");
+      if (film.publishStatus === "ready_to_publish") {
+        void prefetchPublishCatalog({ force: true });
+        showTab("publish");
+      }
     } catch (err) {
       film.mergeFailed = true;
       film.lastMergeError = err.message || String(err);
@@ -2824,30 +3294,55 @@ async function mergeFilm(opts = {}) {
     if (!opts.auto) toast("Nothing to merge. No selected scene has a video on Google Flow.", true);
     return;
   }
-  setFilmStep("Building Final in Google Flow…", 92);
+  const mergeSceneName = /^\d{4}$/.test(String(film.project || "").trim()) ? `${film.project}-Final` : "Final";
+  setFilmStep(`Downloading scenes and stitching ${mergeSceneName} on this PC…`, 92);
   let clips = ready.map((s) => {
     const i = film.scenes.indexOf(s);
     const stem = filmSceneStem(s, i);
     return { stem, flow_title: sceneFlowTitle(s, i) };
   });
   if (window.FilmScript?.sortClipsForMerge) clips = window.FilmScript.sortClipsForMerge(clips);
+  const mergeController = new AbortController();
+  filmRun.mergeAbort = mergeController;
   try {
-    const out = await api("flow_merge", { project: film.project, clips, force: !opts.auto });
+    const out = await api(
+      "flow_merge",
+      { project: film.project, clips, force: !opts.auto, hook: film.hook || "" },
+      false,
+      { signal: mergeController.signal },
+    );
     film.composition = out.composition ?? null;
     film.publishStatus = out.publish_status ?? "";
-    film.finalOutput = "";
+    if (out.credits_remaining !== undefined) renderStatus.credits = out.credits_remaining;
+    film.finalOutput = out.local_video || out.composition?.cached_video_path || "";
     film.mergeFailed = false;
     film.lastMergeError = "";
     setFilmStep(film.publishStatus === "ready_to_publish" ? "Ready to Publish" : "Done", 100);
+    if (out.credits_remaining !== undefined) poll(false);
     await saveFilmNow();
     renderFilmSummary();
-    if (!opts.auto) toast(out.reused ? "Reused saved Final composition in Flow." : "Final composition saved in Google Flow.");
+    void loadFilmHistory();
+    if (!opts.auto) {
+      toast(
+        out.reused
+          ? `Reused ${mergeSceneName} on disk.`
+          : film.finalOutput
+            ? `Saved ${mergeSceneName}: ${film.finalOutput}`
+            : `${mergeSceneName} ready to Publish.`,
+      );
+    }
   } catch (err) {
+    if (filmRun.stop || err?.name === "AbortError") {
+      setFilmStep("Merge stopped", filmStep.pct);
+      throw err;
+    }
     film.mergeFailed = true;
     film.lastMergeError = err.message || String(err);
     setFilmStep(`Merge failed: ${film.lastMergeError}`, filmStep.pct);
     toast(film.lastMergeError, true);
     throw err;
+  } finally {
+    if (filmRun.mergeAbort === mergeController) filmRun.mergeAbort = null;
   }
 }
 
@@ -2900,31 +3395,89 @@ let publishRunning = false;
 let publishRecord = null;
 let publishPollTimer = null;
 let publishCompositionReady = false;
-let publishFlowProjects = [];
+let publishPrefetchAt = 0;
+let publishPrefetchPromise = null;
+let publishCatalogNote = "";
+let publishPrefetchTimer = null;
+const PUBLISH_PREFETCH_TTL_MS = 120_000;
 
-const FLOW_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function publishFlowId() {
-  const fromSel = ($("#pub_project")?.value || "").trim();
-  if (FLOW_UUID.test(fromSel)) return fromSel;
-  const fromState = (S.publish.flowProjectId || "").trim();
-  if (FLOW_UUID.test(fromState)) return fromState;
-  return "";
+function publishCacheWarm() {
+  return publishVideoList.length > 0 && Date.now() - publishPrefetchAt < PUBLISH_PREFETCH_TTL_MS;
 }
+
+function publishFilmsFromHistory(rows) {
+  return (rows || []).filter((r) => r.video_path);
+}
+
+function schedulePublishPrefetch(delayMs = 600) {
+  clearTimeout(publishPrefetchTimer);
+  publishPrefetchTimer = setTimeout(() => void prefetchPublishCatalog(), delayMs);
+}
+
+async function prefetchPublishCatalog({ force = false } = {}) {
+  if (!LIVE) return;
+  if (!force && publishCacheWarm()) return;
+  if (publishPrefetchPromise) return publishPrefetchPromise;
+  publishPrefetchPromise = (async () => {
+    try {
+      await loadPublishFilms({ background: true });
+    } catch {
+      /* background */
+    } finally {
+      publishPrefetchPromise = null;
+    }
+  })();
+  return publishPrefetchPromise;
+}
+
 function publishPick() {
-  const opt = $("#pub_project")?.selectedOptions?.[0];
-  const flowId = publishFlowId();
-  const folder = (opt?.dataset?.folder || S.publish.project || S.cut.project || "MyFilm").trim() || "MyFilm";
-  const title = (opt?.dataset?.title || folder).trim() || folder;
-  return { flowId, folder, title };
+  const opt = $("#pub_video")?.selectedOptions?.[0];
+  const folder = (opt?.dataset?.no || S.publish.project || S.cut.project || "MyFilm").trim() || "MyFilm";
+  const title = (opt?.dataset?.hook || opt?.dataset?.name || folder).trim() || folder;
+  return { flowId: "", folder, title };
 }
 function publishProjectName() {
   return publishPick().folder;
+}
+function publishFilmNo() {
+  const opt = $("#pub_video")?.selectedOptions?.[0];
+  const no = (opt?.dataset?.no || "").trim();
+  if (/^\d{4}$/.test(no)) return no;
+  const { folder } = publishPick();
+  return /^\d{4}$/.test(folder) ? folder : "";
+}
+function filmHookForNo(no) {
+  if (!no) return "";
+  const row = filmHistoryCache.find((r) => String(r.no) === String(no));
+  return (row?.hook || "").trim();
+}
+async function ensureFilmHistoryForPublish() {
+  if (!LIVE) return;
+  try {
+    const { rows } = await api("film_history", { limit: 200 });
+    filmHistoryCache = rows || [];
+  } catch {
+    /* optional */
+  }
+}
+function applyPublishCaptionFromHook() {
+  const cap = $("#pub_caption");
+  if (!cap) return;
+  const opt = $("#pub_video")?.selectedOptions?.[0];
+  const hook = (opt?.dataset?.hook || "").trim() || filmHookForNo(publishFilmNo());
+  if (!hook) return;
+  cap.value = hook;
+  const p = publishProjectName();
+  if (!S.publish.captionByProject) S.publish.captionByProject = {};
+  S.publish.captionByProject[p] = hook;
+  save();
 }
 function publishCaptionName() {
   const p = publishProjectName();
   const fromField = $("#pub_caption")?.value?.trim();
   if (fromField) return fromField;
-  return S.publish.captionByProject?.[p] || publishPick().title;
+  const no = /^\d{4}$/.test(p) ? p : publishFilmNo();
+  return S.publish.captionByProject?.[p] || filmHookForNo(no) || "";
 }
 function publishHashtagsRaw() {
   const p = publishProjectName();
@@ -2990,7 +3543,8 @@ function selectedPublishPlatforms() {
 }
 
 function publishCanGo() {
-  const videoOk = Boolean($("#pub_video")?.value);
+  const opt = $("#pub_video")?.selectedOptions?.[0];
+  const videoOk = Boolean(opt?.dataset?.path && $("#pub_video")?.value);
   return LIVE && !busy && !publishRunning && videoOk && selectedPublishPlatforms().length > 0;
 }
 function scheduleCanGo() {
@@ -3027,8 +3581,237 @@ const HISTORY_PLAT = {
 };
 function historyPlatCell(code) {
   const c = HISTORY_PLAT[code] ?? HISTORY_PLAT["—"];
-  return `<td class="plat ${c.cls}">${c.text}</td>`;
+  return `<td class="plat col-plat ${c.cls}">${c.text}</td>`;
 }
+function historyPlatLabel(code) {
+  const c = HISTORY_PLAT[code] ?? HISTORY_PLAT["—"];
+  const t = c.text;
+  if (t === "✓") return "ok";
+  if (t === "✗") return "fail";
+  if (t === "!") return "auth";
+  if (t === "?") return "unknown";
+  if (t === "…") return "pending";
+  return "none";
+}
+function csvCell(value) {
+  const s = String(value ?? "");
+  if (!/[",\n\r]/.test(s)) return s;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+function pubHistoryEmptyRow(colspan, message, { error = false } = {}) {
+  const cls = error ? "empty-row-cell err" : "empty-row-cell";
+  return `<tr class="pub-history-empty"><td colspan="${colspan}" class="${cls}">${message}</td></tr>`;
+}
+function setPubHistoryTableState(tbody, isEmpty) {
+  if (!tbody) return;
+  tbody.classList.toggle("empty-state", isEmpty);
+  const table = tbody.closest("table");
+  if (table) table.classList.toggle("is-empty", isEmpty);
+}
+let filmHistoryCache = [];
+const filmHistorySelected = new Set();
+
+const FILM_HISTORY_TABLE_HEAD = `<table class="pub-history" id="af_film_history">
+  <colgroup>
+    <col class="col-sel"><col class="col-no"><col class="col-hook">
+    <col class="col-plat"><col class="col-plat"><col class="col-plat"><col class="col-date"><col class="col-path">
+  </colgroup>
+  <thead><tr>
+    <th class="col-sel"><input type="checkbox" id="af_film_history_head" aria-label="Select all film history rows"></th>
+    <th class="col-no">No</th>
+    <th class="col-hook">Hook</th>
+    <th class="col-plat">TikTok</th>
+    <th class="col-plat">YouTube</th>
+    <th class="col-plat">Facebook</th>
+    <th class="col-date">Created On</th>
+    <th class="col-path">Path</th>
+  </tr></thead>
+  <tbody id="af_film_history_body">`;
+
+function filmHistoryPathCell(videoPath) {
+  if (!videoPath) return `<td class="col-path"><span class="muted">—</span></td>`;
+  const p = esc(videoPath);
+  return `<td class="col-path"><a href="#" class="hist-path-link" data-path="${p}" title="Open video">${p}</a></td>`;
+}
+
+function renderFilmHistoryTable(rows) {
+  const visible = new Set((rows || []).map((r) => String(r.no)));
+  for (const no of [...filmHistorySelected]) {
+    if (!visible.has(no)) filmHistorySelected.delete(no);
+  }
+  const allOn = rows?.length && rows.every((r) => filmHistorySelected.has(String(r.no)));
+  const body = rows
+    .map((r) => {
+      const created = formatScheduleWhen(r.created_at);
+      const hook = r.hook?.trim() ? esc(r.hook) : `<span class="muted">—</span>`;
+      const no = String(r.no);
+      const checked = filmHistorySelected.has(no) ? "checked" : "";
+      return `<tr>
+        <td class="col-sel"><input type="checkbox" data-af-hist="sel" data-no="${esc(no)}" ${checked} aria-label="Select ${esc(no)}"></td>
+        <td class="col-no"><strong>${esc(r.no)}</strong></td>
+        <td class="col-hook">${hook}</td>
+        ${historyPlatCell(r.tiktok)}
+        ${historyPlatCell(r.youtube)}
+        ${historyPlatCell(r.facebook)}
+        <td class="col-date">${esc(created)}</td>
+        ${filmHistoryPathCell(r.video_path)}
+      </tr>`;
+    })
+    .join("");
+  const table = `${FILM_HISTORY_TABLE_HEAD}${body}</tbody></table>`;
+  queueMicrotask(() => {
+    const head = $("#af_film_history_head");
+    if (head) head.checked = Boolean(allOn);
+  });
+  return table;
+}
+
+function bindFilmHistorySelection(root) {
+  const host = root || $("#af_film_history_host");
+  if (!host) return;
+  host.querySelector("#af_film_history_head")?.addEventListener("change", (e) => {
+    const on = e.target.checked;
+    filmHistoryCache.forEach((r) => {
+      const no = String(r.no);
+      if (on) filmHistorySelected.add(no);
+      else filmHistorySelected.delete(no);
+    });
+    host.querySelectorAll('input[data-af-hist="sel"]').forEach((el) => {
+      el.checked = on;
+    });
+  });
+  host.querySelectorAll('input[data-af-hist="sel"]').forEach((el) => {
+    el.addEventListener("change", () => {
+      const no = el.getAttribute("data-no");
+      if (!no) return;
+      if (el.checked) filmHistorySelected.add(no);
+      else filmHistorySelected.delete(no);
+      const head = $("#af_film_history_head");
+      if (head && filmHistoryCache.length) {
+        head.checked = filmHistoryCache.every((r) => filmHistorySelected.has(String(r.no)));
+      }
+    });
+  });
+  host.querySelectorAll(".hist-path-link").forEach((a) => {
+    a.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const path = a.getAttribute("data-path");
+      if (!path) return;
+      try {
+        await api("open_local_path", { path });
+      } catch (err) {
+        toast(err.message || "Could not open file.", true);
+      }
+    });
+  });
+}
+
+function setFilmHistoryEmptyMessage(message, { error = false } = {}) {
+  const host = $("#af_film_history_host");
+  const card = $("#af_film_history_card");
+  if (!host) return;
+  host.innerHTML = `<p class="empty${error ? " err" : ""}">${message}</p>`;
+  if (card) {
+    card.style.padding = "";
+    card.style.overflow = "";
+  }
+}
+
+async function loadFilmHistory() {
+  const host = $("#af_film_history_host");
+  if (!host) return;
+  if (!LIVE) {
+    setFilmHistoryEmptyMessage("Studio not connected.");
+    filmHistoryCache = [];
+    return;
+  }
+  setFilmHistoryEmptyMessage("Loading…");
+  try {
+    const { rows } = await api("film_history", {});
+    filmHistoryCache = rows || [];
+    if (!rows?.length) {
+      setFilmHistoryEmptyMessage("No merged films yet.");
+      return;
+    }
+    const card = $("#af_film_history_card");
+    if (card) {
+      card.style.padding = "0";
+      card.style.overflow = "hidden";
+    }
+    host.innerHTML = `<div class="pub-history-wrap" style="margin:0;border:0;border-radius:0">${renderFilmHistoryTable(rows)}</div>`;
+    bindFilmHistorySelection(host);
+  } catch (err) {
+    filmHistoryCache = [];
+    filmHistorySelected.clear();
+    setFilmHistoryEmptyMessage(esc(err.message), { error: true });
+  }
+}
+
+async function exportFilmHistory() {
+  if (!LIVE) return toast("Not connected.", true);
+  let rows = filmHistoryCache;
+  if (!rows?.length) {
+    try {
+      const out = await api("film_history", { limit: 500 });
+      rows = out.rows || [];
+      filmHistoryCache = rows;
+    } catch (err) {
+      toast(err.message, true);
+      return;
+    }
+  }
+  if (!rows.length) return toast("Nothing to export.", true);
+  const header = ["No", "Hook", "Path", "TikTok", "YouTube", "Facebook", "Created On"];
+  const lines = [header.map(csvCell).join(",")];
+  for (const r of rows) {
+    lines.push(
+      [
+        r.no,
+        r.hook || "",
+        r.video_path || "",
+        historyPlatLabel(r.tiktok),
+        historyPlatLabel(r.youtube),
+        historyPlatLabel(r.facebook),
+        formatScheduleWhen(r.created_at),
+      ]
+        .map(csvCell)
+        .join(","),
+    );
+  }
+  const bom = "\ufeff";
+  const blob = new Blob([bom + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tedverse-film-history-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${rows.length} row(s).`);
+}
+$("#af_film_history_export")?.addEventListener("click", () => exportFilmHistory());
+async function deleteFilmHistoryRows() {
+  if (!LIVE) return toast("Not connected.", true);
+  if (!filmHistoryCache.length) return toast("No film history to delete.", true);
+  const selected = [...filmHistorySelected];
+  const deleteAll = !selected.length;
+  const n = deleteAll ? filmHistoryCache.length : selected.length;
+  const msg = deleteAll
+    ? `Delete all ${n} film history row(s)? Video files and Flow projects are not deleted.`
+    : `Delete ${n} selected film history row(s)? Video files and Flow projects are not deleted.`;
+  const title = deleteAll ? "Delete all history" : "Delete selected history";
+  if (!(await confirmApp(msg, { ok: "Delete", danger: true, title }))) return;
+  try {
+    const body = deleteAll ? { all: true } : { nos: selected };
+    const out = await api("film_history_delete", body);
+    if (deleteAll) filmHistorySelected.clear();
+    else selected.forEach((no) => filmHistorySelected.delete(no));
+    toast(`Deleted ${out.deleted ?? n} row(s).`);
+    await loadFilmHistory();
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+$("#af_film_history_delete")?.addEventListener("click", () => deleteFilmHistoryRows());
 
 async function loadPublishHistory() {
   const body = $("#pub_history_body");
@@ -3036,9 +3819,11 @@ async function loadPublishHistory() {
   try {
     const { rows } = await api("publish_history", {});
     if (!rows?.length) {
-      body.innerHTML = `<tr><td colspan="7" class="empty" style="padding:14px">Chưa có lịch sử publish (chỉ ghi bài đăng thật, không gồm test).</td></tr>`;
+      body.innerHTML = pubHistoryEmptyRow(7, "No publish history yet (real posts only, not test runs).");
+      setPubHistoryTableState(body, true);
       return;
     }
+    setPubHistoryTableState(body, false);
     body.innerHTML = rows
       .map((r, i) => {
         const created = formatScheduleWhen(r.created_at);
@@ -3055,7 +3840,8 @@ async function loadPublishHistory() {
       })
       .join("");
   } catch (err) {
-    body.innerHTML = `<tr><td colspan="7" class="empty" style="padding:14px;color:var(--bad)">${esc(err.message)}</td></tr>`;
+    body.innerHTML = pubHistoryEmptyRow(7, esc(err.message), { error: true });
+    setPubHistoryTableState(body, true);
   }
 }
 
@@ -3071,17 +3857,18 @@ function syncPublishGoBusy() {
 }
 
 function syncPublishControls() {
-  if (!$("#pub_project")) return;
+  if (!$("#pub_video")) return;
   S.publish.tiktok = Boolean($("#pub_tiktok")?.checked);
   S.publish.youtube = Boolean($("#pub_youtube")?.checked);
   S.publish.facebook = Boolean($("#pub_facebook")?.checked);
   $("#pub_tiktok").checked = S.publish.tiktok;
   $("#pub_youtube").checked = S.publish.youtube;
   $("#pub_facebook").checked = S.publish.facebook;
-  const { folder, title, flowId } = publishPick();
+  const { folder } = publishPick();
   S.publish.project = folder;
-  S.publish.flowProjectId = flowId;
-  const cap = S.publish.captionByProject?.[folder] ?? title;
+  S.publish.flowProjectId = "";
+  const no = /^\d{4}$/.test(folder) ? folder : publishFilmNo();
+  const cap = S.publish.captionByProject?.[folder] || filmHookForNo(no) || "";
   if ($("#pub_caption") && document.activeElement !== $("#pub_caption")) $("#pub_caption").value = cap;
   const tags = publishHashtagsRaw();
   if ($("#pub_tags") && document.activeElement !== $("#pub_tags")) $("#pub_tags").value = tags;
@@ -3125,25 +3912,17 @@ function renderPublishStatusRows() {
 async function refreshPublishStatus() {
   if (!LIVE || !$("#pub_video")) return;
   const project = publishProjectName();
-  const { flowId } = publishPick();
-  const flowVideoId = $("#pub_video")?.value || "";
   const localPath = $("#pub_video")?.selectedOptions?.[0]?.dataset?.path || "";
   try {
     const snap = await api("publish_status", {
       project,
       video: localPath || undefined,
-      flow_project_id: flowId || undefined,
-      flow_video_id: flowVideoId || undefined,
     });
     publishRunning = Boolean(snap.running);
-    const recVideo = localPath || flowVideoId;
     publishRecord =
-      (snap.records ?? []).find((r) => r.video === localPath || r.flow_video_handle === flowVideoId) ??
-      snap.records?.[0] ??
-      null;
+      (snap.records ?? []).find((r) => r.video === localPath) ?? snap.records?.[0] ?? null;
     if (snap.clip?.platforms) renderClipPostedChips(snap.clip.platforms);
     else renderClipPostedForSelection();
-    void recVideo;
   } catch (err) {
     $("#pub_out").textContent = err.message;
   }
@@ -3151,140 +3930,110 @@ async function refreshPublishStatus() {
   syncPublishControls();
 }
 
-async function loadPublishProjects({ openId } = {}) {
-  const sel = $("#pub_project");
-  const hint = $("#pub_project_hint");
-  if (!sel) return;
-  if (!LIVE || !flowSignedIn) {
-    sel.innerHTML = `<option value="">—</option>`;
-    if (hint) hint.textContent = "Sign in to Flow, then Refresh list (opens the project grid automatically).";
-    return;
-  }
-  if (hint) hint.textContent = "Loading projects from Google Flow…";
-  setPublishFieldsBusy(true);
-  try {
-    const out = await api("flow_projects", openId ? { open_id: openId } : {});
-    publishFlowProjects = out.projects ?? [];
-    const wantId = S.publish.flowProjectId;
-    const wantFolder = S.publish.project;
-    if (!publishFlowProjects.length) {
-      sel.innerHTML = `<option value="">— no projects —</option>`;
-      if (hint) hint.textContent = "No projects found. Flow will open the home grid — check the Flow Chrome window, then Refresh list.";
-      return;
-    }
-    sel.innerHTML = publishFlowProjects
-      .map((p) => {
-        if (!p.id) return "";
-        const status = p.has_final_on_disk ? "disk" : p.has_final_on_flow ? "flow" : "";
-        return `<option value="${esc(p.id)}" data-folder="${esc(p.tedverse_project)}" data-title="${esc(p.title)}" data-final="${status}">${esc(p.title)}</option>`;
-      })
-      .filter(Boolean)
-      .join("");
-    const pick =
-      publishFlowProjects.find((p) => p.id && p.id === wantId) ||
-      publishFlowProjects.find((p) => p.tedverse_project === wantFolder || p.title === wantFolder) ||
-      publishFlowProjects.find((p) => p.id);
-    if (pick?.id) {
-      sel.value = pick.id;
-      S.publish.flowProjectId = pick.id;
-      S.publish.project = pick.tedverse_project;
-      save();
-    }
-    if (hint) hint.textContent = `${publishFlowProjects.length} project(s) from the Flow home grid (names only — fast). Pick one to load videos.`;
-  } catch (err) {
-    const want = S.publish.project || "MyFilm";
-    sel.innerHTML = `<option value="${esc(want)}">${esc(want)}</option>`;
-    if (hint) hint.textContent = err.message;
-    toast(err.message, true);
-  } finally {
-    setPublishFieldsBusy(false);
-    syncPublishControls();
-  }
-}
-
-function renderPubVideo(opts) {
+function renderPublishFilmSelect(rows) {
   const sel = $("#pub_video");
   if (!sel) return;
-  const list = opts?.flow_videos ?? [];
-  publishVideoList = list;
-  publishCompositionReady = false;
+  const list = publishFilmsFromHistory(rows);
+  publishVideoList = list.map((r) => ({
+    handle: String(r.no),
+    name: (r.hook || "").trim() || `Film ${r.no}`,
+    local_path: r.video_path,
+    kind: "file",
+    published_on: r.tiktok || r.youtube || r.facebook ? { tiktok: r.tiktok, youtube: r.youtube, facebook: r.facebook } : undefined,
+  }));
   if (!list.length) {
-    sel.innerHTML = `<option value="">No videos in this project</option>`;
+    sel.innerHTML = `<option value="">No merged films on this PC yet</option>`;
     S.publish.flowVideoId = "";
     S.publish.video = "";
     renderClipPostedChips(null);
     return;
   }
   sel.innerHTML = list
-    .map((v) => {
-      const kind = v.kind === "scene" ? "scene" : v.kind === "video" ? "video" : "file";
-      const onPc = v.local_path ? " · on PC" : "";
-      const rawId = v.id ? String(v.id) : "";
-      const shortId =
-        rawId && !rawId.startsWith("title:") ? (rawId.length > 12 ? `${rawId.slice(0, 8)}…` : rawId) : "";
-      const meta = shortId ? ` · ${shortId}` : "";
-      const posted = v.posted_label ? ` · ${v.posted_label}` : "";
-      return `<option value="${esc(v.handle)}" data-path="${esc(v.local_path || "")}" data-name="${esc(v.name)}">${esc(v.name)} (${kind})${esc(posted)}${esc(onPc)}${esc(meta)}</option>`;
+    .map((r) => {
+      const label = (r.hook || "").trim() || `No ${r.no}`;
+      return `<option value="${esc(String(r.no))}" data-path="${esc(r.video_path)}" data-no="${esc(String(r.no))}" data-hook="${esc(r.hook || "")}" data-name="${esc(label)}">${esc(label)}</option>`;
     })
     .join("");
-  const want = S.publish.flowVideoId || opts.default_flow_video_handle;
-  const pick = list.some((v) => v.handle === want) ? want : opts.default_flow_video_handle || list[0].handle;
+  const want = S.publish.flowVideoId || S.publish.project;
+  const pick = list.some((r) => String(r.no) === String(want)) ? String(want) : String(list[0].no);
   sel.value = pick;
   S.publish.flowVideoId = pick;
-  const row = list.find((v) => v.handle === pick);
-  S.publish.video = row?.local_path || sel.selectedOptions?.[0]?.dataset?.path || "";
+  S.publish.project = pick;
+  const row = list.find((r) => String(r.no) === pick);
+  S.publish.video = row?.video_path || sel.selectedOptions?.[0]?.dataset?.path || "";
   renderClipPostedForSelection();
+  applyPublishCaptionFromHook();
   save();
 }
 
-async function loadPublishVideo({ download = false } = {}) {
+async function loadPublishFilms({ background = false } = {}) {
   if (!$("#pub_video")) return;
-  if (!LIVE || !flowSignedIn) return;
-  const { flowId, folder, title } = publishPick();
+  if (!LIVE) return;
   const hint = $("#pub_videohint");
-  if (!flowId) {
-    if (hint) hint.textContent = "Could not read this project's Flow id — press Refresh list, then choose the project again.";
-    return;
-  }
-  const videoId = download ? $("#pub_video")?.value || S.publish.flowVideoId : undefined;
-  if (hint && download) hint.textContent = "Downloading from Google Flow…";
-  else if (hint) hint.textContent = `Loading videos for project ${flowId.slice(0, 8)}… from Flow (All media)…`;
-  setPublishFieldsBusy(true);
-  bumpActionBusy(true);
+  if (!background) setPublishFieldsBusy(true);
   try {
-    const opts = await api("publish_options", {
-      project: folder,
-      flow_project_id: flowId,
-      flow_video_id: videoId,
-      download: !!download,
-    });
-    if (opts.project) S.publish.project = opts.project;
-    renderPubVideo(opts);
-    if (opts.downloaded_path) S.publish.video = opts.downloaded_path;
-    $("#pub_caption").value = title;
-    if (hint) hint.textContent = opts.note || "";
+    await ensureFilmHistoryForPublish();
+    const list = publishFilmsFromHistory(filmHistoryCache);
+    if (!list.length) {
+      $("#pub_video").innerHTML = `<option value="">No merged films yet</option>`;
+      publishVideoList = [];
+      if (hint) hint.textContent = "Merge in Auto Film first — finished .mp4 files show here from Film Histories.";
+      return;
+    }
+    renderPublishFilmSelect(filmHistoryCache);
+    const msg = `${list.length} film(s) on this PC (Film Histories).`;
+    publishCatalogNote = msg;
+    if (hint) hint.textContent = msg;
+    publishPrefetchAt = Date.now();
   } catch (err) {
-    toast(err.message, true);
+    if (!background) toast(err.message, true);
     if (hint) hint.textContent = err.message;
   } finally {
-    bumpActionBusy(false);
-    setPublishFieldsBusy(false);
+    if (!background) setPublishFieldsBusy(false);
   }
-  await refreshPublishStatus();
+  if (!background) await refreshPublishStatus();
   syncPublishControls();
 }
 
 async function refreshPublishTab() {
   if (!$("#pub_video")) return;
-  await loadPublishProjects();
-  await loadPublishHistory();
   syncPublishControls();
   if (!LIVE) {
-    $("#pub_video").innerHTML = `<option value="">Connect TedVerse to load videos</option>`;
-    $("#pub_videohint").textContent = "Start the studio server to list project files.";
+    $("#pub_video").innerHTML = `<option value="">Connect TedVerse to load films</option>`;
+    $("#pub_videohint").textContent = "Start the studio server to list films from Film Histories.";
     return;
   }
-  await loadPublishVideo();
+  const historyP = loadPublishHistory();
+  void ensureFilmHistoryForPublish();
+
+  if (publishCacheWarm()) {
+    renderPublishFilmSelect(filmHistoryCache);
+    const hint = $("#pub_videohint");
+    if (hint && publishCatalogNote) hint.textContent = publishCatalogNote;
+    applyPublishCaptionFromHook();
+    syncPublishControls();
+    await historyP.catch(() => {});
+    void refreshPublishStatus();
+    void prefetchPublishCatalog({ force: true });
+    return;
+  }
+
+  if (publishPrefetchPromise) {
+    await publishPrefetchPromise.catch(() => {});
+    if (publishCacheWarm()) {
+      renderPublishFilmSelect(filmHistoryCache);
+      const hint = $("#pub_videohint");
+      if (hint && publishCatalogNote) hint.textContent = publishCatalogNote;
+      applyPublishCaptionFromHook();
+      syncPublishControls();
+      await historyP.catch(() => {});
+      void refreshPublishStatus();
+      return;
+    }
+  }
+
+  await loadPublishFilms();
+  await historyP;
 }
 
 function stopPublishPoll() {
@@ -3303,41 +4052,19 @@ function startPublishPoll() {
     if (!publishRunning) {
       stopPublishPoll();
       syncPublishGoBusy();
-      await loadPublishVideo().catch(() => {});
+      await loadPublishFilms({ background: true }).catch(() => {});
       await loadPublishHistory();
+      if (S.tab === "film") await loadFilmHistory();
       toast("Publishing finished");
     }
   }, 2500);
 }
 
-$("#pub_projects_refresh")?.addEventListener("click", () => {
-  if (!guard(false)) return;
-  runBtn($("#pub_projects_refresh"), "Refreshing…", async () => {
-    await loadPublishProjects();
-    await loadPublishVideo();
-  });
-});
-$("#pub_project")?.addEventListener("change", async () => {
-  const { flowId, folder, title } = publishPick();
-  S.publish.flowProjectId = flowId;
-  S.publish.project = folder;
-  S.publish.flowVideoId = "";
-  S.publish.video = "";
-  $("#pub_caption").value = title;
-  save();
-  syncPublishControls();
-  if (flowId && flowSignedIn) {
-    try {
-      await api("flow_projects", { open_id: flowId });
-    } catch (err) {
-      toast(err.message, true);
-    }
-  }
-  await loadPublishVideo();
-});
 $("#pub_video")?.addEventListener("change", () => {
   S.publish.flowVideoId = $("#pub_video").value;
+  S.publish.project = $("#pub_video").value || S.publish.project;
   S.publish.video = $("#pub_video").selectedOptions?.[0]?.dataset?.path || "";
+  applyPublishCaptionFromHook();
   renderClipPostedForSelection();
   save();
   refreshPublishStatus();
@@ -3355,7 +4082,7 @@ for (const [id, key] of [["pub_tiktok", "tiktok"], ["pub_youtube", "youtube"], [
 }
 $("#pub_refresh")?.addEventListener("click", () => {
   if (!guard(false)) return;
-  runBtn($("#pub_refresh"), "Refreshing…", () => loadPublishVideo());
+  runBtn($("#pub_refresh"), "Refreshing…", () => loadPublishFilms());
 });
 $("#pub_schedule_at")?.addEventListener("change", () => {
   S.publish.scheduleAt = $("#pub_schedule_at").value;
@@ -3378,9 +4105,6 @@ $("#pub_caption")?.addEventListener("input", () => {
 $("#pub_go")?.addEventListener("click", async () => {
   if (!guard(false) || !publishActionCanGo() || isBtnBusy($("#pub_go"))) return;
   const project = publishProjectName();
-  const { flowId } = publishPick();
-  const flowVideoId = $("#pub_video").value;
-  const flowVideoName = $("#pub_video").selectedOptions?.[0]?.dataset?.name || "";
   const video = $("#pub_video").selectedOptions?.[0]?.dataset?.path || "";
   const platforms = selectedPublishPlatforms();
   const hashtags = publishHashtagsRaw();
@@ -3391,9 +4115,6 @@ $("#pub_go")?.addEventListener("click", async () => {
     const run = (confirm_uncertain) =>
       api("publish", {
         project,
-        flow_project_id: flowId || undefined,
-        flow_video_id: flowVideoId || undefined,
-        flow_video_name: flowVideoName || undefined,
         caption: publishCaptionName(),
         video: video || undefined,
         platforms,
@@ -3427,16 +4148,12 @@ $("#pub_status")?.addEventListener("click", async (e) => {
   const st = publishRecord?.platforms?.[platform]?.status;
   if (st === "unknown" && !(await confirmApp(`The last ${platform} attempt was uncertain.\n\nRetry only if it did not post.`, { ok: "Retry", title: "Uncertain post" }))) return;
   const project = publishProjectName();
-  const { flowId } = publishPick();
-  const flowVideoId = $("#pub_video").value;
   const video = $("#pub_video").selectedOptions?.[0]?.dataset?.path || "";
   await runBtn(btn, "Retrying…", async () => {
     try {
       await api("publish_retry", {
         project,
         video: video || undefined,
-        flow_project_id: flowId || undefined,
-        flow_video_id: flowVideoId || undefined,
         platforms: [platform],
         confirm_uncertain: true,
       });
@@ -3485,6 +4202,20 @@ let flowSignedIn = false;
 let flowInProject = false;
 let flowLinked = false;
 let statusLinkBusy = false;
+let flowConnectPromise = null;
+function ensureFlowConnected() {
+  if (!LIVE) return Promise.resolve();
+  if (flowLinked) return Promise.resolve();
+  if (flowConnectPromise) return flowConnectPromise;
+  flowConnectPromise = connectFlow({ silent: true }).finally(() => {
+    flowConnectPromise = null;
+  });
+  return flowConnectPromise;
+}
+function flowReadyForGenerate() {
+  if (ACTIVE_PROVIDER === "muse") return flowSignedIn;
+  return flowSignedIn && flowInProject;
+}
 function renderStatus(st) {
   const serverProv = st?.active_provider || st?.provider?.active;
   if (serverProv && serverProv !== ACTIVE_PROVIDER) syncProviderFromPayload(serverProv, st.provider?.capabilities);
@@ -3494,13 +4225,21 @@ function renderStatus(st) {
   let cls, text;
   const museMode = ACTIVE_PROVIDER === "muse";
   if (!flowSignedIn) {
-    cls = "down";
-    text = museMode ? "Muse offline" : "Not connected";
+    if (statusLinkBusy) {
+      cls = "rolling";
+      text = "Connecting…";
+    } else {
+      cls = "down";
+      text = museMode ? "Muse offline" : "Not connected";
+    }
+  } else if (!museMode && !flowInProject) {
+    cls = active ? "rolling" : "warn";
+    text = active ? "Working" : "Open Flow project";
   } else {
     cls = active ? "rolling" : "ready";
     text = active ? "Working" : "Ready";
   }
-  flowLinked = flowSignedIn;
+  flowLinked = flowReadyForGenerate();
   if (flowSignedIn && !museMode) {
     if (f.credits_remaining !== undefined) renderStatus.credits = f.credits_remaining;
     if (f.plan) renderStatus.plan = f.plan;
@@ -3519,20 +4258,29 @@ function renderStatus(st) {
       : "";
   $("#status").innerHTML = `<span class="pill"><i class="tally ${cls}"></i>${text}</span>${acct}`;
   const connBtn = $("#statusConnect");
-  if (connBtn && LIVE) connBtn.hidden = !!flowSignedIn;
+  if (connBtn) {
+    const showConnect = !flowReadyForGenerate();
+    connBtn.hidden = !showConnect;
+    if (showConnect) {
+      connBtn.textContent = museMode ? "Muse login" : flowSignedIn ? "Connect" : "Connect";
+      connBtn.title = museMode
+        ? "Open muse.ai in the Muse Chrome profile and check connection"
+        : flowSignedIn
+          ? "Open a project in the Flow Chrome window, then press Connect to refresh"
+          : "Check Flow sign-in, plan, and name (does not open the Google account panel)";
+    }
+  }
   $("#hint").innerHTML = !flowSignedIn
     ? (museMode
       ? `<div class="hint">Sign in at <b>muse.ai</b> in the Muse Chrome profile (<code>npm run login:muse</code>), then press <b>Muse login</b>.</div>`
       : `<div class="hint">Sign in to Google Flow in the Flow Chrome window, then refresh or press <b>Connect</b>.</div>`)
     : museMode
-      ? `<div class="hint">Muse is connected. Clips save under <code id="outputRootHint"></code> — project name in Auto Film is the subfolder.</div>`
+      ? `<div class="hint">Muse is connected. Auto Film saves clips to your project folder on this Mac.</div>`
       : !flowInProject
         ? `<div class="hint">Signed in. <b>Publish</b> can list every Flow project; open one project in Flow before generating clips.</div>`
         : f.hint
         ? `<div class="hint">${esc(f.hint)}</div>`
         : "";
-  const rootEl = $("#outputRootHint");
-  if (rootEl && st?.output_root) rootEl.textContent = st.output_root;
   $("#pacing").innerHTML = st.pacing ? `<div class="pacing">⏱ ${esc(st.pacing)}</div>` : "";
   const jobs = [...st.jobs].reverse();
   const sig = JSON.stringify(jobs.map((j) => [j.id, j.status, j.progress, j.files.length, j.credits, j.attempts, j.failed_scenes?.length ?? 0]));
@@ -3576,21 +4324,21 @@ async function refreshStatus({ detailed = false, force = false } = {}) {
     if (ACTIVE_PROVIDER === "muse" && lastSt.muse) {
       flowSignedIn = !!lastSt.muse.connected;
       flowInProject = flowSignedIn;
-      flowLinked = flowSignedIn;
-    } else if (detailed) {
-      flowSignedIn = !!lastSt.flow?.signedIn;
-      flowInProject = !!lastSt.flow?.inProject;
-      flowLinked = flowSignedIn;
+    } else if (lastSt.flow) {
+      flowSignedIn = !!lastSt.flow.signedIn;
+      flowInProject = !!lastSt.flow.inProject;
     }
+    flowLinked = flowReadyForGenerate();
     const active = renderStatus(lastSt);
     if (wasActive && !active) {
       wasActive = false;
       if (S.tab === "narrate") loadNarrationOutputs();
       statusBusy = false;
       if (connectBtn) connectBtn.disabled = false;
-      return refreshStatus({ detailed: true, force: true });
+      return refreshStatus({ detailed: false, force: true });
     }
     wasActive = active;
+    if (!active && flowSignedIn && ACTIVE_PROVIDER !== "muse") schedulePublishPrefetch(1200);
     timer = setTimeout(() => refreshStatus({ detailed: false }), active ? 3000 : 20000);
     return { active, st: lastSt };
   } catch (err) {
@@ -3599,8 +4347,6 @@ async function refreshStatus({ detailed = false, force = false } = {}) {
       flowInProject = false;
       flowLinked = false;
     }
-    const connBtn = $("#statusConnect");
-    if (connBtn && LIVE) connBtn.hidden = false;
     $("#status").innerHTML = `<span class="pill"><i class="tally down"></i>Server offline</span>`;
     $("#hint").innerHTML = `<div class="hint">${esc(err?.message || "Studio server not reachable.")}</div>`;
     timer = setTimeout(() => refreshStatus({ detailed: false }), 5000);
@@ -3613,27 +4359,23 @@ async function refreshStatus({ detailed = false, force = false } = {}) {
 const poll = (detailed = false) => refreshStatus({ detailed });
 async function connectFlow({ silent = false } = {}) {
   const btn = $("#statusConnect");
-  if (isBtnBusy(btn)) return;
+  if (isBtnBusy(btn) && statusLinkBusy) return flowConnectPromise ?? Promise.resolve();
   statusLinkBusy = true;
-  if (btn) startBtnBusy(btn, "Connecting…");
+  $("#status").innerHTML = `<span class="pill"><i class="tally rolling"></i>Connecting…</span>`;
+  if (btn && !btn.hidden) startBtnBusy(btn, "Connecting…");
   try {
     if (ACTIVE_PROVIDER === "muse" && !silent) {
       await api("muse_open_login", { show: true });
       await new Promise((r) => setTimeout(r, 800));
     }
-    const out = await refreshStatus({ detailed: true, force: true });
-    if (flowSignedIn) {
-      if (!silent) {
-        toast(
-          ACTIVE_PROVIDER === "muse"
-            ? "Connected to Muse."
-            : flowInProject
-              ? "Connected to Flow — Ready."
-              : "Signed in to Flow (no project open — Publish still works).",
-        );
-      }
+    const out = await refreshStatus({ detailed: false, force: true });
+    if (flowReadyForGenerate()) {
+      if (!silent) toast(ACTIVE_PROVIDER === "muse" ? "Connected to Muse." : "Connected to Flow — Ready.");
       if (S.tab === "publish") await refreshPublishTab().catch(() => {});
-      else await loadPublishProjects().catch(() => {});
+      else void prefetchPublishCatalog({ force: true });
+    } else if (flowSignedIn && ACTIVE_PROVIDER !== "muse") {
+      if (!silent) toast("Signed in to Flow. Open a project in the Flow Chrome window, then press Connect again.", true);
+      void prefetchPublishCatalog({ force: true });
     } else if (!silent) {
       toast(
         ACTIVE_PROVIDER === "muse"
@@ -3657,10 +4399,107 @@ async function connectFlow({ silent = false } = {}) {
 }
 $("#statusConnect")?.addEventListener("click", () => connectFlow({ silent: false }));
 
+/* ---------- Publish API settings ---------- */
+let publishApiEngine = "api";
+let publishApiView = null;
+const PUBLISH_API_PORT = location.port || "8787";
+function publishOAuthRedirect(platform) {
+  return `http://127.0.0.1:${PUBLISH_API_PORT}/oauth/callback/${platform}`;
+}
+function platStatusLine(p, label) {
+  if (!p) return `${label}: not configured`;
+  if (p.connected) {
+    const extra = p.channelTitle || p.pageName || "";
+    return `${label}: connected${extra ? ` · ${extra}` : ""}`;
+  }
+  if (p.clientId) return `${label}: app saved — press Connect`;
+  return `${label}: add app id/key`;
+}
+function renderPublishApiSettingsUI() {
+  const v = publishApiView;
+  if (v) publishApiEngine = v.engine === "api" ? "api" : "browser";
+  if ($("#pub_redir_yt")) $("#pub_redir_yt").textContent = publishOAuthRedirect("youtube");
+  if ($("#pub_redir_fb")) $("#pub_redir_fb").textContent = publishOAuthRedirect("facebook");
+  if ($("#pub_redir_tt")) $("#pub_redir_tt").textContent = publishOAuthRedirect("tiktok");
+  if (v?.youtube && $("#set_yt_id") && document.activeElement !== $("#set_yt_id")) $("#set_yt_id").value = v.youtube.clientId || "";
+  if (v?.facebook && $("#set_fb_id") && document.activeElement !== $("#set_fb_id")) {
+    $("#set_fb_id").value = v.facebook.clientId || "";
+    $("#set_fb_page").value = v.facebook.pageId || "";
+  }
+  if (v?.tiktok && $("#set_tt_key") && document.activeElement !== $("#set_tt_key")) $("#set_tt_key").value = v.tiktok.clientId || "";
+  if ($("#set_yt_status")) $("#set_yt_status").textContent = platStatusLine(v?.youtube, "YouTube");
+  if ($("#set_fb_status")) $("#set_fb_status").textContent = platStatusLine(v?.facebook, "Facebook");
+  if ($("#set_tt_status")) $("#set_tt_status").textContent = platStatusLine(v?.tiktok, "TikTok");
+  renderSegs();
+}
+async function loadPublishApiSettingsUI() {
+  if (!LIVE) {
+    publishApiView = null;
+    renderPublishApiSettingsUI();
+    return;
+  }
+  try {
+    publishApiView = await api("publish_settings_get", {});
+    renderPublishApiSettingsUI();
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+async function savePublishApiForm() {
+  if (!LIVE) return toast("Connect Studio server first.", true);
+  const body = {
+    engine: publishApiEngine,
+    youtube: { clientId: $("#set_yt_id")?.value?.trim() || undefined },
+    facebook: {
+      appId: $("#set_fb_id")?.value?.trim() || undefined,
+      pageId: $("#set_fb_page")?.value?.trim() || undefined,
+    },
+    tiktok: { clientKey: $("#set_tt_key")?.value?.trim() || undefined },
+  };
+  const ytSec = $("#set_yt_secret")?.value?.trim();
+  const fbSec = $("#set_fb_secret")?.value?.trim();
+  const ttSec = $("#set_tt_secret")?.value?.trim();
+  if (ytSec) body.youtube.clientSecret = ytSec;
+  if (fbSec) body.facebook.appSecret = fbSec;
+  if (ttSec) body.tiktok.clientSecret = ttSec;
+  publishApiView = await api("publish_settings_save", body);
+  if (ytSec) $("#set_yt_secret").value = "";
+  if (fbSec) $("#set_fb_secret").value = "";
+  if (ttSec) $("#set_tt_secret").value = "";
+  renderPublishApiSettingsUI();
+  toast("Publish API settings saved.");
+}
+async function openPublishOAuth(platform) {
+  if (!LIVE) return toast("Connect Studio server first.", true);
+  await savePublishApiForm();
+  const { url } = await api("publish_oauth_begin", { platform });
+  window.open(url, "_blank", "noopener");
+  toast(`Complete sign-in for ${platform} in the browser tab.`);
+}
+for (const [id, platform] of [
+  ["set_yt_connect", "youtube"],
+  ["set_fb_connect", "facebook"],
+  ["set_tt_connect", "tiktok"],
+]) {
+  $(`#${id}`)?.addEventListener("click", () => openPublishOAuth(platform));
+}
+for (const [id, platform] of [
+  ["set_yt_disconnect", "youtube"],
+  ["set_fb_disconnect", "facebook"],
+  ["set_tt_disconnect", "tiktok"],
+]) {
+  $(`#${id}`)?.addEventListener("click", async () => {
+    if (!LIVE) return;
+    publishApiView = await api("publish_oauth_disconnect", { platform });
+    renderPublishApiSettingsUI();
+    toast(`${platform} disconnected.`);
+  });
+}
+$("#set_publish_save")?.addEventListener("click", () => savePublishApiForm());
+
 /* ---------- boot ---------- */
 function renderAll() {
   for (const [id, val] of [["f_project", S.frames.project], ["s_project", S.shots.project], ["n_project", S.narrate.project], ["l_project", S.cut.project]]) if ($("#" + id) && !$("#" + id).value) $("#" + id).value = val;
-  if ($("#pub_project") && S.tab !== "publish") S.publish.project = $("#pub_project").value || S.publish.project || S.cut.project;
   syncPublishControls();
   $("#s_model").innerHTML = Object.keys(VIDEO_COST).map((m) => `<option ${m === S.shots.model ? "selected" : ""}>${m}</option>`).join("");
   renderSegs(); renderScenes(); renderCast(); renderNarrate();
@@ -3682,6 +4521,7 @@ const STUDIO_SECTS = [
   ["af_progress_sect", false],
   ["monitor_sect", false],
   ["pub_history_sect", false],
+  ["af_film_history_sect", false],
   ["cast_sect", true],
   ["frames_sect", true],
   ["shots_sect", true],
@@ -3695,6 +4535,7 @@ function initStudioSects() {
     if (!el || el.tagName !== "DETAILS") continue;
     const key =
       id === "af_scenes_sect" ? `studio-sect-v4:${id}`
+      : id === "af_film_history_sect" ? `studio-sect-v5:${id}`
       : id === "af_progress_sect" || id === "monitor_sect" ? `studio-sect-v3:${id}`
       : `studio-sect-v2:${id}`;
     const saved = localStorage.getItem(key);
@@ -3711,7 +4552,7 @@ $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
 (async () => {
   if (!LIVE) {
     $("#status").innerHTML = `<span class="pill"><i class="tally down"></i>Not connected</span>`;
-    if ($("#statusConnect")) $("#statusConnect").hidden = true; /* preview / static mode */
+    if ($("#statusConnect")) $("#statusConnect").hidden = true;
     await loadFilm();
     await whenFilmScript();
     renderAll(); showTab(hashTab() ?? "film"); return;
@@ -3719,15 +4560,22 @@ $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
   await syncSessionToken();
   await syncProviderFromServer();
   await waitForPlatformGate();
-  try { [TECH, VOICES] = await Promise.all([api("techniques"), api("voices")]); } catch { VOICES = { kokoro: [], gemini: [] }; }
-  applyPlace(VOICES.place);
+  const flowLink = ensureFlowConnected();
+  const techVoices = Promise.all([api("techniques"), api("voices")]).catch(() => null);
   await loadFilm();
+  await ensureFilmNumber();
+  const tv = await techVoices;
+  if (tv) [TECH, VOICES] = tv;
+  else VOICES = { kokoro: [], gemini: [] };
+  applyPlace(VOICES.place);
+  await flowLink.catch(() => {});
+  if (flowSignedIn && ACTIVE_PROVIDER !== "muse") schedulePublishPrefetch(400);
   await syncFilmCompositionFromServer();
   await recoverFilmScenesFromFlow();
   await whenFilmScript();
   loadCast().then((c) => { CAST = c; renderCast(); if (S.tab === "film") renderFilm(); }).catch(() => {});
   renderAll(); showTab(hashTab() ?? S.tab); loadNarrationOutputs();
-  await connectFlow({ silent: true });
+  if (S.tab === "film") void loadFilmHistory();
 })();
 </script>
 </body>

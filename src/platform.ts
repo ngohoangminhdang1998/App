@@ -140,6 +140,21 @@ export function extractZip(zip: string, dest: string): string[] {
   return files;
 }
 
+/** Opens a local file with the OS default app (video player, etc.). */
+export function openPath(file: string): void {
+  try {
+    if (IS_MAC) execFileSync("open", [file], { stdio: "ignore" });
+    else if (IS_WIN) execFileSync("cmd", ["/c", "start", "", file], { stdio: "ignore", windowsHide: true });
+    else execFileSync("xdg-open", [file], { stdio: "ignore" });
+  } catch {
+    try {
+      openUrl(IS_WIN ? file : `file://${file}`);
+    } catch {
+      /* best-effort */
+    }
+  }
+}
+
 // Opens a page in the default browser.
 export function openUrl(url: string): void {
   try {

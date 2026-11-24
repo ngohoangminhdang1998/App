@@ -2,9 +2,29 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Locator, Page } from "playwright-core";
 import { HOME_DIR } from "./chrome.js";
+import { filmClipSearchPrefix } from "./film-numbers.js";
 import { optionIsExactMedia } from "./media-ref.js";
 
-const pause = (page: Page, ms: number) => page.waitForTimeout(ms);
+/** Default ~1.5× waits in merge; `FLOW_MCP_MERGE_PACE=1` restores old speed, `2` = very slow. */
+export function mergePaceMs(ms: number): number {
+  const raw = (process.env.FLOW_MCP_MERGE_PACE ?? "").trim().toLowerCase();
+  if (raw === "0" || raw === "off") return ms;
+  if (raw === "1") return ms;
+  const mult = raw ? Number(raw) : 1.5;
+  if (!Number.isFinite(mult) || mult <= 1) return ms;
+  return Math.max(ms + 50, Math.round(ms * mult));
+}
+
+export async function mergeSettle(page: Page, reason?: string): Promise<void> {
+  const ms = mergePaceMs(400);
+  if (process.env.FLOW_MCP_DEBUG && reason) mergeStep(`settle ${ms}ms — ${reason}`);
+  await page.waitForTimeout(ms);
+}
+
+const pause = (page: Page, ms: number) => page.waitForTimeout(mergePaceMs(ms));
+
+/** Top asset chips in the scene editor sit above this fraction; only count clips on the timeline track below. */
+export const TIMELINE_TRACK_TOP_FRAC = 0.45;
 
 const escapeRe = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const assetOptionRe = (name: string) =>
@@ -52,83 +72,194 @@ async function inBottomEditComposer(locator: Locator): Promise<boolean> {
     .catch(() => false);
 }
 
+/** Flow collapses extra clips into "+ N"; combine with visible thumbs for the real total. */
+export function combineTimelineClipCount(
+  domCount: number,
+  visibleThumbs: number,
+  overflowPlus: number,
+  badgeCount = 0,
+): number {
+  const overflowTotal = overflowPlus > 0 && visibleThumbs > 0 ? visibleThumbs + overflowPlus : 0;
+  const onTimeline = domCount > 0 || visibleThumbs > 0 || overflowPlus > 0;
+  const badge = onTimeline ? badgeCount : 0;
+  return Math.max(domCount, overflowTotal, badge);
+}
+
 /** True when the filmstrip shows at least one placed clip (even if data-clip-id is missing). */
 export async function sceneTimelineHasAnyClip(page: Page): Promise<boolean> {
   const n = await sceneTimelineClipCount(page);
   if (n > 0) return true;
-  return page.evaluate(() => {
+  return page.evaluate((trackFrac) => {
     const strip =
       document.querySelector("flow-clip-filmstrip") ||
       document.querySelector("[id^='flow-scene-timeline-area']") ||
       document.querySelector("flow-scene-timeline");
     if (!strip) return false;
     const isScrollbar = (el: Element) => !!el.closest("flow-timeline-scrollbar");
+    const onTrack = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      const box = strip!.getBoundingClientRect();
+      const y0 = box.top + box.height * trackFrac;
+      const cy = (r.top + r.bottom) / 2;
+      return cy >= y0 && r.height >= 12;
+    };
     for (const img of strip.querySelectorAll("img, video")) {
-      if (isScrollbar(img)) continue;
+      if (isScrollbar(img) || !onTrack(img)) continue;
       const r = (img as HTMLElement).getBoundingClientRect();
       if (r.width < 36 || r.height < 20) continue;
       const alt = img.getAttribute("alt") || "";
       if (/^generated video thumbnail$/i.test(alt) && r.width < 50) continue;
       return true;
     }
-    const filled = strip.querySelector(
+    for (const filled of strip.querySelectorAll(
       "[data-clip-id], [class*='clip-card'], [class*='timeline-clip'], [class*='filmstrip-clip']",
-    );
-    if (filled && !isScrollbar(filled)) return true;
+    )) {
+      if (!isScrollbar(filled) && onTrack(filled)) return true;
+    }
     return false;
-  });
+  }, TIMELINE_TRACK_TOP_FRAC);
 }
 
 export async function sceneTimelineClipCount(page: Page): Promise<number> {
-  return page.evaluate(() => {
+  const metrics = await page.evaluate((trackFrac) => {
     const isScrollbar = (el: Element) =>
       !!el.closest("flow-timeline-scrollbar") ||
       el.getAttribute("role") === "scrollbar" ||
       el.classList.contains("scrollbar-thumb");
+    const isOverflowBadge = (el: Element) => {
+      const t = (el.textContent || "").replace(/\s+/g, " ").trim();
+      return /^\+\s*\d+$/.test(t);
+    };
+    const inTimelineTrack = (el: Element, strip: Element) => {
+      const r = el.getBoundingClientRect();
+      const box = strip.getBoundingClientRect();
+      const y0 = box.top + box.height * trackFrac;
+      const cy = (r.top + r.bottom) / 2;
+      return r.height >= 12 && cy >= y0 && r.top <= box.bottom + 6;
+    };
     const roots = [
       document.querySelector("flow-clip-filmstrip"),
       document.querySelector("[id^='flow-scene-timeline-area']"),
-      document.querySelector("flow-scene-timeline"),
-      document.querySelector('[class*="filmstrip"]'),
     ].filter(Boolean) as Element[];
-    for (const strip of roots.length ? roots : [document.body]) {
-      const marked = [...strip.querySelectorAll("[data-clip-id]")].filter((el) => !isScrollbar(el));
-      if (marked.length) return marked.length;
-      const clips = [...strip.querySelectorAll("[class*='clip-card'], [class*='clip-tile'], [class*='timeline-clip']")].filter(
-        (el) => !isScrollbar(el),
+    if (!roots.length) {
+      return { domCount: 0, visibleThumbs: 0, overflowPlus: 0, badgeCount: 0 };
+    }
+
+    let domCount = 0;
+    let visibleThumbs = 0;
+    let overflowPlus = 0;
+    let badgeCount = 0;
+
+    for (const strip of roots) {
+      const marked = [...strip.querySelectorAll("[data-clip-id]")].filter(
+        (el) => !isScrollbar(el) && inTimelineTrack(el, strip),
       );
-      if (clips.length) return clips.length;
+      if (marked.length) domCount = Math.max(domCount, marked.length);
+      const clips = [...strip.querySelectorAll("[class*='clip-card'], [class*='clip-tile'], [class*='timeline-clip']")].filter(
+        (el) => !isScrollbar(el) && !isOverflowBadge(el) && inTimelineTrack(el, strip),
+      );
+      if (clips.length) domCount = Math.max(domCount, clips.length);
+
+      for (const el of strip.querySelectorAll("*")) {
+        if (isScrollbar(el) || !inTimelineTrack(el, strip)) continue;
+        const t = (el.textContent || "").replace(/\s+/g, " ").trim();
+        const plus = t.match(/^\+\s*(\d+)$/);
+        if (!plus) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.width < 120 && r.height < 120) overflowPlus = Math.max(overflowPlus, Number(plus[1]));
+      }
+
       const hostKeys = new Set<string>();
+      const thumbHosts = new Set<Element>();
       for (const img of strip.querySelectorAll("img")) {
         if (isScrollbar(img)) continue;
+        let inBadge = false;
+        for (let p: Element | null = img; p && p !== strip; p = p.parentElement) {
+          if (isOverflowBadge(p)) {
+            inBadge = true;
+            break;
+          }
+        }
+        if (inBadge) continue;
         const r = img.getBoundingClientRect();
         if (r.width < 24 || r.height < 24 || r.width > 140) continue;
         const host =
           img.closest("[data-clip-id]") ||
-          img.closest("[class*='clip-card'], [class*='timeline-clip'], [class*='filmstrip']") ||
+          img.closest("[class*='clip-card'], [class*='timeline-clip'], [class*='filmstrip-clip']") ||
           img.parentElement;
-        if (!host || isScrollbar(host)) continue;
+        if (!host || isScrollbar(host) || isOverflowBadge(host) || !inTimelineTrack(host, strip)) continue;
         const hr = host.getBoundingClientRect();
-        if (hr.width < 40) continue;
+        if (hr.width < 28) continue;
         hostKeys.add(`${Math.round(hr.left)}:${Math.round(hr.top)}:${Math.round(hr.width)}`);
+        thumbHosts.add(host);
       }
-      if (hostKeys.size > 0) return hostKeys.size;
+      if (hostKeys.size) {
+        domCount = Math.max(domCount, hostKeys.size);
+        visibleThumbs = Math.max(visibleThumbs, thumbHosts.size);
+      }
+
       const containers = [...strip.querySelectorAll("[class*='filmstrip-clip'], [class*='clip-container']")].filter(
-        (el) => !isScrollbar(el),
+        (el) => !isScrollbar(el) && !isOverflowBadge(el) && inTimelineTrack(el, strip),
       );
-      if (containers.length) return containers.length;
-      const thumbs = [...strip.querySelectorAll("img")].filter((img) => {
-        if (isScrollbar(img)) return false;
-        const r = img.getBoundingClientRect();
-        if (r.width < 24 || r.height < 24) return false;
-        if (r.width > 140) return false;
-        const alt = img.getAttribute("alt") || "";
-        return !/^generated video thumbnail$/i.test(alt);
-      });
-      if (thumbs.length) return Math.max(1, new Set(thumbs.map((img) => img.parentElement)).size);
+      if (containers.length) domCount = Math.max(domCount, containers.length);
+
+      for (const el of strip.querySelectorAll("span, div, button")) {
+        if (!inTimelineTrack(el, strip)) continue;
+        const t = (el.textContent || "").trim();
+        if (!/^\d{1,2}$/.test(t)) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width < 6 || r.width > 56 || r.height > 56) continue;
+        const n = Number(t);
+        if (n >= 1 && n <= 99) badgeCount = Math.max(badgeCount, n);
+      }
     }
-    return 0;
-  });
+    return { domCount, visibleThumbs, overflowPlus, badgeCount };
+  }, TIMELINE_TRACK_TOP_FRAC);
+  return combineTimelineClipCount(metrics.domCount, metrics.visibleThumbs, metrics.overflowPlus, metrics.badgeCount);
+}
+
+/** Scroll filmstrip end and re-count (virtualized thumbnails). */
+export async function sceneTimelineClipCountAfterScroll(page: Page): Promise<number> {
+  await maybeScrollTimelineEnd(page).catch(() => undefined);
+  await pause(page, 400);
+  return sceneTimelineClipCount(page);
+}
+
+/** Furthest time ruler label on the bottom timeline track (e.g. 00:30 → 30). */
+export async function sceneTimelineEndMarkerSeconds(page: Page): Promise<number> {
+  return page.evaluate((trackFrac) => {
+    const strip =
+      document.querySelector("flow-clip-filmstrip") ||
+      document.querySelector("[id^='flow-scene-timeline-area']") ||
+      document.querySelector("flow-scene-timeline");
+    if (!strip) return 0;
+    const box = strip.getBoundingClientRect();
+    const y0 = box.top + box.height * trackFrac;
+    let maxSec = 0;
+    for (const el of strip.querySelectorAll("span, div, label, button, p")) {
+      const r = el.getBoundingClientRect();
+      if (r.height < 6 || r.bottom < y0 - 2) continue;
+      const t = (el.textContent || "").replace(/\s+/g, " ").trim();
+      const m = t.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (!m) continue;
+      const sec = Number(m[1]) * 60 + Number(m[2]) + (m[3] ? Number(m[3]) : 0);
+      if (sec >= 0) maxSec = Math.max(maxSec, sec);
+    }
+    return maxSec;
+  }, TIMELINE_TRACK_TOP_FRAC);
+}
+
+/** Enough clips on the timeline to skip further Add clip (count + duration ruler — not top asset chips). */
+export async function timelineMergeSatisfied(page: Page, wantCount: number, clipSeconds = 6): Promise<boolean> {
+  if (wantCount <= 0) return true;
+  const endSec = await sceneTimelineEndMarkerSeconds(page);
+  const minDur = Math.max((wantCount - 1) * clipSeconds - 2, clipSeconds * 0.75);
+  const durOk = endSec >= minDur;
+  let n = await sceneTimelineClipCount(page);
+  if (n >= wantCount && durOk) return true;
+  n = await sceneTimelineClipCountAfterScroll(page);
+  if (n >= wantCount && durOk) return true;
+  return durOk && endSec >= wantCount * clipSeconds * 0.85;
 }
 
 export async function sceneTimelineTitles(page: Page): Promise<string[]> {
@@ -198,8 +329,13 @@ async function ensureScenePickerVideosTab(page: Page): Promise<void> {
 }
 
 async function waitForMediaPicker(page: Page): Promise<void> {
-  const deadline = Date.now() + 30_000;
+  const deadline = Date.now() + mergePaceMs(30_000);
   while (Date.now() < deadline) {
+    if (!/\/project\/[0-9a-f-]{36}\/scene\/[0-9a-f-]{36}/i.test(page.url())) {
+      throw new Error(
+        `Left the Scene Editor before the media picker opened (now: ${page.url().replace(/\?.*/, "").slice(0, 96)}). Retry merge to finish rename only.`,
+      );
+    }
     if (await sceneMediaDialogOpen(page)) {
       await ensureScenePickerVideosTab(page);
       return;
@@ -344,6 +480,7 @@ export async function openEmptyTimelineMediaPicker(page: Page): Promise<void> {
   mergeStep("EMPTY_TIMELINE → white + (opens media picker directly)");
   const btn = await locateEmptyTimelineAddControl(page);
   await btn.click({ timeout: 12_000 });
+  await mergeSettle(page, "after empty-timeline +");
   await waitForMediaPicker(page);
 }
 
@@ -533,7 +670,7 @@ async function scrollTimelineToRevealEnd(page: Page): Promise<void> {
 
 async function lastTimelineClipRect(page: Page): Promise<{ left: number; top: number; right: number; bottom: number; width: number; height: number } | null> {
   await maybeScrollTimelineEnd(page);
-  return page.evaluate(() => {
+  return page.evaluate((trackFrac) => {
     const isScrollbar = (el: Element) =>
       !!el.closest("flow-timeline-scrollbar") ||
       el.getAttribute("role") === "scrollbar" ||
@@ -543,8 +680,14 @@ async function lastTimelineClipRect(page: Page): Promise<{ left: number; top: nu
       document.querySelector("[id^='flow-scene-timeline-area']") ||
       document.querySelector("flow-scene-timeline");
     if (!area) return null;
+    const inTimelineTrack = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      const box = area.getBoundingClientRect();
+      const y0 = box.top + box.height * trackFrac;
+      return r.height >= 12 && r.bottom >= y0 - 2 && r.top <= box.bottom + 6;
+    };
 
-    const marked = [...area.querySelectorAll("[data-clip-id]")].filter((el) => !isScrollbar(el));
+    const marked = [...area.querySelectorAll("[data-clip-id]")].filter((el) => !isScrollbar(el) && inTimelineTrack(el));
     if (marked.length) {
       const sorted = marked
         .map((el) => (el as HTMLElement).getBoundingClientRect())
@@ -563,7 +706,7 @@ async function lastTimelineClipRect(page: Page): Promise<{ left: number; top: nu
       const host = (img.closest(
         "[data-clip-id], [class*='clip-card'], [class*='timeline-clip'], [class*='filmstrip-clip']",
       ) || img.parentElement) as HTMLElement | null;
-      if (!host || isScrollbar(host)) continue;
+      if (!host || isScrollbar(host) || !inTimelineTrack(host)) continue;
       const hr = host.getBoundingClientRect();
       if (hr.width < 36 || hr.height < 18) continue;
       hosts.push({ left: hr.left, right: hr.right, top: hr.top, bottom: hr.bottom, width: hr.width, height: hr.height });
@@ -581,7 +724,7 @@ async function lastTimelineClipRect(page: Page): Promise<{ left: number; top: nu
     }
     const last = merged[merged.length - 1];
     return last ? last : null;
-  });
+  }, TIMELINE_TRACK_TOP_FRAC);
 }
 
 async function timelineEndPlusCoords(
@@ -732,7 +875,7 @@ async function clickPlusAfterSelectedClip(page: Page): Promise<void> {
   }
   mergeStep(`click white + after last clip (${Math.round(hit.x)},${Math.round(hit.y)})`);
   await page.mouse.click(hit.x, hit.y);
-  await pause(page, 350);
+  await mergeSettle(page, "after timeline +");
   if (await sceneMediaDialogOpen(page)) return;
   const menuHit = await page.evaluate((pt) => {
     const inComposer = (el: Element) => {
@@ -760,7 +903,7 @@ async function clickPlusAfterSelectedClip(page: Page): Promise<void> {
   }
 }
 
-async function waitForTimelineClipCount(page: Page, atLeast: number, timeoutMs = 45_000): Promise<number> {
+async function waitForTimelineClipCount(page: Page, atLeast: number, timeoutMs = 55_000): Promise<number> {
   const deadline = Date.now() + timeoutMs;
   let last = 0;
   while (Date.now() < deadline) {
@@ -784,11 +927,17 @@ async function selectLastTimelineClipBody(page: Page): Promise<void> {
   const filmstrip = page.locator("flow-clip-filmstrip").first();
   const byId = filmstrip.locator("[data-clip-id]");
   if ((await byId.count()) > 0) {
-    const pick = await page.evaluate(() => {
+    const pick = await page.evaluate((trackFrac) => {
       const isScrollbar = (el: Element) => !!el.closest("flow-timeline-scrollbar");
       const area = document.querySelector("flow-clip-filmstrip");
       if (!area) return null;
-      const marked = [...area.querySelectorAll("[data-clip-id]")].filter((el) => !isScrollbar(el));
+      const inTimelineTrack = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        const box = area.getBoundingClientRect();
+        const y0 = box.top + box.height * trackFrac;
+        return r.height >= 12 && r.bottom >= y0 - 2 && r.top <= box.bottom + 6;
+      };
+      const marked = [...area.querySelectorAll("[data-clip-id]")].filter((el) => !isScrollbar(el) && inTimelineTrack(el));
       if (!marked.length) return null;
       marked.sort(
         (a, b) =>
@@ -797,7 +946,7 @@ async function selectLastTimelineClipBody(page: Page): Promise<void> {
       const last = marked[marked.length - 1] as HTMLElement;
       const r = last.getBoundingClientRect();
       return { left: r.left, top: r.top, width: r.width, height: r.height };
-    });
+    }, TIMELINE_TRACK_TOP_FRAC);
     if (pick) {
       await clickTimelineClipAt(page, pick);
       if (!(await timelineClipSelected(page))) await clickTimelineClipAt(page, pick);
@@ -825,7 +974,7 @@ async function selectLastTimelineClipBody(page: Page): Promise<void> {
     return;
   }
 
-  const target = await page.evaluate(() => {
+  const target = await page.evaluate((trackFrac) => {
     const isScrollbar = (el: Element) =>
       !!el.closest("flow-timeline-scrollbar") ||
       el.getAttribute("role") === "scrollbar" ||
@@ -835,8 +984,14 @@ async function selectLastTimelineClipBody(page: Page): Promise<void> {
       document.querySelector("[id^='flow-scene-timeline-area']") ||
       document.querySelector("flow-scene-timeline");
     if (!area) return null;
+    const inTimelineTrack = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      const box = area.getBoundingClientRect();
+      const y0 = box.top + box.height * trackFrac;
+      return r.height >= 12 && r.bottom >= y0 - 2 && r.top <= box.bottom + 6;
+    };
 
-    const marked = [...area.querySelectorAll("[data-clip-id]")].filter((el) => !isScrollbar(el));
+    const marked = [...area.querySelectorAll("[data-clip-id]")].filter((el) => !isScrollbar(el) && inTimelineTrack(el));
     if (marked.length) {
       marked.sort(
         (a, b) =>
@@ -855,7 +1010,7 @@ async function selectLastTimelineClipBody(page: Page): Promise<void> {
       if (r.width < 24 || r.height < 24 || r.width > 140) continue;
       const host = (img.closest("[data-clip-id], [class*='filmstrip'], [class*='clip-card'], [class*='timeline-clip']") ||
         img.parentElement) as HTMLElement | null;
-      if (!host || isScrollbar(host)) continue;
+      if (!host || isScrollbar(host) || !inTimelineTrack(host)) continue;
       const hr = host.getBoundingClientRect();
       if (hr.width < 40 || hr.height < 20) continue;
       hosts.push({ el: host, left: hr.left, width: hr.width });
@@ -871,7 +1026,7 @@ async function selectLastTimelineClipBody(page: Page): Promise<void> {
     if (!last) return null;
     const r = last.getBoundingClientRect();
     return { left: r.left, top: r.top, width: r.width, height: r.height };
-  });
+  }, TIMELINE_TRACK_TOP_FRAC);
 
   if (target && (target.width ?? 0) > 0 && (target.height ?? 0) > 0) {
     await clickTimelineClipAt(page, target);
@@ -883,7 +1038,7 @@ async function selectLastTimelineClipBody(page: Page): Promise<void> {
   if (await filmstrip.isVisible({ timeout: 1500 }).catch(() => false)) {
     const box = await filmstrip.boundingBox();
     if (box) {
-      await page.mouse.click(box.x + box.width * 0.22, box.y + box.height / 2);
+      await page.mouse.click(box.x + box.width * 0.22, box.y + box.height * 0.72);
       await waitForTimelineClipSelected(page).catch(() => undefined);
       return;
     }
@@ -910,7 +1065,7 @@ export async function openNextClipMediaPicker(page: Page): Promise<void> {
   }
 
   await clickPlusAfterSelectedClip(page);
-  await pause(page, 500);
+  await mergeSettle(page, "after + before picker");
 
   if (await sceneMediaDialogOpen(page)) {
     await ensureScenePickerVideosTab(page);
@@ -936,9 +1091,23 @@ export async function openNextClipMediaPicker(page: Page): Promise<void> {
   await waitForMediaPicker(page);
 }
 
+async function filterMediaPickerSearch(page: Page, query: string): Promise<void> {
+  const search = page.getByPlaceholder(/search assets/i);
+  if (!(await search.isVisible({ timeout: 3000 }).catch(() => false))) return;
+  await search.click({ timeout: 5000 }).catch(() => undefined);
+  await search.fill("");
+  await search.fill(query);
+  await pause(page, 500);
+}
+
 export async function selectVideoAsset(page: Page, title: string): Promise<void> {
   mergeStep(`select asset "${title}"`);
   await waitForMediaPicker(page).catch(() => undefined);
+  const searchPrefix = filmClipSearchPrefix(title);
+  if (searchPrefix) {
+    mergeStep(`search assets → "${searchPrefix}"`);
+    await filterMediaPickerSearch(page, searchPrefix);
+  }
   const list = page.getByRole("listbox", { name: "Asset list" });
   if (await list.isVisible({ timeout: 3000 }).catch(() => false)) {
     const option = optionByName(list, title);
@@ -984,18 +1153,17 @@ export async function confirmAddMedia(page: Page): Promise<void> {
   }
   await confirm.click({ timeout: 10_000 });
   await page.getByRole("button", { name: "Add media", exact: true }).waitFor({ state: "hidden", timeout: 60_000 }).catch(() => {});
-  await pause(page, 400);
+  await mergeSettle(page, "clip added to timeline");
 }
 
 export async function timelineHasEnoughClips(page: Page, want: number): Promise<boolean> {
-  if (want <= 0) return true;
-  const n = await sceneTimelineClipCount(page);
-  return n >= want;
+  return timelineMergeSatisfied(page, want);
 }
 
 /** Top bar scene title (not grid "Editable text"): click title near Back → edit → tick to save. */
 export async function renameSceneBuilderTitle(page: Page, want: string): Promise<void> {
   mergeStep(`rename scene title → ${want}`);
+  await ensureSceneEditorTimeline(page);
   const back = page.getByRole("button", { name: /Back button to go to previous page/i }).first();
   await back.waitFor({ state: "visible", timeout: 15_000 });
   const backBox = await back.boundingBox();
@@ -1094,22 +1262,55 @@ export function parseAspectToggleLabel(text: string): "9:16" | "16:9" | undefine
   return (m?.[1] as "9:16" | "16:9" | undefined) ?? undefined;
 }
 
+/** Scene editor UI (filmstrip + back) before touching aspect or timeline. */
+export async function waitForSceneEditorReady(page: Page, timeoutMs = 90_000): Promise<void> {
+  const deadline = Date.now() + mergePaceMs(timeoutMs);
+  while (Date.now() < deadline) {
+    if (!/\/project\/[0-9a-f-]{36}\/scene\/[0-9a-f-]{36}/i.test(page.url())) {
+      await pause(page, 400);
+      continue;
+    }
+    const back = page.getByRole("button", { name: /Back button to go to previous page/i }).first();
+    const strip = page.locator("flow-clip-filmstrip").first();
+    const backOk = await back.isVisible({ timeout: 600 }).catch(() => false);
+    const stripOk = await strip.isVisible({ timeout: 600 }).catch(() => false);
+    if (backOk && stripOk) {
+      await mergeSettle(page, "scene editor ready");
+      return;
+    }
+    await page.keyboard.press("Escape").catch(() => undefined);
+    await dismissMergeOverlaysOnly(page).catch(() => undefined);
+    await pause(page, 450);
+  }
+  throw new Error(
+    `Scene editor did not finish loading (need Back + timeline). URL: ${page.url().replace(/\?.*/, "").slice(0, 96)}`,
+  );
+}
+
 /** Left toolbar: aria-label "Toggle aspect ratio"; visible ratio is in .aspect-ratio-content ("16:9" / "9:16"). */
-async function locateSceneAspectToggle(page: Page): Promise<Locator> {
-  for (let attempt = 0; attempt < 12; attempt++) {
+async function locateSceneAspectToggle(page: Page): Promise<Locator | null> {
+  await waitForSceneEditorReady(page).catch(() => undefined);
+  for (let attempt = 0; attempt < 24; attempt++) {
+    if (attempt > 0 && attempt % 3 === 0) {
+      await page.keyboard.press("Escape").catch(() => undefined);
+      await dismissMergeOverlaysOnly(page).catch(() => undefined);
+      await mergeSettle(page, "find aspect toggle");
+    }
     const candidates = [
-      page.locator("button.aspect-ratio-button").first(),
       page.getByRole("button", { name: /toggle aspect ratio/i }).first(),
+      page.locator("button.aspect-ratio-button").first(),
       page.locator("button.left-toolbar-item.aspect-ratio-button").first(),
+      page.locator("button").filter({ has: page.locator(".aspect-ratio-content") }).first(),
+      page.locator("button.left-toolbar-item").filter({ hasText: /9:16|16:9/ }).first(),
     ];
     for (const btn of candidates) {
-      if (!(await btn.isVisible({ timeout: 800 }).catch(() => false))) continue;
+      if (!(await btn.isVisible({ timeout: mergePaceMs(900) }).catch(() => false))) continue;
       if (await inComposer(btn)) continue;
       return btn;
     }
     await pause(page, 500);
   }
-  throw new Error("Could not find the Scene Editor aspect ratio toggle (button.aspect-ratio-button).");
+  return null;
 }
 
 async function readAspectFromToggle(toggle: Locator): Promise<"9:16" | "16:9" | undefined> {
@@ -1121,41 +1322,51 @@ async function readAspectFromToggle(toggle: Locator): Promise<"9:16" | "16:9" | 
 }
 
 export async function readSceneBuilderAspect(page: Page): Promise<"9:16" | "16:9" | undefined> {
-  try {
-    const toggle = await locateSceneAspectToggle(page);
-    return await readAspectFromToggle(toggle);
-  } catch {
-    return undefined;
-  }
+  const toggle = await locateSceneAspectToggle(page);
+  if (!toggle) return undefined;
+  return await readAspectFromToggle(toggle).catch(() => undefined);
 }
 
-export async function setSceneBuilderAspectRatio(page: Page, want: "9:16" | "16:9"): Promise<void> {
+/** Best-effort only — never abort merge if the toggle is hidden or slow to mount. */
+export async function setSceneBuilderAspectRatio(page: Page, want: "9:16" | "16:9"): Promise<string | undefined> {
   mergeStep(`aspect requested: ${want}`);
   const toggle = await locateSceneAspectToggle(page);
+  if (!toggle) {
+    const note = `Aspect toggle not visible yet; continuing merge at current layout (wanted ${want}).`;
+    mergeStep(`warn: ${note}`);
+    return note;
+  }
   let current = await readAspectFromToggle(toggle);
   mergeStep(`aspect current: ${current ?? "unknown"}`);
 
   if (current === want) {
     mergeStep(`aspect verified: ${want} (no click)`);
-    return;
+    return undefined;
   }
 
-  await toggle.click({ timeout: 10_000 });
+  await toggle.click({ timeout: 12_000 });
   mergeStep("aspect toggle clicked: true");
-  await pause(page, 600);
+  await mergeSettle(page, "after aspect toggle");
 
-  const finalToggle = await locateSceneAspectToggle(page);
+  const finalToggle = (await locateSceneAspectToggle(page)) ?? toggle;
   const final = await readAspectFromToggle(finalToggle);
   mergeStep(`aspect final: ${final ?? "unknown"}`);
 
   if (final !== want) {
-    throw new Error(`Scene Editor aspect is "${final ?? "unknown"}" after one toggle click; expected "${want}".`);
+    const note = `Aspect is "${final ?? "unknown"}" after toggle (wanted ${want}); continuing merge.`;
+    mergeStep(`warn: ${note}`);
+    return note;
   }
   mergeStep(`aspect verified: ${final}`);
   await pause(page, 400);
+  return undefined;
 }
 
-export async function insertSceneBuilderClip(page: Page, title: string, opts: { isFirst: boolean }): Promise<void> {
+export async function insertSceneBuilderClip(
+  page: Page,
+  title: string,
+  opts: { isFirst: boolean },
+): Promise<void> {
   await ensureSceneEditorTimeline(page);
   const beforeTitles = await sceneTimelineTitles(page);
   if (timelineHasClip(beforeTitles, title)) {

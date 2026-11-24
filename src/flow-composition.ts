@@ -16,7 +16,7 @@ export interface FlowCompositionRecord {
   tedverse_project: string;
   flow_project_id: string;
   composition_id: string;
-  composition_name: "Final";
+  composition_name: string;
   scene_assets: SceneAssetRef[];
   scene_count: number;
   merge_status: MergeStatus;

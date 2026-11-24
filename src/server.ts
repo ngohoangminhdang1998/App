@@ -117,10 +117,35 @@ export async function startServer(core: Core): Promise<ServerRole> {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
         return res.end(readFileSync(STUDIO_HTML, "utf8").replace("__FLOW_TOKEN__", token));
       }
+      if (req.method === "GET" && url.pathname.startsWith("/oauth/callback/")) {
+        const platform = url.pathname.slice("/oauth/callback/".length) as "youtube" | "facebook" | "tiktok";
+        const { handleOAuthCallback } = await import("./publish-api/oauth-handlers.js");
+        const result = await handleOAuthCallback(
+          platform,
+          url.searchParams.get("code"),
+          url.searchParams.get("state"),
+          url.searchParams.get("error_description") ?? url.searchParams.get("error"),
+        );
+        const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Publish login</title></head><body style="font-family:system-ui;padding:2rem"><h1>${result.ok ? "Connected" : "Could not connect"}</h1><p>${result.message.replace(/</g, "&lt;")}</p><p>You can close this tab and return to TedVerse Studio.</p></body></html>`;
+        res.writeHead(result.ok ? 200 : 400, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+        return res.end(html);
+      }
       if (req.method === "GET" && url.pathname === "/film-script.js") {
         if (!existsSync(FILM_SCRIPT)) return json(res, 404, { error: "film-script.js is missing. Run npm run build." });
         res.writeHead(200, { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" });
         return res.end(readFileSync(FILM_SCRIPT));
+      }
+      if (req.method === "GET" && url.pathname === "/film-policy.js") {
+        const file = fileURLToPath(new URL("../dist/film-policy.js", import.meta.url));
+        if (!existsSync(file)) return json(res, 404, { error: "film-policy.js is missing. Run npm run build." });
+        res.writeHead(200, { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" });
+        return res.end(readFileSync(file));
+      }
+      if (req.method === "GET" && url.pathname === "/film-prompt-text.js") {
+        const file = fileURLToPath(new URL("../dist/film-prompt-text.js", import.meta.url));
+        if (!existsSync(file)) return json(res, 404, { error: "film-prompt-text.js is missing. Run npm run build." });
+        res.writeHead(200, { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" });
+        return res.end(readFileSync(file));
       }
 
       const given = req.headers["x-flow-token"] ?? url.searchParams.get("token");

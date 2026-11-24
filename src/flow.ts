@@ -11,15 +11,21 @@ import {
   getCompositionByFlowId,
   saveComposition,
 } from "./flow-composition.js";
+import { filmFinalSceneName } from "./film-numbers.js";
 import { normalizeLookEntry } from "./film-script.js";
 import {
   insertSceneBuilderClip,
   renameSceneBuilderTitle,
+  waitForSceneEditorReady,
   sceneTimelineClipCount,
+  sceneTimelineClipCountAfterScroll,
   sceneTimelineTitles,
   setSceneBuilderAspectRatio,
   timelineHasClip,
   timelineHasEnoughClips,
+  mergePaceMs,
+  mergeSettle,
+  timelineMergeSatisfied,
 } from "./scene-builder.js";
 import type { Job } from "./queue.js";
 import { finalizeFlowDownload, sniffMediaFile } from "./media-download.js";
@@ -116,14 +122,14 @@ export async function getFlowState(detailed = false): Promise<FlowState> {
   if (!signedIn) state.hint = "Not signed in. Run `npm run login` and sign in to Google in the Flow Chrome window.";
   else if (!inProject) state.hint = "Signed in, but no project is open. Open or create a project in the Flow Chrome window.";
   else if (detailed) {
-    // Name + plan are on the closed account button; credits need the panel. Read the button first so Connect
-    // does not wait on a 9s panel poll when Flow already shows the name in the header chrome.
+    // Plan + display name live on the closed Account details button. Never open the account panel here — it blocks
+    // the grid and races with generation. Credits are read only when the user already left the panel open.
     await dismissOverlays(page);
     await scrollToTop(page);
     const accountLines = await readAccountButtonLines(page);
     state.plan = accountLines.find((l) => PLAN_LABEL.test(l)) ?? accountLines[0];
     state.user_display_name = (await readProfileDisplayName(page)) ?? pickNameFromAccountLines(accountLines);
-    const panel = await readAccountPanel(page, { needName: !state.user_display_name }).catch(
+    const panel = await readAccountPanelIfOpen(page, { needName: !state.user_display_name }).catch(
       (): { credits?: number; user_display_name?: string } => ({}),
     );
     state.credits_remaining = panel.credits;
@@ -166,6 +172,58 @@ async function waitNoBackdrop(page: Page, timeoutMs = 12_000): Promise<void> {
   await dismissOverlays(page);
   if (await showing.count().catch(() => 0)) {
     throw new Error("Flow still has a menu overlay open (.cdk-overlay-backdrop-showing). Close it by hand, then retry.");
+  }
+}
+
+// Ingredients / frame picker (Asset list + search). If it stays open while a prompt is typed, keystrokes land in search.
+async function assetPickerOpen(page: Page): Promise<boolean> {
+  const list = page.getByRole("listbox", { name: "Asset list" });
+  if (await list.isVisible().catch(() => false)) return true;
+  const shell = page.locator(".cdk-overlay-pane").filter({
+    has: page.getByRole("tab", { name: "All", exact: true }),
+  });
+  return shell.first().isVisible().catch(() => false);
+}
+
+async function waitAssetPickerClosed(page: Page, timeoutMs = 12_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (!(await assetPickerOpen(page))) {
+      await pause(page, 350);
+      if (!(await assetPickerOpen(page))) return;
+    }
+    await page.keyboard.press("Escape").catch(() => {});
+    await clearBackdrops(page);
+    await pause(page, 450);
+  }
+  throw new Error("Flow's asset picker stayed open. Close All media by hand, then retry.");
+}
+
+function composerEditor(page: Page): Locator {
+  return page.locator("flow-base-prompt-box .ProseMirror").first();
+}
+
+/** Attach opens Flow's All media picker on purpose; typing must not. Close every overlay before the prompt step. */
+async function sealComposerAfterAttach(page: Page): Promise<void> {
+  for (let round = 0; round < 4; round++) {
+    await page.keyboard.press("Escape").catch(() => {});
+    await dismissOverlays(page);
+    await waitNoBackdrop(page).catch(() => {});
+    try {
+      await waitAssetPickerClosed(page, 8000);
+    } catch {
+      /* one more round */
+    }
+    if (!(await assetPickerOpen(page))) {
+      await pause(page, 700);
+      if (!(await assetPickerOpen(page))) return;
+    }
+    await pause(page, 500);
+  }
+  if (await assetPickerOpen(page)) {
+    throw new Error(
+      "Flow's asset picker is still open after attaching references. It should close before the prompt is typed — close All media in the Flow window and retry.",
+    );
   }
 }
 
@@ -254,35 +312,63 @@ async function readAccountUserName(page: Page, maxMs = 4000): Promise<string | u
   return undefined;
 }
 
-// The balance only shows inside the account panel. That panel also holds "Sign out": never touch anything else in it.
-async function readAccountPanel(
+/** Read balance from the account panel only when it is already open — never clicks Account details. */
+async function readAccountPanelIfOpen(
   page: Page,
   opts: { needName?: boolean } = {},
 ): Promise<{ credits?: number; user_display_name?: string }> {
   const needName = opts.needName !== false;
-  await dismissOverlays(page);
-  await scrollToTop(page);
-  const panelAlready = await page.getByRole("link", { name: /Google Flow credits/ }).isVisible().catch(() => false);
-  if (!panelAlready) await page.getByRole("button", { name: "Account details" }).click({ timeout: 5000 });
-  await page.locator("flow-account-panel, [class*='account-panel']").first().waitFor({ state: "attached", timeout: 8000 }).catch(() => undefined);
   const link = page.getByRole("link", { name: /Google Flow credits/ });
+  const panelOpen = await link.isVisible().catch(() => false);
+  if (!panelOpen) {
+    return { credits: undefined, user_display_name: undefined };
+  }
   let credits: number | undefined;
   try {
-    await link.waitFor({ state: "visible", timeout: 8000 });
     const n = Number((await link.innerText()).replace(/[^\d]/g, ""));
     credits = Number.isNaN(n) ? undefined : n;
   } catch {
     credits = undefined;
   }
   const user_display_name = needName ? await readAccountUserName(page) : undefined;
-  await dismissOverlays(page);
-  await pause(page, 300);
   return { credits, user_display_name };
 }
 
 async function readCredits(page: Page): Promise<number | undefined> {
-  const out = await readAccountPanel(page);
+  const out = await readAccountPanelIfOpen(page, { needName: false });
   return out.credits;
+}
+
+/** Opens the account panel once, reads the balance, closes it — for pre-merge refresh only. */
+export async function refreshFlowCreditsOnce(): Promise<number | undefined> {
+  const state = await getFlowState(false);
+  if (!state.signedIn || !state.inProject) return undefined;
+  const page = await getFlowPage();
+  const open = await readAccountPanelIfOpen(page, { needName: false });
+  if (open.credits !== undefined) {
+    await dismissOverlays(page).catch(() => undefined);
+    return open.credits;
+  }
+  await dismissOverlays(page);
+  await scrollToTop(page);
+  try {
+    await page.getByRole("button", { name: "Account details" }).click({ timeout: 5000 });
+    await page
+      .locator("flow-account-panel, [class*='account-panel']")
+      .first()
+      .waitFor({ state: "attached", timeout: 8000 })
+      .catch(() => undefined);
+    const link = page.getByRole("link", { name: /Google Flow credits/ });
+    await link.waitFor({ state: "visible", timeout: 8000 });
+    const n = Number((await link.innerText()).replace(/[^\d]/g, ""));
+    const credits = Number.isNaN(n) ? undefined : n;
+    await dismissOverlays(page);
+    await pause(page, 300);
+    return credits;
+  } catch {
+    await dismissOverlays(page).catch(() => undefined);
+    return undefined;
+  }
 }
 
 export function displayNameForHeader(name: string | undefined): string {
@@ -516,6 +602,208 @@ async function waitForNewMedia(page: Page, before: string[], count: number, time
   throw new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s waiting for Flow to finish.`);
 }
 
+async function mediaStillRendering(page: Page, ids: string[]): Promise<boolean> {
+  if (!ids.length) return false;
+  return page.evaluate(
+    ({ needle, js }) => {
+      const tiles = [...document.querySelectorAll("flow-grid-tile-container")];
+      const resolve = eval(js) as (t: Element) => string | undefined;
+      for (const id of needle) {
+        const match = id.startsWith("title:") ? id.slice(6) : id;
+        const tile = tiles.find((el) => resolve(el) === id || (el.getAttribute("aria-label") ?? "") === match);
+        if (!tile) continue;
+        if (/\d+%/.test((tile as HTMLElement).innerText)) return true;
+      }
+      return false;
+    },
+    { needle: ids, js: TILE_ID_JS },
+  );
+}
+
+/** Returns as soon as Flow shows progress on new tiles, or when they already finished. */
+async function waitForPipelineHandoff(
+  page: Page,
+  before: string[],
+  count: number,
+  job: Job,
+  timeoutMs: number,
+): Promise<{ done: boolean; ids: string[] }> {
+  const deadline = Date.now() + Math.min(timeoutMs, 180_000);
+  let seen = "";
+  while (Date.now() < deadline) {
+    await pause(page, 1200);
+    const fresh = await freshMedia(page, before, "video");
+    const progress = await page.evaluate(() =>
+      [...document.querySelectorAll("flow-grid-tile-container")]
+        .slice(0, 8)
+        .map((t) => (t as HTMLElement).innerText.match(/\d+%/)?.[0])
+        .filter(Boolean),
+    );
+    if (job) job.progress = progress.join(", ") || undefined;
+    if (fresh.length < count) continue;
+    const picked = fresh.slice(0, count);
+    const rendering = await mediaStillRendering(page, picked);
+    const settled = !picked.some((id) => id.startsWith("title:")) || picked.join("|") === seen;
+    if (!rendering && settled) return { done: true, ids: picked };
+    seen = picked.join("|");
+    if (rendering || fresh.length >= count) return { done: false, ids: picked };
+  }
+  throw new Error(`Timed out after ${Math.round(Math.min(timeoutMs, 180_000) / 1000)}s waiting for Flow to start rendering.`);
+}
+
+function filmClipTitleLocked(name: string, hint?: string): boolean {
+  if (!name?.trim()) return false;
+  const batch = hint?.match(/^(\d{4})-\d/)?.[1];
+  if (batch) return new RegExp(`^${batch}-\\d+(-v\\d+)?$`).test(name.trim());
+  return /^\d{4}-\d+(-v\d+)?$/.test(name.trim());
+}
+
+function tileHandle(asset: FlowAsset): string {
+  return asset.id ?? (asset.name ? `title:${asset.name}` : "");
+}
+
+/** Flow retitles clips while they render; pipeline must find the finished tile on the grid before rename. */
+async function resolvePipelineTileIds(page: Page, job: Job): Promise<string[]> {
+  const variants = job.params.variants ?? 1;
+  const want = flowTileRenameTitle(job.params, job.params.file_stem, 0, variants);
+  const hint = job.params.flow_title;
+  await ensureProjectGrid(page);
+  await dismissOverlays(page);
+  await showAllMedia(page);
+  await scrollToTop(page);
+  await pause(page, 500);
+
+  let grid = await scanGrid(page);
+  const already = grid.filter((a) => a.kind === "video" && a.name === want);
+  if (already.length >= variants) return already.slice(0, variants).map(tileHandle).filter(Boolean);
+
+  const before = job.pipelineBefore ?? [];
+  let fresh = await freshMedia(page, before, "video");
+  const unmounted = fresh.length < variants;
+  if (unmounted) {
+    await scanGrid(page, (seen) => fresh.every((id) => seen.some((a) => a.id === id || (id.startsWith("title:") && a.name === id.slice(6)))));
+    fresh = await freshMedia(page, before, "video");
+    grid = await scanGrid(page);
+  }
+
+  const picks: string[] = [];
+  for (const id of [...fresh].reverse()) {
+    const name = id.startsWith("title:") ? id.slice(6) : grid.find((a) => a.id === id)?.name ?? "";
+    if (name && !filmClipTitleLocked(name, hint)) picks.push(id);
+    if (picks.length >= variants) break;
+  }
+  if (picks.length >= variants) return picks.slice(0, variants);
+
+  for (const id of job.pipelineMedia ?? []) {
+    if (picks.includes(id)) continue;
+    const loc = await tileLocator(page, id, grid);
+    if (loc) picks.push(id);
+    if (picks.length >= variants) break;
+  }
+
+  if (fresh.length >= variants) return fresh.slice(-variants);
+  return picks.length ? picks : fresh;
+}
+
+async function tileLocator(page: Page, id: string, grid?: FlowAsset[]): Promise<Locator | null> {
+  const loc = mediaTile(page, id);
+  if (await loc.count().catch(() => 0)) return loc;
+  const name = id.startsWith("title:") ? id.slice(6) : grid?.find((a) => a.id === id)?.name;
+  if (!name) return null;
+  await scanGrid(page, (seen) => seen.some((a) => a.name === name)).catch(() => undefined);
+  const hit = page.locator(`flow-grid-tile-container[aria-label="${name.replace(/"/g, '\\"')}"]`).first();
+  return (await hit.count().catch(() => 0)) ? hit : null;
+}
+
+async function waitForPipelineSettled(page: Page, ids: string[], job: Job, timeoutMs: number): Promise<string[]> {
+  const deadline = Date.now() + timeoutMs;
+  let seen = "";
+  while (Date.now() < deadline) {
+    await pause(page, 2000);
+    if (await mediaStillRendering(page, ids)) {
+      job.progress = "Rendering on Flow…";
+      continue;
+    }
+    const settled = !ids.some((id) => id.startsWith("title:")) || ids.join("|") === seen;
+    if (settled) return ids;
+    seen = ids.join("|");
+    job.progress = "Flow is finishing the video";
+  }
+  throw new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s waiting for Flow to finish rendering.`);
+}
+
+async function saveGeneratedTiles(page: Page, job: Job, fresh: string[]): Promise<string[]> {
+  const s = job.params;
+  mkdirSync(s.output_dir, { recursive: true });
+  const files: string[] = [];
+  await ensureProjectGrid(page);
+  await scrollToTop(page);
+  const grid = await scanGrid(page);
+  for (const [i, id] of fresh.entries()) {
+    const label = fresh.length > 1 ? `${s.file_stem}-v${i + 1}` : s.file_stem;
+    const newTitle = flowTileRenameTitle(s, label, i, fresh.length);
+    const tile = (await tileLocator(page, id, grid)) ?? mediaTile(page, id);
+    await tile.scrollIntoViewIfNeeded().catch(() => {});
+    let renamed = await renameTile(page, tile, newTitle).catch(() => false);
+    if (!renamed) {
+      const again = await tileLocator(page, id, await scanGrid(page));
+      if (again) renamed = await renameTile(page, again, newTitle).catch(() => false);
+    }
+    if (renamed) job.note = [job.note, `renamed in Flow to ${newTitle}`].filter(Boolean).join(" · ");
+    else job.note = [job.note, `rename to ${newTitle} failed — could not find the clip on the grid`].filter(Boolean).join(" · ");
+    await pause(page, 800);
+    const stem = join(s.output_dir, label);
+    const handle = renamed ? `title:${newTitle}` : id;
+    const flowProjectId = projectIdFromUrl(page.url());
+    const title = renamed ? newTitle : id.startsWith("title:") ? id.slice(6) : newTitle;
+    if (s.skip_download) {
+      job.flow_assets ??= [];
+      job.flow_assets.push({ id: handle, title, project_id: flowProjectId });
+      job.note = [job.note, `saved in Flow as ${title} (no local download)`].filter(Boolean).join(" · ");
+      await pause(page, 600);
+      continue;
+    }
+    files.push(...(await downloadMedia(page, handle, stem, s.download_quality)));
+    await pause(page, 1500);
+  }
+  return files;
+}
+
+/** Rename Flow clips that still carry auto titles so merge can find 0002-3, 0002-4, … */
+export async function repairMissingFilmTitles(project: string, clips: { flow_title: string }[]): Promise<string[]> {
+  if (!/^\d{4}$/.test(project.trim())) return [];
+  const page = await getFlowPage();
+  await ensureProjectGrid(page);
+  const fixed: string[] = [];
+  let grid = await scanGrid(page);
+  for (const { flow_title } of clips) {
+    const want = flow_title.trim();
+    if (!want || grid.some((a) => a.name === want)) continue;
+    const unrenamed = grid.filter((a) => a.kind === "video" && !filmClipTitleLocked(a.name, want));
+    if (!unrenamed.length) continue;
+    const victim = unrenamed[unrenamed.length - 1];
+    const loc = await tileLocator(page, tileHandle(victim), grid);
+    if (!loc) continue;
+    if (await renameTile(page, loc, want).catch(() => false)) {
+      fixed.push(want);
+      grid = await scanGrid(page);
+    }
+  }
+  return fixed;
+}
+
+export async function finalizePipelineGeneration(job: Job): Promise<string[]> {
+  if (!job.pipelineMedia?.length) throw new Error("Nothing left to finish on Flow for this job.");
+  const page = await getFlowPage();
+  await ensureProjectGrid(page);
+  await scrollToTop(page);
+  await waitForPipelineSettled(page, job.pipelineMedia, job, VIDEO_TIMEOUT_MS);
+  const resolved = await resolvePipelineTileIds(page, job);
+  job.progress = undefined;
+  job.flow_assets = [];
+  return saveGeneratedTiles(page, job, resolved.length ? resolved : job.pipelineMedia);
+}
+
 async function openSettings(page: Page): Promise<void> {
   const probe = page.getByRole("radio", { name: "Image", exact: true });
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -738,6 +1026,7 @@ async function finishAttach(page: Page, list: Locator): Promise<void> {
   if (await add.waitFor({ state: "visible", timeout: 1500 }).then(() => true, () => false)) await add.click().catch(() => {});
   await list.waitFor({ state: "hidden", timeout: 10_000 });
   await pause(page, 500);
+  await waitAssetPickerClosed(page).catch(() => {});
 }
 
 // The frame pickers attach on click; the ingredients picker only previews and needs "Add to prompt".
@@ -865,16 +1154,62 @@ export async function attachAsset(page: Page, opener: Locator, assetName: string
   await page.keyboard.press("Escape").catch(() => {});
   await dismissOverlays(page);
   await waitNoBackdrop(page);
+  await waitAssetPickerClosed(page);
+}
+
+/** One line for the composer. @ opens Flow's asset-mention UI — references are already chips on the box. */
+function composerPromptLine(prompt: string): string {
+  const oneLine = prompt.replace(/\s*\n+\s*/g, " ").trim();
+  return oneLine.replace(/@/g, "");
+}
+
+async function pasteComposerPrompt(page: Page, editor: Locator, line: string): Promise<void> {
+  await waitAssetPickerClosed(page);
+  await editor.click({ timeout: 8000 });
+  await editor.press("ControlOrMeta+a");
+  await editor.press("Backspace");
+  await pause(page, 200);
+  // Single paste: no per-keystroke triggers (especially @), and no mid-document cursor jumps on overlay dismiss.
+  await page.evaluate(async (text) => {
+    await navigator.clipboard.writeText(text);
+  }, line);
+  await editor.press("ControlOrMeta+v");
+  await pause(page, 600);
+  if (await assetPickerOpen(page)) {
+    await page.keyboard.press("Escape").catch(() => {});
+    await dismissOverlays(page);
+    await waitAssetPickerClosed(page);
+  }
 }
 
 async function typePrompt(page: Page, prompt: string): Promise<void> {
-  const box = page.locator(".ProseMirror");
-  await box.click();
-  await page.keyboard.press("ControlOrMeta+a");
-  await page.keyboard.press("Delete");
-  // Enter submits in Flow, so the prompt goes in as a single line.
-  await page.keyboard.type(prompt.replace(/\s*\n+\s*/g, " ").trim(), { delay: 8 });
-  await pause(page, 500);
+  const line = composerPromptLine(prompt);
+  const editor = composerEditor(page);
+  await sealComposerAfterAttach(page);
+  if (await assetPickerOpen(page)) {
+    throw new Error("Flow's asset picker is still open. Close All media in the Flow window and retry.");
+  }
+  await editor.waitFor({ state: "visible", timeout: 15_000 });
+  await scrollToTop(page).catch(() => {});
+
+  await pasteComposerPrompt(page, editor, line);
+  let got = (await editor.innerText().catch(() => "")).replace(/\s+/g, " ").trim();
+  const head = line.slice(0, Math.min(48, line.length));
+  const bad = line.length > 40 && (got.length < line.length * 0.7 || (head.length >= 16 && !got.includes(head.slice(0, 16))));
+  if (bad) {
+    await dismissOverlays(page);
+    await waitAssetPickerClosed(page);
+    await pasteComposerPrompt(page, editor, line);
+    got = (await editor.innerText().catch(() => "")).replace(/\s+/g, " ").trim();
+  }
+  if (await assetPickerOpen(page)) {
+    throw new Error("Flow opened the asset picker while entering the prompt. Generation stopped so the prompt is not scrambled.");
+  }
+  const head2 = line.slice(0, Math.min(32, line.length));
+  if (head2.length >= 12 && !got.includes(head2.slice(0, 12))) {
+    throw new Error("The prompt did not land in Flow's composer (picker or focus stole input). Clear the prompt and retry.");
+  }
+  await pause(page, 300);
 }
 
 export type DownloadQuality = "original" | "upscaled";
@@ -1362,15 +1697,29 @@ async function downloadTile(
 // nothing visible. Each item's text holds its icon name and its label whether or not the label shows, so it is found by
 // label in both states. (Why the menu used to vanish altogether: see leaveSideMenu.)
 async function clickProjectNav(page: Page, item: string): Promise<boolean> {
-  const button = page
-    .getByRole("navigation", { name: "Project navigation" })
-    .locator("button, a")
-    .filter({ hasText: new RegExp(`${item}\\s*$`) })
-    .first();
-  if (!(await button.isVisible().catch(() => false))) return false;
-  await button.click({ timeout: 5000 });
-  await leaveSideMenu(page);
-  return true;
+  const esc = escapeRe(item);
+  const word = new RegExp(`\\b${esc}\\b`, "i");
+  const nav = page.getByRole("navigation", { name: "Project navigation" });
+  const scopes: Locator[] = [nav.locator("button, a").filter({ hasText: word })];
+  if (await nav.isVisible().catch(() => false)) {
+    scopes.push(nav.getByRole("button", { name: word }), nav.getByRole("link", { name: word }));
+  }
+  scopes.push(
+    page.getByRole("button", { name: word }),
+    page.getByRole("link", { name: word }),
+    page.locator("mat-sidenav button, mat-sidenav a").filter({ hasText: word }),
+  );
+  for (const group of scopes) {
+    const n = await group.count().catch(() => 0);
+    for (let i = 0; i < n; i++) {
+      const button = group.nth(i);
+      if (!(await button.isVisible().catch(() => false))) continue;
+      await button.click({ timeout: 5000 });
+      await leaveSideMenu(page);
+      return true;
+    }
+  }
+  return false;
 }
 
 // The left-hand menu is a Material drawer, and Escape shuts it whenever the keyboard focus is inside it. Clicking
@@ -1386,11 +1735,26 @@ async function leaveSideMenu(page: Page): Promise<void> {
     .catch(() => {});
 }
 async function openProjectNav(page: Page, item: string): Promise<void> {
+  await leaveCharacterEditor(page).catch(() => {});
+  const projectRoot = page.url().match(/^https:\/\/[^/]+\/project\/[0-9a-f-]{36}/)?.[0];
+  if (projectRoot && !page.url().startsWith(projectRoot + "?")) {
+    const onGrid = new URL(page.url()).pathname === new URL(projectRoot).pathname;
+    if (!onGrid) {
+      await page.goto(inEnglish(projectRoot), { waitUntil: "domcontentloaded" });
+      await pause(page, 2000);
+    }
+  }
+  await scrollToTop(page).catch(() => {});
   if (await clickProjectNav(page, item)) return;
   // A page load shows the menu again in whatever state the user keeps it, and changes nothing about that choice.
-  await page.goto(inEnglish(page.url()), { waitUntil: "domcontentloaded" });
+  if (projectRoot) await page.goto(inEnglish(projectRoot), { waitUntil: "domcontentloaded" });
+  else await page.goto(inEnglish(page.url()), { waitUntil: "domcontentloaded" });
   await pause(page, 3000);
-  if (!(await clickProjectNav(page, item))) throw new Error(`Flow's left-hand menu is not showing, so "${item}" could not be opened. Show the menu in the Flow window and try again.`);
+  if (!(await clickProjectNav(page, item))) {
+    throw new Error(
+      `Flow's left-hand menu is not showing, so "${item}" could not be opened. Expand project navigation in the Flow window (or leave the character editor), then try again.`,
+    );
+  }
 }
 
 // All media: through the left-hand menu when it shows. When it does not (collapsed and scrolled away), the top bar's
@@ -1465,6 +1829,13 @@ async function materializeRef(
   }
   if (parsed.kind === "flow") {
     const wantedId = parsed.pick.assetId;
+    if (parsed.pick.assetType === "character" && isMediaId(wantedId)) {
+      const displayName = parsed.pick.assetName.trim();
+      if (displayName) {
+        console.error(`[flow-mcp ${job.id}] ${label} character id=${wantedId} name="${displayName}" (stored ref)`);
+        return { name: displayName, exact: false, assetId: wantedId, character: true };
+      }
+    }
     const characters = await loadCharacterCatalog(cache);
     const asCharacter = parsed.pick.assetType === "character" || characters.some((c) => c.characterId === wantedId);
     if (asCharacter) {
@@ -1583,9 +1954,10 @@ export async function runGeneration(job: Job): Promise<string[]> {
     }
   }
 
+  await sealComposerAfterAttach(page);
   await typePrompt(page, s.prompt);
   await dismissOverlays(page);
-  await waitNoBackdrop(page);
+  await waitNoBackdrop(page).catch(() => {});
   const start = page.getByRole("button", { name: "Start generation" });
   if (!(await start.isEnabled())) throw new Error("Flow's Start generation button is disabled; the prompt or inputs were not accepted.");
   await scrollToTop(page);
@@ -1593,38 +1965,16 @@ export async function runGeneration(job: Job): Promise<string[]> {
   await start.click();
 
   const variants = s.variants ?? 1;
-  const fresh = await waitForNewMedia(page, before, variants, s.type === "image" ? IMAGE_TIMEOUT_MS : VIDEO_TIMEOUT_MS, job, s.type === "image" ? "image" : "video");
+  const fresh = await waitForNewMedia(
+    page,
+    before,
+    variants,
+    s.type === "image" ? IMAGE_TIMEOUT_MS : VIDEO_TIMEOUT_MS,
+    job,
+    s.type === "image" ? "image" : "video",
+  );
   job.progress = undefined;
-
-  mkdirSync(s.output_dir, { recursive: true });
-  const files: string[] = [];
-  for (const [i, id] of fresh.entries()) {
-    const label = fresh.length > 1 ? `${s.file_stem}-v${i + 1}` : s.file_stem;
-    // Flow names clips itself and reuses those names, so two takes of one scene come back identically titled and
-    // neither can be found by name afterwards. Renaming each finished tile to the scene's own file stem makes every
-    // later lookup - download, continue, assemble - unambiguous. Best effort: a failed rename must not lose the clip.
-    const newTitle = flowTileRenameTitle(s, label, i, fresh.length);
-    const renamed = await renameTile(page, mediaTile(page, id), newTitle).catch(() => false);
-    if (renamed) job.note = [job.note, `renamed in Flow to ${newTitle}`].filter(Boolean).join(" · ");
-    await pause(page, 800);
-    const stem = join(s.output_dir, label);
-    // A video at rest has no media id, so it is tracked by its title - which the rename just changed. Looking for the
-    // old title failed every such download after 30 s ("locator.waitFor: Timeout 30000ms exceeded ... aria-label=
-    // <the prompt>", reported by a user, 2026-10-15) while the clip sat finished and renamed in Flow.
-    const handle = renamed && id.startsWith("title:") ? `title:${newTitle}` : id;
-    const flowProjectId = projectIdFromUrl(page.url());
-    const title = renamed ? newTitle : id.startsWith("title:") ? id.slice(6) : newTitle;
-    if (s.skip_download) {
-      job.flow_assets ??= [];
-      job.flow_assets.push({ id: handle, title, project_id: flowProjectId });
-      job.note = [job.note, `saved in Flow as ${title} (no local download)`].filter(Boolean).join(" · ");
-      await pause(page, 600);
-      continue;
-    }
-    files.push(...(await downloadMedia(page, handle, stem, s.download_quality)));
-    await pause(page, 1500);
-  }
-  return files;
+  return saveGeneratedTiles(page, job, fresh);
 }
 
 export interface FlowAsset {
@@ -1789,6 +2139,46 @@ export async function listCharacters(): Promise<FlowCharacter[]> {
   return out;
 }
 
+// Studio picker: same character list, no per-character editor for voice; retries until tiles show.
+export async function listCharactersForPicker(): Promise<FlowCharacter[]> {
+  const state = await getFlowState();
+  if (!state.signedIn || !state.inProject) throw new Error(state.hint);
+  const page = await getFlowPage();
+  const projectRoot = page.url().match(/^https:\/\/[^/]+\/project\/[0-9a-f-]{36}/)?.[0];
+  const projectId = openProjectId(page);
+  let out: FlowCharacter[] = [];
+  for (let round = 0; round < 3; round++) {
+    await dismissOverlays(page);
+    await openProjectNav(page, "Characters");
+    await pause(page, 2000 + round * 900);
+    const tileLoc = page.locator("flow-character-tile");
+    await tileLoc.first().waitFor({ state: "visible", timeout: 18_000 }).catch(() => {});
+    await pause(page, 700);
+    let tiles = await scrapeCharacterTiles(page);
+    for (const tile of tiles) {
+      if (tile.id || !projectRoot) continue;
+      const card = page.locator("flow-character-tile").filter({ hasText: tile.displayName }).first();
+      if (!(await card.isVisible().catch(() => false))) continue;
+      await card.click();
+      tile.id = page.url().match(/\/character\/([0-9a-f-]{36})/)?.[1] || "";
+      await leaveCharacterEditor(page);
+      await openProjectNav(page, "Characters");
+      await pause(page, 1200);
+    }
+    tiles = tiles.filter((t) => t.id && t.displayName);
+    out = tiles.map((tile) => ({
+      characterId: tile.id,
+      displayName: tile.displayName,
+      projectId,
+      thumbnail: tile.thumbnail,
+      voice: characterRecord(tile.displayName).voice?.trim() || null,
+    }));
+    if (out.length) break;
+  }
+  await ensureProjectGrid(page).catch(() => {});
+  return out;
+}
+
 // A run that stopped half-way leaves Flow inside a character's editor, where the project navigation is gone. Done keeps
 // whatever is on screen - leaving any other way could drop a finished edit - and then the grid is put back.
 async function leaveCharacterEditor(page: Page): Promise<void> {
@@ -1901,6 +2291,22 @@ export async function listAssets(): Promise<FlowAsset[]> {
   await ensureProjectGrid(page);
   const assets = await scanGrid(page);
   await scrollToTop(page);
+  return assets;
+}
+
+// Studio's From Flow picker: after Characters, the virtual grid often needs an extra settle before scanGrid sees tiles.
+export async function listAssetsForPicker(): Promise<FlowAsset[]> {
+  const state = await getFlowState();
+  if (!state.signedIn || !state.inProject) throw new Error(state.hint);
+  const page = await getFlowPage();
+  let assets: FlowAsset[] = [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await ensureProjectGrid(page);
+    if (attempt > 0) await pause(page, 1000 + attempt * 600);
+    assets = await scanGrid(page);
+    await scrollToTop(page);
+    if (assets.length) break;
+  }
   return assets;
 }
 
@@ -2807,9 +3213,7 @@ export async function runAgentBatch(job: Job): Promise<string[]> {
     if (!ok) failed.push(numberOf(i));
   }
   job.failed_scenes = failed.length ? failed : undefined;
-  step(job, "reading the credit balance");
   const left = await readCredits(page).catch(() => undefined);
-  step(job, undefined);
   files.sort();
   job.note = [
     // What still needs doing first: the panel shows only the start of a long note.
@@ -3195,20 +3599,93 @@ async function openNewSceneBuilder(page: Page): Promise<void> {
   }
   await newScene.click();
   await page.waitForURL(/\/project\/[0-9a-f-]{36}\//, { timeout: 60_000 });
-  await pause(page, 2500);
+  await pause(page, mergePaceMs(2800));
+  await mergeSettle(page, "new scene editor mounted");
 }
 
-async function openSceneBuilderForMerge(page: Page, flowProjectId: string, resumeSceneId?: string): Promise<void> {
-  if (resumeSceneId && /^[0-9a-f-]{36}$/i.test(resumeSceneId)) {
-    if (process.env.FLOW_MCP_DEBUG) console.error(`[flow-mcp merge] resume scene ${resumeSceneId}`);
-    await page.goto(inEnglish(`https://flow.google.com/project/${flowProjectId}/scene/${resumeSceneId}`), {
+function pickResumableSceneAsset(
+  assets: FlowAsset[],
+  compositionName: string,
+  prior?: FlowCompositionRecord,
+): FlowAsset | undefined {
+  if (prior?.composition_id && /^[0-9a-f-]{36}$/i.test(prior.composition_id)) {
+    const byId = assets.find((a) => a.kind === "scene" && a.id === prior.composition_id);
+    if (byId) return byId;
+  }
+  const final = assets.find((a) => a.kind === "scene" && a.name === compositionName);
+  if (final) return final;
+  const untitled = assets.filter((a) => a.kind === "scene" && /untitled/i.test(a.name));
+  if (!untitled.length) return undefined;
+  untitled.sort((a, b) => b.name.localeCompare(a.name, undefined, { sensitivity: "base" }));
+  return untitled[0];
+}
+
+async function ensureFlowProjectPage(page: Page, flowProjectId: string): Promise<void> {
+  if (/\/project\/[0-9a-f-]{36}/i.test(page.url())) return;
+  await page.goto(inEnglish(`https://flow.google.com/project/${flowProjectId}`), { waitUntil: "domcontentloaded" });
+  await pause(page, mergePaceMs(1500));
+  await dismissOverlays(page).catch(() => {});
+  await showAllMedia(page).catch(() => {});
+}
+
+async function openSceneBuilderForMerge(
+  page: Page,
+  flowProjectId: string,
+  resume?: { sceneId?: string; asset?: FlowAsset },
+): Promise<void> {
+  const sceneId = resume?.sceneId?.match(/^[0-9a-f-]{36}$/i)?.[0];
+  if (sceneId) {
+    if (process.env.FLOW_MCP_DEBUG) console.error(`[flow-mcp merge] resume scene ${sceneId}`);
+    await page.goto(inEnglish(`https://flow.google.com/project/${flowProjectId}/scene/${sceneId}`), {
       waitUntil: "domcontentloaded",
     });
-    await pause(page, 1200);
+    await pause(page, mergePaceMs(1400));
+    await mergeSettle(page, "resumed scene editor");
     await dismissOverlays(page).catch(() => {});
+    await waitForSceneEditorReady(page).catch(() => undefined);
+    return;
+  }
+  const asset = resume?.asset;
+  if (asset?.kind === "scene") {
+    const idFromAsset = asset.id && /^[0-9a-f-]{36}$/i.test(asset.id) ? asset.id : undefined;
+    if (idFromAsset) {
+      await page.goto(inEnglish(`https://flow.google.com/project/${flowProjectId}/scene/${idFromAsset}`), {
+        waitUntil: "domcontentloaded",
+      });
+      await pause(page, mergePaceMs(1400));
+      await mergeSettle(page, "resumed scene editor");
+      await dismissOverlays(page).catch(() => {});
+      await waitForSceneEditorReady(page).catch(() => undefined);
+      return;
+    }
+    if (process.env.FLOW_MCP_DEBUG) console.error(`[flow-mcp merge] open scene tile "${asset.name}"`);
+    await dismissOverlays(page);
+    await scrollToTop(page);
+    await showAllMedia(page);
+    const tile = page.locator(`flow-grid-tile-container[aria-label="${asset.name.replace(/"/g, '\\"')}"]`).first();
+    await tile.waitFor({ state: "visible", timeout: 20_000 });
+    await tile.click({ timeout: 15_000 });
+    await page.waitForURL(/\/project\/[0-9a-f-]{36}\/scene\/[0-9a-f-]{36}/i, { timeout: 90_000 });
+    await pause(page, mergePaceMs(1800));
+    await mergeSettle(page, "scene tile opened");
+    await dismissOverlays(page).catch(() => {});
+    await waitForSceneEditorReady(page).catch(() => undefined);
     return;
   }
   await openNewSceneBuilder(page);
+  await waitForSceneEditorReady(page).catch(() => undefined);
+}
+
+async function ensureMergeSceneEditor(page: Page, flowProjectId: string, sceneId?: string): Promise<void> {
+  if (/\/scene\/[0-9a-f-]{36}/i.test(page.url())) return;
+  if (sceneId && /^[0-9a-f-]{36}$/i.test(sceneId)) {
+    await page.goto(inEnglish(`https://flow.google.com/project/${flowProjectId}/scene/${sceneId}`), {
+      waitUntil: "domcontentloaded",
+    });
+    await pause(page, mergePaceMs(1400));
+    await mergeSettle(page, "back on scene editor");
+    await dismissOverlays(page).catch(() => {});
+  }
 }
 
 function projectIdFromUrl(url: string): string | undefined {
@@ -3219,8 +3696,9 @@ function sceneIdFromUrl(url: string): string | undefined {
   return url.match(/\/scene\/([0-9a-f-]{36})/)?.[1];
 }
 
-/** Build a Final scene in Flow — saves on Flow only; does not download. */
+/** Build a merged scene in Flow (e.g. 0001-Final) — saves on Flow only; does not download. */
 export async function mergeClipsIntoFlowScene(input: FlowMergeInput): Promise<FlowCompositionRecord> {
+  const compositionName = filmFinalSceneName(input.tedverseProject);
   const titles = input.clips.map((c, i) => ({
     order: i + 1,
     stem: c.stem,
@@ -3234,7 +3712,7 @@ export async function mergeClipsIntoFlowScene(input: FlowMergeInput): Promise<Fl
       tedverse_project: input.tedverseProject,
       flow_project_id: "00000000-0000-0000-0000-000000000001",
       composition_id: "00000000-0000-0000-0000-000000000002",
-      composition_name: "Final",
+      composition_name: compositionName,
       scene_assets: titles,
       scene_count: titles.length,
       merge_status: "completed",
@@ -3249,12 +3727,12 @@ export async function mergeClipsIntoFlowScene(input: FlowMergeInput): Promise<Fl
 
   const state = await getFlowState();
   if (!state.signedIn || !state.inProject) throw new Error(state.hint ?? "Flow is not ready.");
-  const page = await getFlowPage();
-  await ensureProjectGrid(page);
-  const flowProjectId = projectIdFromUrl(page.url());
-  if (!flowProjectId) throw new Error("Could not read the open Flow project id.");
+    const page = await getFlowPage();
+    await ensureProjectGrid(page);
+    let flowProjectId = projectIdFromUrl(page.url());
+    if (!flowProjectId) throw new Error("Could not read the open Flow project id. Open your Teddy Ngo project in Flow, then retry merge.");
 
-  const assets = await scanGrid(page);
+    const assets = await scanGrid(page);
   const missing = titles.filter((t) => !assets.some((a) => a.kind === "video" && optionIsExactMedia(a.name, t.flow_title)));
   if (missing.length) {
     throw new Error(
@@ -3266,7 +3744,7 @@ export async function mergeClipsIntoFlowScene(input: FlowMergeInput): Promise<Fl
     tedverse_project: input.tedverseProject,
     flow_project_id: flowProjectId,
     composition_id: "",
-    composition_name: "Final",
+    composition_name: compositionName,
     scene_assets: titles,
     scene_count: titles.length,
     merge_status: "in_progress",
@@ -3279,50 +3757,66 @@ export async function mergeClipsIntoFlowScene(input: FlowMergeInput): Promise<Fl
 
   const prior = getComposition(input.tedverseProject);
   const resumeSceneId =
-    prior?.flow_project_id === flowProjectId && prior.composition_id && prior.merge_status !== "completed"
+    prior?.flow_project_id === flowProjectId && prior.composition_id && /^[0-9a-f-]{36}$/i.test(prior.composition_id)
       ? prior.composition_id
       : undefined;
+  const resumeAsset =
+    prior?.flow_project_id === flowProjectId && prior.merge_status !== "completed"
+      ? pickResumableSceneAsset(assets, compositionName, prior)
+      : undefined;
 
-  try {
-    await openSceneBuilderForMerge(page, flowProjectId, resumeSceneId);
-    await setSceneBuilderAspectRatio(page, rec.aspect_ratio);
-    const wantCount = titles.length;
-    if (await timelineHasEnoughClips(page, wantCount)) {
-      if (process.env.FLOW_MCP_DEBUG) {
-        console.error(`[flow-mcp merge] timeline already has ${wantCount} clip(s) — skip insert`);
-      }
-    } else {
-      let timeline = await sceneTimelineTitles(page);
-      for (const clip of titles) {
-        if (await timelineHasEnoughClips(page, wantCount)) break;
-        if (timelineHasClip(timeline, clip.flow_title)) {
-          if (process.env.FLOW_MCP_DEBUG) console.error(`[flow-mcp merge] already merged: ${clip.flow_title}`);
-          continue;
-        }
-        const count = await sceneTimelineClipCount(page);
-        await insertSceneBuilderClip(page, clip.flow_title, { isFirst: count === 0 });
-        timeline = await sceneTimelineTitles(page);
-      }
-    }
-    if (!(await timelineHasEnoughClips(page, wantCount))) {
-      const have = await sceneTimelineClipCount(page);
-      throw new Error(`Timeline has ${have} clip(s) but ${wantCount} were expected. Add the missing clips in Flow and retry.`);
-    }
+    try {
+    await ensureFlowProjectPage(page, flowProjectId);
+    await openSceneBuilderForMerge(page, flowProjectId, {
+      sceneId: resumeSceneId,
+      asset: resumeSceneId ? undefined : resumeAsset,
+    });
     let sceneId = sceneIdFromUrl(page.url());
+    if (sceneId) {
+      rec.composition_id = sceneId;
+      saveComposition(rec);
+    }
+    await waitForSceneEditorReady(page).catch((err) => {
+      if (process.env.FLOW_MCP_DEBUG) console.error(`[flow-mcp merge] scene editor wait: ${err}`);
+    });
+    const aspectNote = await setSceneBuilderAspectRatio(page, rec.aspect_ratio);
+    if (aspectNote && process.env.FLOW_MCP_DEBUG) console.error(`[flow-mcp merge] ${aspectNote}`);
+    const wantCount = titles.length;
+    let timeline = await sceneTimelineTitles(page);
+    for (const clip of titles) {
+      if (timelineHasClip(timeline, clip.flow_title)) {
+        if (process.env.FLOW_MCP_DEBUG) console.error(`[flow-mcp merge] already on timeline: ${clip.flow_title}`);
+        continue;
+      }
+      const count = await sceneTimelineClipCount(page);
+      await insertSceneBuilderClip(page, clip.flow_title, { isFirst: count === 0 });
+      timeline = await sceneTimelineTitles(page);
+    }
+    const finalTitles = await sceneTimelineTitles(page);
+    const missingOnTimeline = titles.filter((t) => !timelineHasClip(finalTitles, t.flow_title));
+    if (missingOnTimeline.length) {
+      throw new Error(
+        `Still missing ${missingOnTimeline.length} clip(s) on the timeline: ${missingOnTimeline.map((m) => m.flow_title).join(", ")}. Open the scene in Flow, add manually, then Retry merge.`,
+      );
+    }
+    sceneId = sceneIdFromUrl(page.url()) ?? sceneId;
+    await ensureMergeSceneEditor(page, flowProjectId, sceneId);
     await renameSceneBuilderTitle(page, rec.composition_name).catch(async () => {
       const name = page.getByRole("textbox", { name: /Editable text/i }).first();
       if (await name.isVisible({ timeout: 3000 }).catch(() => false)) {
         await name.fill(rec.composition_name);
         await name.press("Enter").catch(() => undefined);
-        await pause(page, 800);
+        await pause(page, mergePaceMs(900));
       }
     });
+    await mergeSettle(page, "after rename");
     const done = page
       .getByRole("button", { name: /Done editing scene|Done editing|^Done$/i })
       .first();
     if (await done.isVisible({ timeout: 8000 }).catch(() => false)) {
       await done.click({ timeout: 10_000 }).catch(() => {});
-      await pause(page, 1500);
+      await pause(page, mergePaceMs(2000));
+      await mergeSettle(page, "after Done");
     }
     if (!sceneId) sceneId = sceneIdFromUrl(page.url());
     const back = page.getByRole("button", { name: "Back button to go to previous page" });
@@ -3332,11 +3826,13 @@ export async function mergeClipsIntoFlowScene(input: FlowMergeInput): Promise<Fl
     }
     await ensureProjectGrid(page).catch(() => {});
     if (!sceneId) {
-      const finalScene = (await scanGrid(page)).find((a) => a.kind === "scene" && a.name === "Final");
+      const finalScene = (await scanGrid(page)).find((a) => a.kind === "scene" && a.name === rec.composition_name);
       sceneId = finalScene?.id?.replace(/^title:/, "");
     }
     if (!sceneId || !/^[0-9a-f-]{36}$/i.test(sceneId)) {
-      throw new Error('Saved the scene but could not read its composition id. Open the "Final" scene in Flow and retry.');
+      throw new Error(
+        `Saved the scene but could not read its composition id. Open the "${rec.composition_name}" scene in Flow and retry.`,
+      );
     }
     rec.composition_id = sceneId;
     rec.merge_status = "completed";
@@ -3395,10 +3891,11 @@ export async function downloadFlowComposition(record: FlowCompositionRecord, tar
   return saved[0]!;
 }
 
-/** Resolve final.mp4 for Publish: local file, saved composition, or a Flow scene named "Final". */
+/** Resolve final.mp4 for Publish: local file, saved composition, or a Flow scene (e.g. 0001-Final). */
 export async function preparePublishFinal(
   flowProjectId: string,
   outputDir: string,
+  tedverseProject?: string,
 ): Promise<{ path: string; ready: boolean; note: string }> {
   const state = await getFlowState(false);
   if (!state.signedIn) throw new Error(state.hint ?? "Not signed in to Flow.");
@@ -3408,23 +3905,29 @@ export async function preparePublishFinal(
     return { path: finalPath, ready: true, note: "Using final.mp4 on this PC." };
   }
 
-  const comp = getCompositionByFlowId(flowProjectId);
+  const comp =
+    (tedverseProject ? getComposition(tedverseProject) : undefined) ?? getCompositionByFlowId(flowProjectId);
+  const sceneName = comp?.composition_name ?? (tedverseProject ? filmFinalSceneName(tedverseProject) : "Final");
   if (comp?.composition_id && comp.merge_status === "completed") {
     const stem = join(outputDir, "final");
     const path = await downloadFlowComposition(comp, stem);
-    return { path, ready: true, note: "Downloaded Final composition from Flow." };
+    return { path, ready: true, note: `Downloaded "${sceneName}" from Flow.` };
   }
 
   await openFlowProject(flowProjectId);
   const page = await getFlowPage();
   await ensureProjectGrid(page);
   const assets = await scanGrid(page);
-  const finalScene = assets.find((a) => a.kind === "scene" && /^final$/i.test(a.name.trim()));
+  const finalScene = assets.find(
+    (a) =>
+      a.kind === "scene" &&
+      (a.name === sceneName || (!tedverseProject && /^final$/i.test(a.name.trim()))),
+  );
   if (!finalScene) {
     return {
       path: "",
       ready: false,
-      note: 'No scene named "Final" in this Flow project. Finish merge in Auto Film first.',
+      note: `No scene named "${sceneName}" in this Flow project. Finish merge in Auto Film first.`,
     };
   }
   const stem = join(outputDir, "final");
