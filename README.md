@@ -1,6 +1,6 @@
 # TedVerse
 
-**TedVerse** — *One Prompt. Infinite Worlds.* · AI Creative Studio · *Crafted by Teddy Dang*
+**TedVerse** — *One Prompt. Infinite Worlds.* · AI Creative Studio · *Crafted by Teddy Ngo*
 
 This repository is **flow-mcp**, the local engine behind TedVerse. It drives **Google Flow** (flow.google.com)
 from Claude, Codex or any other MCP app, or from the TedVerse control panel at `http://127.0.0.1:8787`,

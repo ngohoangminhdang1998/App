@@ -1,6 +1,8 @@
 // Local script splitter for Auto Film. No network, no rewriting. Headers must be their own line.
 // A script with no header is not split: guessing paragraph boundaries would drop or merge dialogue.
 
+import { validateScenePolicy } from "./film-policy.js";
+
 export const FILM_RATES: Record<string, number | Record<string, Record<number, number>>> = {
   "Omni 1.1 Flash": { "360p": { 4: 4, 6: 5, 8: 6, 10: 7 }, "720p": { 4: 7, 6: 10, 8: 12, 10: 15 } },
   "Veo 3.1 - Lite": 10,
@@ -83,8 +85,62 @@ export function parseFilmScript(script: string): ParseResult {
         `Scene ${sc.number}: wording looks like real news ("breaking news", "news report", etc.). Flow often refuses that. Reframe as fictional comedy — e.g. "staged satire sketch", "impossible fantasy snow in Saigon", no TV news graphics.`,
       );
     }
+    const policy = validateScenePolicy(sc.prompt, sc.number);
+    for (const f of policy.findings) {
+      if (f.severity === "block" || f.severity === "warn") {
+        warnings.push(`Scene ${sc.number} policy [${policy.status}]: ${f.message}`);
+      }
+    }
   }
   return { scenes, warnings, preamble };
+}
+
+/** Vietnamese diacritics — used to pick dialogue, not English prompt lines. */
+const VIET_MARK =
+  /[ăâđêôơưĂÂĐÊÔƠƯàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]/;
+
+function collapseLine(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+function hasVietnamese(s: string): boolean {
+  return VIET_MARK.test(s) || VIET_MARK.test(s.normalize("NFC"));
+}
+
+/** First Vietnamese sentence or dialogue line inside a scene prompt (quotes, then speaker lines). */
+export function extractFirstVietnameseSentence(text: string): string {
+  const body = String(text ?? "");
+  if (!body.trim()) return "";
+
+  const quoteRe = /["'“”]([^"'“”\n]{2,})["'“”]/g;
+  let m: RegExpExecArray | null;
+  while ((m = quoteRe.exec(body)) !== null) {
+    const q = m[1].trim();
+    if (hasVietnamese(q)) return collapseLine(q);
+  }
+
+  const speakerRe = /^(?:FRIEND|TEDDY|[A-Z][A-Z0-9 _-]{0,24}):\s*(.+)$/gim;
+  while ((m = speakerRe.exec(body)) !== null) {
+    let line = m[1].trim().replace(/^["'“”‘’]|["'“”‘’]$/g, "");
+    const inQuote = /^["'“”](.+?)["'“”]$/.exec(line);
+    if (inQuote) line = inQuote[1].trim();
+    if (hasVietnamese(line)) return collapseLine(line);
+  }
+
+  const chunks = body.split(/(?<=[.!?…])\s+|\n+/);
+  for (const chunk of chunks) {
+    const t = chunk.trim().replace(/^["']|["']$/g, "");
+    if (t.length >= 3 && hasVietnamese(t)) return collapseLine(t);
+  }
+  return "";
+}
+
+/** Hook for Auto Film: first Vietnamese line in scene 1 (or the first scene block if there is no scene 1). */
+export function hookFromFilmScript(script: string): string {
+  const { scenes } = parseFilmScript(script);
+  if (!scenes.length) return "";
+  const scene1 = scenes.find((s) => s.number === 1) ?? scenes[0];
+  return extractFirstVietnameseSentence(scene1.prompt);
 }
 
 export interface FilmCast {
@@ -141,12 +197,14 @@ export function statusBadge(status: string): string {
   return "PENDING";
 }
 
-/** Play order for merge: numeric Flow title (1,2,3…) beats scene number, then digits in stem. */
+/** Play order for merge: 0001-2 → 2, then bare numeric titles (1,2,3…), then stem digits. */
 export function mergePlayOrderKey(
   clip: { number?: number; flow_title?: string; flowTitle?: string; stem?: string },
   fallbackIndex = 0,
 ): number {
   const title = (clip.flow_title || clip.flowTitle || "").trim();
+  const batch = title.match(/^(\d{4})-(\d+)$/);
+  if (batch) return Number(batch[2]);
   if (/^\d+$/.test(title)) return Number(title);
   const leading = title.match(/^(\d+)\b/);
   if (leading) return Number(leading[1]);
@@ -190,6 +248,21 @@ export function sceneReadyOnFlow(scene: {
   if ((st === "completed" || st === "download_failed") && hasRef) return true;
   return false;
 }
+
+/** TedVerse Prompt Format V2 — explicit LANGUAGE AND AUDIO + AUDIO blocks (tested for Vietnamese on Google Flow). */
+export function isPromptFormatV2(prompt: string): boolean {
+  const t = String(prompt ?? "").replace(/\r\n/g, "\n");
+  return /\bLANGUAGE AND AUDIO\s*:/i.test(t) && /\bAUDIO\s*:/i.test(t);
+}
+
+export {
+  PROMPT_V3_VISUAL_TEXT_RESTRICTION,
+  PROMPT_V3_NO_TEXT_FOOTER,
+  promptHasNoSubtitlesClause,
+  promptHasVisualTextRestrictionBlock,
+  promptHasFullNoTextPolicy,
+  ensurePromptVisualTextRestriction,
+} from "./film-prompt-text.js";
 
 // First two lines of the prompt. Anything past that, or a very long line, ends with "...".
 export function promptPreview(prompt: string): string {
@@ -441,9 +514,20 @@ export function sceneAction(
   if (!scene.selected || scene.status === "skipped") return "skip";
   if (sceneReadyOnFlow(scene)) return "skip";
   if (scene.status === "completed") return "skip";
-  if (scene.status === "generating" && scene.jobId) return "poll";
+  if ((scene.status === "generating" || scene.status === "waiting_flow") && scene.jobId) return "poll";
   if (scene.status === "generating") return "blocked";
   if (!scene.prompt.trim()) return "empty";
   if (overBudget(budget.spent, budget.next, budget.budget)) return "over-budget";
   return "submit";
 }
+
+export {
+  isPromptFormatV3,
+  validateFilmScript,
+  validateScenePolicy,
+  policyStatusLabel,
+  type PolicyFinding,
+  type PolicyValidationStatus,
+  type ScenePolicyValidation,
+  type FilmPolicySummary,
+} from "./film-policy.js";

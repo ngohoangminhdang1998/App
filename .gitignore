@@ -6,3 +6,6 @@ dist
 *.key
 .DS_Store
 .claude/
+_backup-merge-*/
+merge-retry-frames/
+merge-retry-frames2/

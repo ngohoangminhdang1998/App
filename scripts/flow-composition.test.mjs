@@ -25,6 +25,13 @@ assert.equal(rec.composition_name, "Final");
 assert.equal(rec.scene_count, 2);
 assert.equal(getComposition("Demo")?.composition_id, rec.composition_id);
 
+const recFilm = await mergeClipsIntoFlowScene({
+  tedverseProject: "0001",
+  clips: [{ stem: "scene-01", flow_title: "0001-1" }],
+});
+assert.equal(recFilm.composition_name, "0001-Final");
+assert.equal(getComposition("0001")?.composition_name, "0001-Final");
+
 const stem = join(home, "out", "Demo", "Demo-final");
 const path = await downloadFlowComposition(rec, stem);
 assert.match(path, /\.mp4$/i);

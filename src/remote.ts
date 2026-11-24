@@ -31,6 +31,7 @@ export class RemoteCore implements Core {
   new_project = (a: unknown) => call("new_project", a);
   character = (a: unknown) => call("character", a);
   characters = () => call("characters", {});
+  picker_list = () => call("picker_list", {});
   character_edit = (a: unknown) => call("character_edit", a);
   edit = (a: unknown) => call("edit", a);
   trash = (a: unknown) => call("trash", a);
@@ -44,6 +45,11 @@ export class RemoteCore implements Core {
   publish_status = (a: unknown) => call("publish_status", a);
   publish_retry = (a: unknown) => call("publish_retry", a);
   publish_history = (a: unknown) => call("publish_history", a ?? {});
+  publish_settings_get = () => call("publish_settings_get", {});
+  publish_settings_save = (a: unknown) => call("publish_settings_save", a);
+  publish_oauth_begin = (a: unknown) => call("publish_oauth_begin", a);
+  publish_oauth_disconnect = (a: unknown) => call("publish_oauth_disconnect", a);
+  open_local_path = (a: unknown) => call("open_local_path", a);
   flow_merge = (a: unknown) => call("flow_merge", a);
   flow_composition = (a: unknown) => call("flow_composition", a);
   flow_recover_film_scenes = (a: unknown) => call("flow_recover_film_scenes", a);
@@ -52,6 +58,12 @@ export class RemoteCore implements Core {
   provider_select = (a: unknown) => call("provider_select", a);
   muse_status = () => call("muse_status", {});
   muse_open_login = (a: unknown) => call("muse_open_login", a ?? {});
+  film_allocate = () => call("film_allocate", {});
+  film_numbers = () => call("film_numbers", {});
+  film_peek_no = () => call("film_peek_no", {});
+  film_ensure_next = (a: unknown) => call("film_ensure_next", a);
+  film_history = (a?: unknown) => call("film_history", a ?? {});
+  film_history_delete = (a?: unknown) => call("film_history_delete", a ?? {});
   // Captions, like narration, run here: they never touch the Flow Chrome.
   transcribe = transcribeHere;
   caption_preview = captionPreviewHere;
