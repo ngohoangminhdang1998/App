@@ -1518,7 +1518,7 @@ export class LocalCore implements Core {
       resolved = await fetchFlowVideoStaging(flow_project_id, flow_video_id);
       ephemeral = true;
     }
-    if (!resolved) throw new Error("Pick a merged film from Film Histories (local .mp4), then Publish.");
+    if (!resolved) throw new Error("Pick a merged film from the Auto Film list (Done, local .mp4), then Publish.");
     if (resolved && !ephemeral) {
       const root = resolve(OUTPUT_ROOT);
       const underRoot = !relative(root, resolved).startsWith("..") && !isAbsolute(relative(root, resolved));

@@ -182,29 +182,12 @@ table.pub-history td.plat{text-align:center;font-weight:600;white-space:nowrap}
 table.pub-history td.plat.ok{color:var(--good)}
 table.pub-history td.plat.fail{color:var(--bad)}
 table.pub-history td.plat.muted{color:var(--text-muted);font-weight:400}
-#af_film_history{table-layout:fixed;width:100%}
-#af_film_history col.col-sel{width:2.35rem}
-#af_film_history th.col-sel,#af_film_history td.col-sel{width:2.35rem;text-align:center;padding:4px 6px;vertical-align:middle}
-#af_film_history col.col-no{width:3.25rem}
-#af_film_history col.col-date{width:10.25rem}
-#af_film_history col.col-plat{width:4rem}
-#af_film_history{table-layout:auto;min-width:100%;width:max-content;max-width:none}
-#af_film_history col.col-hook{min-width:10rem}
-#af_film_history col.col-path{min-width:22rem;width:auto}
-#af_film_history th.col-path,#af_film_history td.col-path{font-size:11px;line-height:1.35;white-space:nowrap;vertical-align:middle;padding:6px 10px;font-family:ui-monospace,Consolas,monospace;max-width:none}
-#af_film_history_card .pub-history-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 a.hist-path-link{color:var(--primary);text-decoration:underline;text-decoration-color:rgba(168,85,247,.45);text-underline-offset:2px;cursor:pointer;font-weight:500}
 a.hist-path-link:hover{text-decoration-color:var(--primary)}
-#af_film_history th.col-no,#af_film_history td.col-no{width:3.25rem;padding-left:10px;padding-right:6px;text-align:center;white-space:nowrap}
-#af_film_history th.col-date,#af_film_history td.col-date{width:10.25rem;min-width:10.25rem;font-size:12px;white-space:nowrap;padding-right:8px}
-#af_film_history th.col-hook,#af_film_history td.col-hook{width:auto;line-height:1.4;word-break:break-word}
-#af_film_history th.col-plat,#af_film_history td.col-plat{width:4rem;padding-left:4px;padding-right:4px;font-size:11px;white-space:nowrap}
 table.pub-history.is-empty thead{display:none}
 table.pub-history tbody.empty-state tr{display:block;width:100%}
 table.pub-history tbody.empty-state td.empty-row-cell{display:block;width:100%;box-sizing:border-box;white-space:normal;text-align:left;line-height:1.45;padding:14px 12px;border-bottom:0;color:var(--text-muted)}
 table.pub-history tbody.empty-state td.empty-row-cell.err{color:var(--bad)}
-#af_film_history_card .empty{margin:0;display:block;line-height:1.5;color:var(--text-muted)}
-#af_film_history_card .empty.err{color:var(--bad)}
 .af-no-hook-row{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:var(--space-3) var(--space-4);align-items:end;margin-bottom:var(--space-2)}
 .af-no-hook-row .f{margin-bottom:6px}
 .af-no-hook-row #af_project{text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.04em;padding-left:8px;padding-right:8px}
@@ -436,6 +419,7 @@ button.af-lib-open:hover{color:#c4b5fd}
 #af_library_table tbody tr.af-lib-row td.col-sel{cursor:default}
 #af_library_table th.col-path,#af_library_table td.col-path{font-size:11px;line-height:1.35;white-space:nowrap;font-family:ui-monospace,Consolas,monospace;max-width:14rem;overflow:hidden;text-overflow:ellipsis}
 #af_library_table td.col-path a.hist-path-link{color:var(--primary);text-decoration:underline}
+#af_library_table th.col-plat,#af_library_table td.col-plat{width:3.25rem;text-align:center;padding:4px 6px;font-size:11px}
 .af-editor-topbar{align-items:center;gap:var(--space-3)}
 .af-editor-title{font:600 14px var(--font);color:var(--text-muted)}
 .af-create-scene-note strong{color:var(--primary)}
@@ -715,7 +699,7 @@ button.af-lib-open:hover{color:#c4b5fd}
         <details class="studio-sect" id="publish_sect" open>
           <summary><span class="sect-title">Publish</span><small class="sect-sum-end">manual · browser</small></summary>
           <div class="studio-sect-body">
-        <p class="lede">Pick a merged film from <strong>Film Histories</strong> on this PC. Upload qua <strong>Settings → Publish API</strong> hoặc Playwright (browser). API: <strong>Publish now</strong> only; lên lịch vẫn dùng browser.</p>
+        <p class="lede">Pick a merged film from the <strong>Auto Film</strong> list (status <strong>Done</strong>). Upload qua <strong>Settings → Publish API</strong> hoặc Playwright (browser). API: <strong>Publish now</strong> only; lên lịch vẫn dùng browser.</p>
         <div class="card">
           <label class="f" for="pub_video">Film</label>
           <select id="pub_video"></select>
@@ -746,31 +730,6 @@ button.af-lib-open:hover{color:#c4b5fd}
           </div>
           <p class="empty" id="pub_out" style="margin-top:12px"></p>
         </div>
-          </div>
-        </details>
-        <details class="studio-sect" id="pub_history_sect" open>
-          <summary><span class="sect-title">Publish history</span><small class="sect-sum-end">local log</small></summary>
-          <div class="studio-sect-body">
-            <div class="card" style="padding:0;overflow:hidden">
-              <div class="pub-history-wrap" style="margin:0;border:0;border-radius:0">
-                <table class="pub-history is-empty" id="pub_history">
-                  <thead>
-                    <tr>
-                      <th>No</th>
-                      <th>Created</th>
-                      <th>Project</th>
-                      <th>Publish date</th>
-                      <th>TikTok</th>
-                      <th>YouTube</th>
-                      <th>Facebook</th>
-                    </tr>
-                  </thead>
-                  <tbody id="pub_history_body" class="empty-state">
-                    <tr class="pub-history-empty"><td colspan="7" class="empty-row-cell">Loading…</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
         </details>
       </section>
@@ -897,18 +856,6 @@ button.af-lib-open:hover{color:#c4b5fd}
         <summary><span class="sect-title">Monitor</span></summary>
         <div class="studio-sect-body">
           <div class="card"><div id="pacing"></div><div id="jobs"><p class="empty">Nothing queued yet.</p></div></div>
-        </div>
-      </details>
-      <details class="studio-sect" id="af_film_history_sect">
-        <summary><span class="sect-title">Film Histories</span><small class="sect-sum-end">after merge</small></summary>
-        <div class="studio-sect-body">
-          <div class="card" id="af_film_history_card">
-            <div class="rowbtns" style="margin-bottom:8px">
-              <button type="button" class="btn small ghost" id="af_film_history_export">Export CSV</button>
-              <button type="button" class="btn small ghost" id="af_film_history_delete" title="Delete ticked rows, or every row if none are ticked">Delete</button>
-            </div>
-            <div id="af_film_history_host"><p class="empty">Loading…</p></div>
-          </div>
         </div>
       </details>
     </aside>
@@ -1357,6 +1304,7 @@ const filmBlank = () => ({
   publishStatus: "",
   mergeFailed: false,
   lastMergeError: "",
+  publishPlatforms: { tiktok: "—", youtube: "—", facebook: "—" },
 });
 let film = filmBlank();
 const filmRun = { running: false, paused: false, stop: false, merging: false, mergeAbort: null };
@@ -1393,7 +1341,6 @@ function showTab(name) {
   if (cols) cols.classList.toggle("cols-single", !filmSide);
   if (name === "film") {
     applyAutoFilmView();
-    void loadFilmHistory();
     if (flowSignedIn && ACTIVE_PROVIDER !== "muse") schedulePublishPrefetch(800);
   }
   if (name === "publish") refreshPublishTab();
@@ -1902,9 +1849,9 @@ async function ensureFilmNumber({ force = false } = {}) {
     if (note) toast(note, true);
     return true;
   };
-  if (force && LIVE) {
+  if (force) {
     try {
-      await loadFilmHistory();
+      if (!autoFilmLibraryCache.length) await renderAutoFilmLibrary();
     } catch { /* optional */ }
   }
   if (LIVE) {
@@ -1918,7 +1865,10 @@ async function ensureFilmNumber({ force = false } = {}) {
       console.warn("[TedVerse] film_next_from_history failed:", err);
     }
   }
-  if (!applyNo(localFilmNoFromHistory(filmHistoryCache), LIVE ? "No from local list only. Run npm run build and restart Studio (npm run studio) for film history sync." : null)) {
+  const localRows = (autoFilmLibraryCache.length ? autoFilmLibraryCache : await listStoredAutoFilms())
+    .map((f) => ({ no: f.project }))
+    .filter((r) => isFilmBatchNo(r.no));
+  if (!applyNo(localFilmNoFromHistory(localRows), LIVE ? "No from Auto Film list only — connect TedVerse for server sync." : null)) {
     toast("Could not assign film No.", true);
   }
 }
@@ -2667,6 +2617,7 @@ function mergeSavedFilm(saved) {
   if (!merged.hook && merged.script?.trim() && window.FilmScript?.hookFromFilmScript) {
     merged.hook = window.FilmScript.hookFromFilmScript(merged.script.trim());
   }
+  merged.publishPlatforms = normalizePublishPlatforms(merged.publishPlatforms);
   return merged;
 }
 async function migrateFilmStore() {
@@ -2815,10 +2766,111 @@ function bindAutoFilmLibrarySelection(root) {
     });
   });
 }
+const EMPTY_PUBLISH_PLAT = { tiktok: "—", youtube: "—", facebook: "—" };
+const PUBLISH_PLAT_CODES = new Set(["—", "wait", "run", "ok", "fail", "auth", "unknown"]);
+function normalizePublishPlatforms(src) {
+  const base = { ...EMPTY_PUBLISH_PLAT };
+  if (!src || typeof src !== "object") return base;
+  for (const k of ["tiktok", "youtube", "facebook"]) {
+    const v = src[k];
+    if (v && PUBLISH_PLAT_CODES.has(v)) base[k] = v;
+  }
+  return base;
+}
+function filmNoFromPublishProject(project) {
+  const p = String(project || "").trim();
+  if (isFilmBatchNo(p)) return p;
+  const m = p.match(/\b(\d{4})\b/);
+  return m ? m[1] : "";
+}
+function publishStatusToPlatformCell(status) {
+  switch (status) {
+    case "published":
+    case "scheduled":
+      return "ok";
+    case "failed":
+      return "fail";
+    case "needs_attention":
+    case "auth_required":
+      return "auth";
+    case "unknown":
+      return "unknown";
+    case "preparing":
+    case "uploading":
+    case "processing":
+    case "publishing":
+    case "scheduling":
+      return "run";
+    default:
+      return "—";
+  }
+}
+function platformsFromPublishRecord(rec) {
+  const out = { ...EMPTY_PUBLISH_PLAT };
+  if (!rec?.platforms) return out;
+  for (const id of ["tiktok", "youtube", "facebook"]) {
+    const row = rec.platforms[id];
+    if (!row || row.status === "not_published") continue;
+    out[id] = publishStatusToPlatformCell(row.status);
+  }
+  return out;
+}
+async function fetchLatestPublishPlatformsByNo() {
+  const map = new Map();
+  if (!LIVE) return map;
+  try {
+    const { rows } = await api("publish_history", { limit: 500 });
+    for (const r of rows || []) {
+      const no = filmNoFromPublishProject(r.project);
+      if (!no || map.has(no)) continue;
+      map.set(no, { tiktok: r.tiktok, youtube: r.youtube, facebook: r.facebook });
+    }
+  } catch { /* optional */ }
+  return map;
+}
+async function syncAutoFilmPublishPlatformsFromServer() {
+  const byNo = await fetchLatestPublishPlatformsByNo();
+  if (!byNo.size) return;
+  const db = await filmDb();
+  const films = await listStoredAutoFilms();
+  for (const f of films) {
+    const no = String(f.project || "").trim();
+    if (!isFilmBatchNo(no)) continue;
+    const plat = byNo.get(no);
+    if (!plat) continue;
+    const next = normalizePublishPlatforms(plat);
+    const prev = normalizePublishPlatforms(f.publishPlatforms);
+    if (JSON.stringify(prev) === JSON.stringify(next)) continue;
+    const copy = mergeSavedFilm(f);
+    copy.publishPlatforms = next;
+    await idbPutFilm(db, copy, copy.id);
+  }
+}
+async function savePublishPlatformsOnDraft(no, platforms) {
+  if (!isFilmBatchNo(no)) return;
+  const db = await filmDb();
+  const f = (await listStoredAutoFilms()).find((x) => String(x.project).trim() === no);
+  if (!f) return;
+  const next = normalizePublishPlatforms(platforms);
+  const prev = normalizePublishPlatforms(f.publishPlatforms);
+  if (JSON.stringify(prev) === JSON.stringify(next)) return;
+  const copy = mergeSavedFilm(f);
+  copy.publishPlatforms = next;
+  await idbPutFilm(db, copy, copy.id);
+  const ix = autoFilmLibraryCache.findIndex((x) => x.id === copy.id);
+  if (ix >= 0) autoFilmLibraryCache[ix] = copy;
+}
+async function persistPublishPlatformsForActiveFilm() {
+  const no = publishFilmNo() || String(film.project || "").trim();
+  if (!publishRecord || !isFilmBatchNo(no)) return;
+  await savePublishPlatformsOnDraft(no, platformsFromPublishRecord(publishRecord));
+  if (S.tab === "film" && S.autoFilmView === "list") await renderAutoFilmLibrary();
+}
 async function renderAutoFilmLibrary() {
   const host = $("#af_library_host");
   if (!host) return;
   try {
+    if (LIVE) await syncAutoFilmPublishPlatformsFromServer();
     const rows = await listStoredAutoFilms();
     autoFilmLibraryCache = rows;
     if (!rows.length) {
@@ -2829,7 +2881,7 @@ async function renderAutoFilmLibrary() {
     host.innerHTML = `<div class="pub-history-wrap"><table class="pub-history" id="af_library_table">
       <thead><tr>
         <th class="col-sel"><input type="checkbox" id="af_library_head" aria-label="Select all drafts"></th>
-        <th>No</th><th class="col-hook">Hook</th><th>Scenes</th><th>Updated</th><th>Status</th><th class="col-path">Path</th>
+        <th>No</th><th class="col-hook">Hook</th><th>Scenes</th><th class="col-plat">TikTok</th><th class="col-plat">YouTube</th><th class="col-plat">Facebook</th><th>Updated</th><th>Status</th><th class="col-path">Path</th>
       </tr></thead>
       <tbody>${rows
         .map((f) => {
@@ -2838,6 +2890,7 @@ async function renderAutoFilmLibrary() {
           const noBtn = `<button type="button" class="af-lib-open" data-af-id="${esc(f.id)}">${esc(noRaw)}</button>`;
           const hookBtn = `<button type="button" class="af-lib-open" data-af-id="${esc(f.id)}">${esc(hookRaw)}</button>`;
           const n = (f.scenes || []).length;
+          const plat = normalizePublishPlatforms(f.publishPlatforms);
           const wf = autoFilmWorkflowStatusForList(f);
           const stBadge = autoFilmStatusBadge(wf);
           const up = esc(formatFilmUpdated(f.updatedAt));
@@ -2847,6 +2900,9 @@ async function renderAutoFilmLibrary() {
             <td class="num">${noBtn}</td>
             <td class="col-hook">${hookBtn}</td>
             <td>${n}</td>
+            ${historyPlatCell(plat.tiktok)}
+            ${historyPlatCell(plat.youtube)}
+            ${historyPlatCell(plat.facebook)}
             <td>${up}</td>
             <td>${stBadge}</td>
             ${autoFilmDraftPathCell(autoFilmDraftPath(f))}
@@ -2854,6 +2910,7 @@ async function renderAutoFilmLibrary() {
         })
         .join("")}</tbody></table></div>`;
     bindAutoFilmLibrarySelection(host);
+    autoFilmPublishCache = publishRowsFromAutoFilms(autoFilmLibraryCache);
     if (S.tab === "film" && S.autoFilmView === "list") estimate();
   } catch (err) {
     host.innerHTML = `<p class="empty err">${esc(err.message || "Could not load drafts.")}</p>`;
@@ -4269,7 +4326,7 @@ async function mergeFilm(opts = {}) {
     if (out.credits_remaining !== undefined) poll(false);
     await saveFilmNow();
     renderFilmSummary();
-    void loadFilmHistory();
+    void renderAutoFilmLibrary();
     if (!opts.auto) {
       toast(
         out.reused
@@ -4353,6 +4410,33 @@ function publishCacheWarm() {
   return publishVideoList.length > 0 && Date.now() - publishPrefetchAt < PUBLISH_PREFETCH_TTL_MS;
 }
 
+/** Publish dropdown rows: Done Auto Film drafts with a local merged .mp4. */
+let autoFilmPublishCache = [];
+function publishRowsFromAutoFilms(films) {
+  return (films || [])
+    .map((f) => {
+      const path = autoFilmDraftPath(f);
+      const no = String(f.project || "").trim();
+      if (!path || !isFilmBatchNo(no)) return null;
+      const plat = normalizePublishPlatforms(f.publishPlatforms);
+      return {
+        no,
+        hook: (f.hook || "").trim(),
+        video_path: path,
+        created_at: f.updatedAt || "",
+        tiktok: plat.tiktok,
+        youtube: plat.youtube,
+        facebook: plat.facebook,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => Number(b.no) - Number(a.no) || String(b.created_at).localeCompare(String(a.created_at)));
+}
+async function refreshAutoFilmPublishCache() {
+  const films = autoFilmLibraryCache.length ? autoFilmLibraryCache : await listStoredAutoFilms();
+  autoFilmPublishCache = publishRowsFromAutoFilms(films);
+  return autoFilmPublishCache;
+}
 function publishFilmsFromHistory(rows) {
   return (rows || []).filter((r) => r.video_path);
 }
@@ -4396,17 +4480,13 @@ function publishFilmNo() {
 }
 function filmHookForNo(no) {
   if (!no) return "";
-  const row = filmHistoryCache.find((r) => String(r.no) === String(no));
+  const fromLib = autoFilmLibraryCache.find((f) => String(f.project) === String(no));
+  if (fromLib?.hook) return String(fromLib.hook).trim();
+  const row = autoFilmPublishCache.find((r) => String(r.no) === String(no));
   return (row?.hook || "").trim();
 }
-async function ensureFilmHistoryForPublish() {
-  if (!LIVE) return;
-  try {
-    const { rows } = await api("film_history", { limit: 200 });
-    filmHistoryCache = rows || [];
-  } catch {
-    /* optional */
-  }
+async function ensureAutoFilmsForPublish() {
+  await refreshAutoFilmPublishCache();
 }
 function applyPublishCaptionFromHook() {
   const cap = $("#pub_caption");
@@ -4518,253 +4598,6 @@ function csvCell(value) {
   if (!/[",\n\r]/.test(s)) return s;
   return `"${s.replace(/"/g, '""')}"`;
 }
-function pubHistoryEmptyRow(colspan, message, { error = false } = {}) {
-  const cls = error ? "empty-row-cell err" : "empty-row-cell";
-  return `<tr class="pub-history-empty"><td colspan="${colspan}" class="${cls}">${message}</td></tr>`;
-}
-function setPubHistoryTableState(tbody, isEmpty) {
-  if (!tbody) return;
-  tbody.classList.toggle("empty-state", isEmpty);
-  const table = tbody.closest("table");
-  if (table) table.classList.toggle("is-empty", isEmpty);
-}
-let filmHistoryCache = [];
-const filmHistorySelected = new Set();
-
-const FILM_HISTORY_TABLE_HEAD = `<table class="pub-history" id="af_film_history">
-  <colgroup>
-    <col class="col-sel"><col class="col-no"><col class="col-hook">
-    <col class="col-plat"><col class="col-plat"><col class="col-plat"><col class="col-date"><col class="col-path">
-  </colgroup>
-  <thead><tr>
-    <th class="col-sel"><input type="checkbox" id="af_film_history_head" aria-label="Select all film history rows"></th>
-    <th class="col-no">No</th>
-    <th class="col-hook">Hook</th>
-    <th class="col-plat">TikTok</th>
-    <th class="col-plat">YouTube</th>
-    <th class="col-plat">Facebook</th>
-    <th class="col-date">Created On</th>
-    <th class="col-path">Path</th>
-  </tr></thead>
-  <tbody id="af_film_history_body">`;
-
-function filmHistoryPathCell(videoPath) {
-  if (!videoPath) return `<td class="col-path"><span class="muted">—</span></td>`;
-  const p = esc(videoPath);
-  return `<td class="col-path"><a href="#" class="hist-path-link" data-path="${p}" title="Open video">${p}</a></td>`;
-}
-
-function renderFilmHistoryTable(rows) {
-  const visible = new Set((rows || []).map((r) => String(r.no)));
-  for (const no of [...filmHistorySelected]) {
-    if (!visible.has(no)) filmHistorySelected.delete(no);
-  }
-  const allOn = rows?.length && rows.every((r) => filmHistorySelected.has(String(r.no)));
-  const body = rows
-    .map((r) => {
-      const created = formatScheduleWhen(r.created_at);
-      const hook = r.hook?.trim() ? esc(r.hook) : `<span class="muted">—</span>`;
-      const no = String(r.no);
-      const checked = filmHistorySelected.has(no) ? "checked" : "";
-      return `<tr>
-        <td class="col-sel"><input type="checkbox" data-af-hist="sel" data-no="${esc(no)}" ${checked} aria-label="Select ${esc(no)}"></td>
-        <td class="col-no"><strong>${esc(r.no)}</strong></td>
-        <td class="col-hook">${hook}</td>
-        ${historyPlatCell(r.tiktok)}
-        ${historyPlatCell(r.youtube)}
-        ${historyPlatCell(r.facebook)}
-        <td class="col-date">${esc(created)}</td>
-        ${filmHistoryPathCell(r.video_path)}
-      </tr>`;
-    })
-    .join("");
-  const table = `${FILM_HISTORY_TABLE_HEAD}${body}</tbody></table>`;
-  queueMicrotask(() => {
-    const head = $("#af_film_history_head");
-    if (head) head.checked = Boolean(allOn);
-  });
-  return table;
-}
-
-function bindFilmHistorySelection(root) {
-  const host = root || $("#af_film_history_host");
-  if (!host) return;
-  host.querySelector("#af_film_history_head")?.addEventListener("change", (e) => {
-    const on = e.target.checked;
-    filmHistoryCache.forEach((r) => {
-      const no = String(r.no);
-      if (on) filmHistorySelected.add(no);
-      else filmHistorySelected.delete(no);
-    });
-    host.querySelectorAll('input[data-af-hist="sel"]').forEach((el) => {
-      el.checked = on;
-    });
-  });
-  host.querySelectorAll('input[data-af-hist="sel"]').forEach((el) => {
-    el.addEventListener("change", () => {
-      const no = el.getAttribute("data-no");
-      if (!no) return;
-      if (el.checked) filmHistorySelected.add(no);
-      else filmHistorySelected.delete(no);
-      const head = $("#af_film_history_head");
-      if (head && filmHistoryCache.length) {
-        head.checked = filmHistoryCache.every((r) => filmHistorySelected.has(String(r.no)));
-      }
-    });
-  });
-  host.querySelectorAll(".hist-path-link").forEach((a) => {
-    a.addEventListener("click", async (e) => {
-      e.preventDefault();
-      const path = a.getAttribute("data-path");
-      if (!path) return;
-      try {
-        await api("open_local_path", { path });
-      } catch (err) {
-        toast(err.message || "Could not open file.", true);
-      }
-    });
-  });
-}
-
-function setFilmHistoryEmptyMessage(message, { error = false } = {}) {
-  const host = $("#af_film_history_host");
-  const card = $("#af_film_history_card");
-  if (!host) return;
-  host.innerHTML = `<p class="empty${error ? " err" : ""}">${message}</p>`;
-  if (card) {
-    card.style.padding = "";
-    card.style.overflow = "";
-  }
-}
-
-async function loadFilmHistory() {
-  const host = $("#af_film_history_host");
-  if (!host) return;
-  if (!LIVE) {
-    setFilmHistoryEmptyMessage("Studio not connected.");
-    filmHistoryCache = [];
-    return;
-  }
-  setFilmHistoryEmptyMessage("Loading…");
-  try {
-    const { rows } = await api("film_history", {});
-    filmHistoryCache = rows || [];
-    if (!rows?.length) {
-      setFilmHistoryEmptyMessage("No merged films yet.");
-      return;
-    }
-    const card = $("#af_film_history_card");
-    if (card) {
-      card.style.padding = "0";
-      card.style.overflow = "hidden";
-    }
-    host.innerHTML = `<div class="pub-history-wrap" style="margin:0;border:0;border-radius:0">${renderFilmHistoryTable(rows)}</div>`;
-    bindFilmHistorySelection(host);
-  } catch (err) {
-    filmHistoryCache = [];
-    filmHistorySelected.clear();
-    setFilmHistoryEmptyMessage(esc(err.message), { error: true });
-  }
-}
-
-async function exportFilmHistory() {
-  if (!LIVE) return toast("Not connected.", true);
-  let rows = filmHistoryCache;
-  if (!rows?.length) {
-    try {
-      const out = await api("film_history", { limit: 500 });
-      rows = out.rows || [];
-      filmHistoryCache = rows;
-    } catch (err) {
-      toast(err.message, true);
-      return;
-    }
-  }
-  if (!rows.length) return toast("Nothing to export.", true);
-  const header = ["No", "Hook", "Path", "TikTok", "YouTube", "Facebook", "Created On"];
-  const lines = [header.map(csvCell).join(",")];
-  for (const r of rows) {
-    lines.push(
-      [
-        r.no,
-        r.hook || "",
-        r.video_path || "",
-        historyPlatLabel(r.tiktok),
-        historyPlatLabel(r.youtube),
-        historyPlatLabel(r.facebook),
-        formatScheduleWhen(r.created_at),
-      ]
-        .map(csvCell)
-        .join(","),
-    );
-  }
-  const bom = "\ufeff";
-  const blob = new Blob([bom + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `tedverse-film-history-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast(`Exported ${rows.length} row(s).`);
-}
-$("#af_film_history_export")?.addEventListener("click", () => exportFilmHistory());
-async function deleteFilmHistoryRows() {
-  if (!LIVE) return toast("Not connected.", true);
-  if (!filmHistoryCache.length) return toast("No film history to delete.", true);
-  const selected = [...filmHistorySelected];
-  const deleteAll = !selected.length;
-  const n = deleteAll ? filmHistoryCache.length : selected.length;
-  const msg = deleteAll
-    ? `Delete all ${n} film history row(s)? Video files and Flow projects are not deleted.`
-    : `Delete ${n} selected film history row(s)? Video files and Flow projects are not deleted.`;
-  const title = deleteAll ? "Delete all history" : "Delete selected history";
-  if (!(await confirmApp(msg, { ok: "Delete", danger: true, title }))) return;
-  try {
-    const body = deleteAll ? { all: true } : { nos: selected };
-    const out = await api("film_history_delete", body);
-    if (deleteAll) filmHistorySelected.clear();
-    else selected.forEach((no) => filmHistorySelected.delete(no));
-    toast(`Deleted ${out.deleted ?? n} row(s).`);
-    await loadFilmHistory();
-  } catch (err) {
-    toast(err.message, true);
-  }
-}
-$("#af_film_history_delete")?.addEventListener("click", () => deleteFilmHistoryRows());
-
-async function loadPublishHistory() {
-  const body = $("#pub_history_body");
-  if (!body || !LIVE) return;
-  try {
-    const { rows } = await api("publish_history", {});
-    if (!rows?.length) {
-      body.innerHTML = pubHistoryEmptyRow(7, "No publish history yet (real posts only, not test runs).");
-      setPubHistoryTableState(body, true);
-      return;
-    }
-    setPubHistoryTableState(body, false);
-    body.innerHTML = rows
-      .map((r, i) => {
-        const created = formatScheduleWhen(r.created_at);
-        const published = formatScheduleWhen(r.publish_at);
-        return `<tr>
-          <td class="muted" style="color:var(--text-muted)">${i + 1}</td>
-          <td>${esc(created)}</td>
-          <td>${esc(r.project)}</td>
-          <td>${esc(published)}</td>
-          ${historyPlatCell(r.tiktok)}
-          ${historyPlatCell(r.youtube)}
-          ${historyPlatCell(r.facebook)}
-        </tr>`;
-      })
-      .join("");
-  } catch (err) {
-    body.innerHTML = pubHistoryEmptyRow(7, esc(err.message), { error: true });
-    setPubHistoryTableState(body, true);
-  }
-}
-
 function syncPublishGoBusy() {
   const go = $("#pub_go");
   if (!go) return;
@@ -4846,6 +4679,7 @@ async function refreshPublishStatus() {
   }
   renderPublishStatusRows();
   syncPublishControls();
+  if (!publishRunning) await persistPublishPlatformsForActiveFilm();
 }
 
 function renderPublishFilmSelect(rows) {
@@ -4887,14 +4721,14 @@ async function loadPublishFilms({ background = false } = {}) {
   if (!LIVE) return;
   if (!background) setPublishFieldsBusy(true);
   try {
-    await ensureFilmHistoryForPublish();
-    const list = publishFilmsFromHistory(filmHistoryCache);
+    await ensureAutoFilmsForPublish();
+    const list = publishFilmsFromHistory(autoFilmPublishCache);
     if (!list.length) {
-      $("#pub_video").innerHTML = `<option value="">No merged films yet</option>`;
+      $("#pub_video").innerHTML = `<option value="">No merged films yet — finish a film on the Auto Film list</option>`;
       publishVideoList = [];
       return;
     }
-    renderPublishFilmSelect(filmHistoryCache);
+    renderPublishFilmSelect(autoFilmPublishCache);
     publishPrefetchAt = Date.now();
   } catch (err) {
     if (!background) toast(err.message, true);
@@ -4912,14 +4746,12 @@ async function refreshPublishTab() {
     $("#pub_video").innerHTML = `<option value="">Connect TedVerse to load films</option>`;
     return;
   }
-  const historyP = loadPublishHistory();
-  void ensureFilmHistoryForPublish();
+  void ensureAutoFilmsForPublish();
 
   if (publishCacheWarm()) {
-    renderPublishFilmSelect(filmHistoryCache);
+    renderPublishFilmSelect(autoFilmPublishCache);
     applyPublishCaptionFromHook();
     syncPublishControls();
-    await historyP.catch(() => {});
     void refreshPublishStatus();
     void prefetchPublishCatalog({ force: true });
     return;
@@ -4928,17 +4760,15 @@ async function refreshPublishTab() {
   if (publishPrefetchPromise) {
     await publishPrefetchPromise.catch(() => {});
     if (publishCacheWarm()) {
-      renderPublishFilmSelect(filmHistoryCache);
+      renderPublishFilmSelect(autoFilmPublishCache);
       applyPublishCaptionFromHook();
       syncPublishControls();
-      await historyP.catch(() => {});
       void refreshPublishStatus();
       return;
     }
   }
 
   await loadPublishFilms();
-  await historyP;
 }
 
 function stopPublishPoll() {
@@ -4958,8 +4788,8 @@ function startPublishPoll() {
       stopPublishPoll();
       syncPublishGoBusy();
       await loadPublishFilms({ background: true }).catch(() => {});
-      await loadPublishHistory();
-      if (S.tab === "film") await loadFilmHistory();
+      await persistPublishPlatformsForActiveFilm();
+      if (S.tab === "film") await renderAutoFilmLibrary();
       toast("Publishing finished");
     }
   }, 2500);
@@ -5449,8 +5279,6 @@ const STUDIO_SECTS = [
   ["af_scenes_sect", true],
   ["af_progress_sect", false],
   ["monitor_sect", false],
-  ["pub_history_sect", false],
-  ["af_film_history_sect", false],
   ["cast_sect", true],
   ["frames_sect", true],
   ["shots_sect", true],
@@ -5464,7 +5292,6 @@ function initStudioSects() {
     if (!el || el.tagName !== "DETAILS") continue;
     const key =
       id === "af_scenes_sect" ? `studio-sect-v4:${id}`
-      : id === "af_film_history_sect" ? `studio-sect-v5:${id}`
       : id === "af_progress_sect" || id === "monitor_sect" ? `studio-sect-v3:${id}`
       : `studio-sect-v2:${id}`;
     const saved = localStorage.getItem(key);
@@ -5512,7 +5339,7 @@ $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
   applyAutoFilmView();
   showTab(hashTab() ?? S.tab);
   loadNarrationOutputs();
-  if (S.tab === "film") void loadFilmHistory();
+  if (S.tab === "film") void renderAutoFilmLibrary();
 })();
 </script>
 </body>
