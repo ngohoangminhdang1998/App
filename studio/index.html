@@ -420,8 +420,8 @@ button.af-lib-open:hover{color:#c4b5fd}
 #af_library_table th.col-path,#af_library_table td.col-path{font-size:11px;line-height:1.35;white-space:nowrap;font-family:ui-monospace,Consolas,monospace;max-width:14rem;overflow:hidden;text-overflow:ellipsis}
 #af_library_table td.col-path a.hist-path-link{color:var(--primary);text-decoration:underline}
 #af_library_table th.col-plat,#af_library_table td.col-plat{width:3.25rem;text-align:center;padding:4px 6px;font-size:11px}
-.af-editor-topbar{align-items:center;gap:var(--space-3)}
-.af-editor-title{font:600 14px var(--font);color:var(--text-muted)}
+.af-editor-topbar{align-items:center;gap:var(--space-3);grid-column:1/-1;margin:0 0 var(--space-3)}
+.af-editor-title{flex:1;min-width:0;font:600 14px var(--font);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .af-create-scene-note strong{color:var(--primary)}
 #af_preview.pulse{box-shadow:0 0 0 2px var(--primary),0 0 18px rgba(168,85,247,.4)}
 #platformGate{width:min(640px,calc(100vw - 24px));max-height:92vh;padding:0;overflow:hidden auto;border-color:rgba(168,85,247,.4);box-shadow:0 32px 80px rgba(0,0,0,.65),0 0 0 1px rgba(6,182,212,.15)}
@@ -499,6 +499,10 @@ button.af-lib-open:hover{color:#c4b5fd}
   <div id="hint"></div>
 
   <div class="cols">
+    <div class="rowbtns af-editor-topbar" id="af_editor_topbar" hidden>
+      <button type="button" class="btn small ghost" id="af_back_list">Back</button>
+      <span id="af_editor_title" class="af-editor-title"></span>
+    </div>
     <main>
       <!-- CAST -->
       <section class="panel" data-panel="cast">
@@ -748,10 +752,6 @@ button.af-lib-open:hover{color:#c4b5fd}
           <div id="af_library_host"><p class="empty">Loading…</p></div>
         </div>
         <div id="af_editor_wrap" hidden>
-        <div class="rowbtns af-editor-topbar" style="margin:0 0 var(--space-3)">
-          <button type="button" class="btn small ghost" id="af_back_list">Back</button>
-          <span id="af_editor_title" class="af-editor-title"></span>
-        </div>
         <details class="studio-sect" id="af_film_sect" open>
           <summary><span class="sect-title">Film</span></summary>
           <div class="studio-sect-body">
@@ -2638,7 +2638,12 @@ async function listStoredAutoFilms() {
   return raw
     .filter((f) => f && typeof f === "object" && f.id && f.id !== "current")
     .map((f) => mergeSavedFilm(f))
-    .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")) || String(b.project || "").localeCompare(String(a.project || "")));
+    .sort((a, b) => {
+      const na = parseInt(String(a.project || "").trim(), 10) || 0;
+      const nb = parseInt(String(b.project || "").trim(), 10) || 0;
+      if (nb !== na) return nb - na;
+      return String(b.updatedAt || "").localeCompare(String(a.updatedAt || ""));
+    });
 }
 function autoFilmDraftPath(f) {
   const p = String(f.finalOutput || f.composition?.cached_video_path || "").trim();
@@ -3088,17 +3093,19 @@ function applyAutoFilmView() {
   const lib = $("#af_library_lede");
   const card = $("#af_library_card");
   const editor = $("#af_editor_wrap");
+  const topbar = $("#af_editor_topbar");
   const side = $("#film_side");
   if (lib) lib.hidden = !list;
   if (card) card.hidden = !list;
   if (editor) editor.hidden = list;
+  if (topbar) topbar.hidden = list || S.tab !== "film";
   if (side) side.hidden = S.tab !== "film" || list;
   const cols = $(".cols");
   if (cols) cols.classList.toggle("cols-single", S.tab !== "film" || list);
   const title = $("#af_editor_title");
   if (title && !list) {
     const no = isFilmBatchNo(film.project) ? film.project : "Draft";
-    title.textContent = no + (film.hook ? ` · ${film.hook.slice(0, 48)}${film.hook.length > 48 ? "…" : ""}` : "");
+    title.textContent = no + (film.hook ? ` · ${film.hook}` : "");
   }
   if (list) void renderAutoFilmLibrary();
   else renderFilm();
