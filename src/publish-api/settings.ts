@@ -88,6 +88,37 @@ function maskSecret(v?: string) {
   return `${"•".repeat(Math.min(12, v.length - 4))}${v.slice(-4)}`;
 }
 
+function oauthTokenForStudio(p: PlatformApiFields): string {
+  return p.refreshToken || p.accessToken || "";
+}
+
+/** Studio panel only (localhost) — includes Facebook secrets in full for editable fields. */
+export function studioPublishApiSettings() {
+  const pub = publicPublishApiSettings();
+  const raw = loadRaw();
+  const fb = raw.facebook;
+  const yt = raw.youtube;
+  const tt = raw.tiktok;
+  return {
+    ...pub,
+    youtube: {
+      ...pub.youtube,
+      clientSecret: yt.clientSecret || yt.appSecret || "",
+      oauthToken: oauthTokenForStudio(yt),
+    },
+    tiktok: {
+      ...pub.tiktok,
+      clientSecret: tt.clientSecret || tt.appSecret || "",
+      oauthToken: oauthTokenForStudio(tt),
+    },
+    facebook: {
+      ...pub.facebook,
+      appSecret: fb.appSecret || fb.clientSecret || "",
+      accessToken: fb.accessToken || "",
+    },
+  };
+}
+
 export function publicPublishApiSettings() {
   const s = loadRaw();
   const map = (p: PlatformApiFields, useAppId = false) => ({

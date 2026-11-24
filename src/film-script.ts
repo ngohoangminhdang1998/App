@@ -258,10 +258,13 @@ export function isPromptFormatV2(prompt: string): boolean {
 export {
   PROMPT_V3_VISUAL_TEXT_RESTRICTION,
   PROMPT_V3_NO_TEXT_FOOTER,
+  PROMPT_V3_DIALOGUE_DENSITY,
   promptHasNoSubtitlesClause,
   promptHasVisualTextRestrictionBlock,
   promptHasFullNoTextPolicy,
+  promptHasDialogueDensityBlock,
   ensurePromptVisualTextRestriction,
+  ensurePromptDialogueDensity,
 } from "./film-prompt-text.js";
 
 // First two lines of the prompt. Anything past that, or a very long line, ends with "...".

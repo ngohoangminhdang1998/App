@@ -4,6 +4,7 @@
  */
 
 import {
+  promptHasDialogueDensityBlock,
   promptHasNoSubtitlesClause,
   promptHasVisualTextRestrictionBlock,
 } from "./film-prompt-text.js";
@@ -143,6 +144,16 @@ export function validateScenePolicy(prompt: string, sceneNumber = 0): ScenePolic
             "info",
             "Consider adding “No English speech / No English narration.”",
             "Audio / language instructions",
+          ),
+        );
+      }
+      if (!promptHasDialogueDensityBlock(text)) {
+        findings.push(
+          finding(
+            "dialogue_density",
+            "info",
+            "Add DIALOGUE DENSITY / 80%+ spoken timeline (Copy format V3) so clips stay dialogue-heavy.",
+            "Audio pacing",
           ),
         );
       }

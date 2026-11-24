@@ -8,7 +8,7 @@ Studio tab **Settings → Publish API**. Chọn engine **API (OAuth)** rồi **P
 |----------|---------|---------|---------|
 | **YouTube** | [Google Cloud Console](https://console.cloud.google.com/) | Miễn phí trong quota (upload tốn ~1600 units/lần) | Bật **YouTube Data API v3**, OAuth consent, thêm redirect `http://127.0.0.1:8787/oauth/callback/youtube` |
 | **Facebook Reels / Page video** | [Meta for Developers](https://developers.facebook.com/) | Không tính phí theo call cơ bản | Cần **Facebook Page**. Một số quyền (`pages_manage_posts`, `publish_video`) cần **App Review** cho production |
-| **TikTok** | [TikTok for Developers](https://developers.tiktok.com/) | Miễn phí | **Content Posting API** cần đăng ký sản phẩm + **duyệt app**; redirect `http://127.0.0.1:8787/oauth/callback/tiktok` |
+| **TikTok** | [TikTok for Developers](https://developers.tiktok.com/) | Miễn phí | **Content Posting API** + **Login Kit**. Redirect loopback chỉ đăng ký tab **Desktop** (không phải **Web** — Web bắt `https://` only). |
 
 Không có phí “đăng bài từng video” kiểu trả tiền cho Google/Meta/TikTok, nhưng **không phải** “chỉ tạo app là xong” — đặc biệt TikTok và Meta Reels thường phải duyệt quyền.
 
@@ -20,7 +20,7 @@ Redirect phải **khớp từng ký tự** với URL TedVerse gửi lúc Connect
 
 - YouTube: `http://127.0.0.1:8787/oauth/callback/youtube`
 - Facebook: `http://127.0.0.1:8787/oauth/callback/facebook` — **Meta Login for Business thường từ chối `http://`** → dùng tunnel bên dưới
-- TikTok: `http://127.0.0.1:8787/oauth/callback/tiktok`
+- TikTok (Login Kit **Desktop**): `http://127.0.0.1:8787/oauth/callback/tiktok` — **không** dùng tab Web (`localhost` / `127.0.0.1` bị từ chối, báo “localhost is not supported”).
 
 Đổi cổng Studio: `FLOW_MCP_PORT` (mặc định 8787).
 
@@ -86,20 +86,28 @@ Tùy chọn: `FLOW_MCP_YOUTUBE_MADE_FOR_KIDS=yes|no`
 
 ## Facebook (Page Reels / video)
 
-1. Tạo app loại **Business** (hoặc phù hợp Page)
-2. Thêm sản phẩm **Facebook Login for Business**
-3. **App ID**, **App secret**, (tuỳ chọn) **Page ID**
-4. **Connect Facebook** → cấp quyền Page
-5. Upload qua Graph API resumable lên **Page** bạn chọn
+1. Tạo app trên Meta → **App ID**, **App secret**, **Page ID** fanpage
+2. [Graph API Explorer](https://developers.facebook.com/tools/explorer/) → user token → `GET me/accounts?fields=id,name,access_token` → copy **Page `access_token`**
+3. Studio **Settings → Publish API** → dán **Page access token** → **Save settings** (không dùng OAuth Connect)
+4. Upload qua Graph API resumable lên Page đã chọn
 
 Reels trên Page phụ thuộc chính sách Meta; clip dọc ngắn thường hiển thị dạng Reel.
 
 ## TikTok
 
-1. App → **Content Posting API** (scope `video.upload`, `video.publish`)
-2. **Client key** + **Client secret**
-3. Sau khi được duyệt: **Connect TikTok**
-4. Publish qua `post/publish/video/init`
+1. **Login Kit** → tab **Desktop** (không điền redirect ở tab **Web** — Web chỉ `https://`).
+2. Redirect (Sandbox): `http://127.0.0.1:8787/oauth/callback/tiktok` (không dùng `localhost`).
+3. **Content Posting API** + bật **Direct Post**; scopes `user.info.basic`, `video.upload`, `video.publish`.
+4. **Sandbox** → **Target users** → Add account (nick bạn đăng bài).
+5. TedVerse: Client key/secret → **Get token** → **Publish**.
+
+Nếu Apply báo *localhost is not supported* dù đã dùng `127.0.0.1`: bạn đang ở tab **Web** — chuyển sang **Desktop**.
+
+Tunnel HTTPS (Production Web): `export FLOW_MCP_TIKTOK_OAUTH_PUBLIC_URL=https://….trycloudflare.com` + redirect trên TikTok khớp Studio.
+
+**Sandbox / app chưa audit:** TedVerse mặc định `privacy_level=SELF_ONLY` (chỉ mình bạn xem). Trong **app TikTok** → Cài đặt → **Privacy** → bật **Private account**, rồi Publish lại. Video lên kênh nhưng **không public** — sau khi đổi public + sửa privacy từng clip trên TikTok.
+
+Sau **App review** (Production): `export FLOW_MCP_TIKTOK_PRIVACY=PUBLIC_TO_EVERYONE` và restart studio.
 
 Nếu init trả lỗi quota/review, TikTok chưa bật posting cho app của bạn.
 

@@ -60,6 +60,10 @@ export interface Job {
   error?: string;
   // Scene numbers a batch still could not make after all its own retries; flow_retry redoes just these.
   failed_scenes?: number[];
+  /** Tiles known before a pipeline job; used when the virtual grid drops fresh handles. */
+  pipelineBefore?: string[];
+  /** In-progress or freshly matched tile ids for multi-variant pipeline jobs. */
+  pipelineMedia?: string[];
   createdAt: string;
   finishedAt?: string;
 }

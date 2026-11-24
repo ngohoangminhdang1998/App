@@ -13,7 +13,11 @@ export const IS_WIN = process.platform === "win32";
 export const COMPUTER = IS_MAC ? "this Mac" : IS_WIN ? "this PC" : "this computer";
 export const BIN = IS_MAC ? "the Mac's Trash" : IS_WIN ? "the Recycle Bin" : "the Trash";
 
-export const FFMPEG_HINT = IS_MAC ? "brew install ffmpeg" : IS_WIN ? "winget install Gyan.FFmpeg" : "sudo apt install ffmpeg";
+export const FFMPEG_HINT = IS_MAC
+  ? "brew install ffmpeg (or static builds: evermeet.cx/ffmpeg)"
+  : IS_WIN
+    ? "winget install Gyan.FFmpeg"
+    : "sudo apt install ffmpeg";
 
 const binCache: Partial<Record<"ffmpeg" | "ffprobe", string>> = {};
 

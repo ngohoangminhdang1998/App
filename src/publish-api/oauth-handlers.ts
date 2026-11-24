@@ -13,11 +13,18 @@ export async function handleOAuthCallback(
   if (err) return { ok: false, message: err };
   if (!code || !state) return { ok: false, message: "Missing code or state." };
   const expect = oauthStateTake(state);
-  if (expect !== platform) return { ok: false, message: "OAuth state expired or invalid. Try Connect again." };
+  if (!expect || expect.platform !== platform) {
+    return { ok: false, message: "OAuth state expired or invalid. Try Get token again." };
+  }
   try {
     if (platform === "youtube") await youtubeExchangeCode(code);
     else if (platform === "facebook") await facebookExchangeCode(code);
-    else if (platform === "tiktok") await tiktokExchangeCode(code);
+    else if (platform === "tiktok") {
+      if (!expect.codeVerifier) {
+        return { ok: false, message: "TikTok PKCE session missing. Close this tab and press Get token again." };
+      }
+      await tiktokExchangeCode(code, expect.codeVerifier);
+    }
     else return { ok: false, message: "Unknown platform." };
     return { ok: true, message: `${platform} connected.` };
   } catch (e) {

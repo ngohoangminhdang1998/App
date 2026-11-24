@@ -17,9 +17,22 @@ export function oauthPublicOrigin(): string | null {
 }
 
 export function publishOAuthRedirect(platform: PublishPlatform): string {
-  const pub = oauthPublicOrigin();
-  if (pub) return `${pub}/oauth/callback/${platform}`;
-  return `http://127.0.0.1:${STUDIO_PORT}/oauth/callback/${platform}`;
+  const local = `http://127.0.0.1:${STUDIO_PORT}/oauth/callback/${platform}`;
+  // Meta Facebook Login needs HTTPS via FLOW_MCP_OAUTH_PUBLIC_URL; YouTube/TikTok sandbox use localhost.
+  if (platform === "facebook") {
+    const pub = oauthPublicOrigin();
+    if (pub) return `${pub}/oauth/callback/facebook`;
+  }
+  const ttPub = process.env.FLOW_MCP_TIKTOK_OAUTH_PUBLIC_URL?.trim();
+  if (platform === "tiktok" && ttPub) {
+    const withScheme = /^https?:\/\//i.test(ttPub) ? ttPub : `https://${ttPub}`;
+    try {
+      return `${new URL(withScheme).origin}/oauth/callback/tiktok`;
+    } catch {
+      throw new Error(`FLOW_MCP_TIKTOK_OAUTH_PUBLIC_URL is not a valid URL: ${ttPub}`);
+    }
+  }
+  return local;
 }
 
 /** Host headers allowed when tunnel forwards HTTPS to local Studio. */

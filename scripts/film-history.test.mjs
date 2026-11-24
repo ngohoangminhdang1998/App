@@ -7,9 +7,14 @@ const home = join(tmpdir(), `film-history-test-${Date.now()}`);
 process.env.FLOW_MCP_HOME = home;
 mkdirSync(home, { recursive: true });
 
-const { deleteFilmHistory, buildFilmHistory, recordFilmMerge, syncFilmHistoryFromNumbers } = await import(
-  "../dist/film-history.js"
-);
+const {
+  deleteFilmHistory,
+  buildFilmHistory,
+  maxKnownFilmSerial,
+  nextFilmNoFromHistory,
+  recordFilmMerge,
+  syncFilmHistoryFromNumbers,
+} = await import("../dist/film-history.js");
 const { listFilmNumbers } = await import("../dist/film-numbers.js");
 
 writeFileSync(
@@ -27,6 +32,8 @@ writeFileSync(
 syncFilmHistoryFromNumbers();
 let rows = buildFilmHistory(50);
 assert.equal(rows.length, 2);
+assert.equal(maxKnownFilmSerial(), 2);
+assert.deepEqual(nextFilmNoFromHistory(), { no: "0003", next: 4 });
 
 recordFilmMerge({ no: "0001", hook: "Hook one" });
 rows = buildFilmHistory(50);

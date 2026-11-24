@@ -51,12 +51,17 @@ import {
   runEdit,
   runGeneration,
 } from "./flow.js";
-import { buildFilmHistory, deleteFilmHistory, recordFilmMerge } from "./film-history.js";
+import { buildFilmHistory, deleteFilmHistory, nextFilmNoFromHistory, recordFilmMerge } from "./film-history.js";
 import { buildPublishHistory, prunePublishHistoryStores, PUBLISH_HISTORY_KEEP } from "./publish-history.js";
 import { filmFinalSceneName, isFilmNo } from "./film-numbers.js";
-import { isPromptFormatV2, ensurePromptVisualTextRestriction, promptHasNoSubtitlesClause } from "./film-script.js";
+import {
+  isPromptFormatV2,
+  ensurePromptVisualTextRestriction,
+  ensurePromptDialogueDensity,
+  promptHasNoSubtitlesClause,
+} from "./film-script.js";
 import { publishOAuthBegin } from "./publish-api/connect.js";
-import { clearPlatformTokens, publicPublishApiSettings, savePublishApiSettings } from "./publish-api/settings.js";
+import { clearPlatformTokens, publicPublishApiSettings, savePublishApiSettings, studioPublishApiSettings } from "./publish-api/settings.js";
 import { guessDefaultVideo, listPublishableVideos, publishManager, summarizeClipPublish } from "./publish.js";
 import { normalizeHashtags } from "./publish-text.js";
 import { JobQueue, type Job } from "./queue.js";
@@ -67,6 +72,7 @@ import { providerPayload } from "./providers/registry.js";
 import { BIN, COMPUTER, moveToBin } from "./platform.js";
 import { cleanMediaRef, cleanMediaRefs, describeJobAssets as formatJobAssets, encodeFlowRef, isLocalClip } from "./media-ref.js";
 import { allocateFilmNo, ensureFilmSerialNext, listFilmNumbers, peekFilmNo } from "./film-numbers.js";
+import { exportFilmTemplatePayload, importFilmTemplatePayload, type FilmTemplateRow } from "./film-excel.js";
 import { TECHNIQUES, techniqueById } from "./techniques.js";
 
 export const OUTPUT_ROOT = process.env.FLOW_MCP_OUTPUT ?? join(homedir(), "flow-mcp-out");
@@ -599,6 +605,7 @@ export const shapes = {
         appId: z.string().optional(),
         appSecret: z.string().optional(),
         pageId: z.string().optional(),
+        accessToken: z.string().optional(),
       })
       .optional(),
     tiktok: z
@@ -629,6 +636,41 @@ export const shapes = {
     all: z.boolean().optional().describe("Clear every film history row."),
     nos: z.array(z.string().min(1)).max(500).optional().describe("4-digit batch numbers to remove."),
   },
+  film_template_export: {
+    no: z.string().optional().describe("4-digit film No for a single-sheet export."),
+    rows: z
+      .array(
+        z.object({
+          scene_no: z.coerce.number().int().positive(),
+          hook: z.string().optional().default(""),
+          prompt: z.string().optional().default(""),
+        }),
+      )
+      .max(100)
+      .optional(),
+    films: z
+      .array(
+        z.object({
+          no: z.string().min(1),
+          rows: z
+            .array(
+              z.object({
+                scene_no: z.coerce.number().int().positive(),
+                hook: z.string().optional().default(""),
+                prompt: z.string().optional().default(""),
+              }),
+            )
+            .max(100)
+            .optional(),
+        }),
+      )
+      .max(50)
+      .optional()
+      .describe("Multi-sheet workbook: one entry per sheet (name = no)."),
+  },
+  film_template_import: {
+    data: z.string().min(1).describe("Base64-encoded .xlsx (one sheet per film; sheet name = 4-digit No)."),
+  },
   flow_composition: { project: z.string().min(1) },
   flow_recover_film_scenes: {
     project: z.string().min(1),
@@ -641,6 +683,7 @@ export const shapes = {
   muse_status: {},
   muse_open_login: { show: z.boolean().default(true).describe("Open a visible Chrome window on muse.ai for manual login.") },
   film_allocate: {},
+  film_next_from_history: {},
   film_numbers: {},
   film_peek_no: {},
   film_ensure_next: { min_next: z.number().int().min(1) },
@@ -729,11 +772,14 @@ export interface Core {
   muse_status(a: Args<"muse_status">): Promise<unknown>;
   muse_open_login(a: Args<"muse_open_login">): Promise<unknown>;
   film_allocate(a: Args<"film_allocate">): Promise<unknown>;
+  film_next_from_history(a: Args<"film_next_from_history">): Promise<unknown>;
   film_numbers(a: Args<"film_numbers">): Promise<unknown>;
   film_peek_no(a: Args<"film_peek_no">): Promise<unknown>;
   film_ensure_next(a: Args<"film_ensure_next">): Promise<unknown>;
   film_history(a?: Args<"film_history">): Promise<unknown>;
   film_history_delete(a?: Args<"film_history_delete">): Promise<unknown>;
+  film_template_export(a?: Args<"film_template_export">): Promise<unknown>;
+  film_template_import(a: Args<"film_template_import">): Promise<unknown>;
   open_local_path(a: Args<"open_local_path">): Promise<unknown>;
 }
 
@@ -855,7 +901,12 @@ export class LocalCore implements Core {
       // unless the scene really wants words in the picture. Captions are added afterwards by flow_captions.
       const noText = scene.type !== "image" && !on_screen_text;
       let promptBody = scene.prompt.trim();
-      if (noText) promptBody = ensurePromptVisualTextRestriction(promptBody);
+      if (noText) {
+        promptBody = ensurePromptVisualTextRestriction(promptBody);
+        if (scene.type !== "image" && isPromptFormatV2(promptBody)) {
+          promptBody = ensurePromptDialogueDensity(promptBody);
+        }
+      }
       const hasNoSubs = promptHasNoSubtitlesClause(promptBody);
       const textFirst = noText && !hasNoSubs ? "NO SUBTITLES, NO CAPTIONS, NO TEXT OF ANY KIND ON SCREEN. " : "";
       const textLast =
@@ -1557,7 +1608,7 @@ export class LocalCore implements Core {
   }
 
   async publish_settings_get() {
-    return publicPublishApiSettings();
+    return studioPublishApiSettings();
   }
 
   async publish_settings_save(a: Args<"publish_settings_save">) {
@@ -1573,6 +1624,7 @@ export class LocalCore implements Core {
       if (a.facebook.appId !== undefined) patch.facebook.appId = a.facebook.appId;
       if (a.facebook.appSecret) patch.facebook.appSecret = a.facebook.appSecret;
       if (a.facebook.pageId !== undefined) patch.facebook.pageId = a.facebook.pageId;
+      if (a.facebook.accessToken) patch.facebook.accessToken = a.facebook.accessToken;
     }
     if (a.tiktok) {
       patch.tiktok = {};
@@ -1580,7 +1632,7 @@ export class LocalCore implements Core {
       if (a.tiktok.clientSecret) patch.tiktok.clientSecret = a.tiktok.clientSecret;
     }
     savePublishApiSettings(patch);
-    return publicPublishApiSettings();
+    return studioPublishApiSettings();
   }
 
   async publish_oauth_begin({ platform }: Args<"publish_oauth_begin">) {
@@ -1636,6 +1688,10 @@ export class LocalCore implements Core {
     return allocateFilmNo();
   }
 
+  async film_next_from_history() {
+    return nextFilmNoFromHistory();
+  }
+
   async film_numbers() {
     return listFilmNumbers();
   }
@@ -1662,6 +1718,26 @@ export class LocalCore implements Core {
     if (!existsSync(resolved)) throw new Error(`File not found: ${basename(resolved)}`);
     openPath(resolved);
     return { path: resolved };
+  }
+
+  async film_template_export({ no, rows, films }: Args<"film_template_export"> = {}) {
+    if (films?.length) {
+      return exportFilmTemplatePayload({
+        films: films.map((f) => ({
+          no: isFilmNo(String(f.no).trim()) ? String(f.no).trim() : "0001",
+          rows: f.rows as FilmTemplateRow[] | undefined,
+        })),
+      });
+    }
+    const batch = String(no ?? "").trim();
+    return exportFilmTemplatePayload({
+      no: isFilmNo(batch) ? batch : "0001",
+      rows: rows as FilmTemplateRow[] | undefined,
+    });
+  }
+
+  async film_template_import({ data }: Args<"film_template_import">) {
+    return importFilmTemplatePayload(data);
   }
 
   async film_history_delete({ all, nos }: Args<"film_history_delete"> = {}) {

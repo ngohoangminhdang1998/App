@@ -59,11 +59,14 @@ export class RemoteCore implements Core {
   muse_status = () => call("muse_status", {});
   muse_open_login = (a: unknown) => call("muse_open_login", a ?? {});
   film_allocate = () => call("film_allocate", {});
+  film_next_from_history = () => call("film_next_from_history", {});
   film_numbers = () => call("film_numbers", {});
   film_peek_no = () => call("film_peek_no", {});
   film_ensure_next = (a: unknown) => call("film_ensure_next", a);
   film_history = (a?: unknown) => call("film_history", a ?? {});
   film_history_delete = (a?: unknown) => call("film_history_delete", a ?? {});
+  film_template_export = (a?: unknown) => call("film_template_export", a ?? {});
+  film_template_import = (a: unknown) => call("film_template_import", a);
   // Captions, like narration, run here: they never touch the Flow Chrome.
   transcribe = transcribeHere;
   caption_preview = captionPreviewHere;
