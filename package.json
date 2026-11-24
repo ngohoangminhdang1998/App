@@ -4,7 +4,7 @@
   "description": "TedVerse — AI Creative Studio (One Prompt. Infinite Worlds.) Local MCP server for Google Flow.",
   "main": "index.js",
   "scripts": {
-    "test": "node scripts/film-script.test.mjs && node scripts/film-oneclick.test.mjs && node scripts/film-autofilm.test.mjs && node scripts/flow-scene-builder.test.mjs && node scripts/character-ref.test.mjs && node scripts/media-download.test.mjs && node scripts/publish.test.mjs && node scripts/flow-composition.test.mjs && node scripts/provider.test.mjs",
+    "test": "node scripts/film-script.test.mjs && node scripts/film-excel.test.mjs && node scripts/film-oneclick.test.mjs && node scripts/film-autofilm.test.mjs && node scripts/flow-scene-builder.test.mjs && node scripts/character-ref.test.mjs && node scripts/media-download.test.mjs && node scripts/publish.test.mjs && node scripts/flow-composition.test.mjs && node scripts/provider.test.mjs",
     "build": "tsc",
     "start": "node dist/index.js",
     "login": "node dist/login.js",
@@ -23,6 +23,7 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "kokoro-js": "^1.2.1",
     "playwright-core": "^1.63.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {

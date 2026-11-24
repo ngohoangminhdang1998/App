@@ -132,6 +132,10 @@ input[type=datetime-local]::-webkit-datetime-edit-text{color:var(--text-muted)}
 select{background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
 textarea{min-height:96px;resize:vertical;line-height:1.5}
 input:focus,select:focus,textarea:focus,input[type=password]:focus,input[type=date]:focus,input[type=time]:focus,input[type=datetime-local]:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,92,255,.35)}
+input:read-only{cursor:default}
+input:read-only:focus{border-color:var(--border);box-shadow:none}
+input.input-token-ro,input.input-token-ro:read-only{color:var(--text-muted);background:rgba(139,147,167,.14);border:1px dashed rgba(139,147,167,.45);opacity:1}
+input.input-token-ro::placeholder{color:var(--text-muted);opacity:.75}
 .seg{display:flex;flex-wrap:wrap;gap:var(--space-1);padding:3px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-pill)}
 .seg button{flex:1 1 0;min-width:0;min-height:36px;padding:0 12px;font:500 13px var(--font);color:var(--text-muted);background:transparent;border:0;border-radius:var(--r-pill);cursor:pointer;transition:background var(--ease),color var(--ease)}
 .seg button.on{background:var(--primary);color:#fff;box-shadow:0 1px 4px rgba(124,92,255,.4)}
@@ -161,6 +165,7 @@ select[aria-busy="true"]{opacity:.65;pointer-events:none}
 .publish-status{display:grid;gap:8px;margin-top:12px}
 .publish-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-control);background:var(--surface-2)}
 .publish-row b{font:600 13px var(--font);min-width:7em}
+.pub-err{display:block;width:100%;margin-top:6px;color:var(--bad);font-size:13px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .pub-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .pub-chip{font:500 12px var(--font);padding:5px 10px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted)}
 .pub-chip.ok{border-color:rgba(34,197,94,.5);color:var(--success)}
@@ -203,6 +208,7 @@ table.pub-history tbody.empty-state td.empty-row-cell.err{color:var(--bad)}
 .af-no-hook-row{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:var(--space-3) var(--space-4);align-items:end;margin-bottom:var(--space-2)}
 .af-no-hook-row .f{margin-bottom:6px}
 .af-no-hook-row #af_project{text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.04em;padding-left:8px;padding-right:8px}
+.af-no-hook-row #af_project:read-only{opacity:.88;cursor:default;color:var(--text)}
 @media (max-width:520px){.af-no-hook-row{grid-template-columns:1fr}}
 .phrase{margin-top:var(--space-2);padding:var(--space-3);border-radius:var(--r-control);background:var(--surface-2);border:1px dashed var(--border);color:var(--text-muted);font-size:13px}
 .phrase b{color:var(--warning);font-weight:600}
@@ -286,6 +292,22 @@ dialog h2{font:600 18px var(--font)}
 #confirmDlg .confirm-body{font:400 14px/1.55 var(--font);color:var(--text-muted);margin:0;white-space:pre-wrap}
 #confirmDlg .confirm-bar{display:flex;gap:var(--space-2);justify-content:flex-end;padding:var(--space-3) var(--space-5);background:var(--surface-2);border-top:1px solid var(--border)}
 #confirmDlg .confirm-bar .btn{min-width:5.5em}
+#afImportDlg{width:min(480px,calc(100vw - 32px));padding:0;overflow:hidden;border-color:rgba(168,85,247,.35);box-shadow:0 24px 48px rgba(0,0,0,.55),0 0 0 1px rgba(168,85,247,.12)}
+#afImportDlg .confirm-in{padding:var(--space-5) var(--space-5) var(--space-3)}
+#afImportDlg h2{font:600 17px var(--font);margin:0 0 var(--space-2)}
+#afImportDlg .af-import-note{display:block;width:100%;margin:0 0 14px}
+#afImportDlg .af-import-note p{margin:0 0 8px;font:400 14px/1.55 var(--font);color:var(--text-muted);display:block;width:100%}
+#afImportDlg .af-import-note p:last-child{margin-bottom:0}
+#afImportDlg .af-import-chars{max-height:min(42vh,280px);overflow-y:auto;margin:8px 0 14px;border:1px solid var(--border);border-radius:var(--r-card);background:var(--surface-2)}
+#afImportDlg .af-import-char{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer}
+#afImportDlg .af-import-char:last-child{border-bottom:0}
+#afImportDlg .af-import-char img{width:40px;height:40px;object-fit:cover;border-radius:8px;background:var(--surface);flex:0 0 auto}
+#afImportDlg .af-import-char b{font:600 14px var(--font);display:block}
+#afImportDlg .af-import-file-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}
+#afImportDlg .confirm-bar{display:flex;gap:var(--space-2);justify-content:flex-end;padding:var(--space-3) var(--space-5);background:var(--surface-2);border-top:1px solid var(--border)}
+.af-import-loading{display:flex;align-items:center;gap:10px;padding:14px 12px;margin:0;color:var(--text-muted);font:500 14px var(--font)}
+.af-import-loading .spin{width:18px;height:18px;flex:0 0 auto;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:btn-spin .75s linear infinite}
+.af-import-loading .af-dots{display:inline-block;min-width:1.25em;text-align:left;color:var(--primary);font-weight:600}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 32px);padding:var(--space-3) var(--space-4);border-radius:var(--r-control);background:var(--surface);border:1px solid var(--border);color:var(--text);font-weight:500;font-size:14px;box-shadow:var(--shadow-card)}
 .toast.bad{background:rgba(239,68,68,.95);border-color:var(--danger);color:#fff}
 input[type=range]{width:100%;accent-color:var(--primary);height:28px}
@@ -324,6 +346,7 @@ input[type=range]{width:100%;accent-color:var(--primary);height:28px}
 .st{display:inline-flex;align-items:center;gap:4px;max-width:100%;font:600 10px var(--font);padding:3px 8px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
 .st::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex:none;opacity:.85}
 .st.generating{background:rgba(124,92,255,.2);color:#c4b5fd}.st.generating::before{animation:pulse-dot 1.2s ease-in-out infinite}
+.st.queued{background:rgba(124,92,255,.1);color:#a78bfa;border:1px dashed rgba(167,139,250,.45)}
 .st.completed{background:rgba(34,197,94,.15);color:#86efac}.st.failed{background:rgba(239,68,68,.18);color:#fca5a5}
 .st.download_failed{background:rgba(245,158,11,.15);color:#fcd34d}.st.generated_on_flow{background:rgba(34,197,94,.12);color:#86efac}.st.waiting_flow{background:rgba(59,130,246,.12);color:#93c5fd}.st.skipped{background:transparent;border:1px solid var(--border)}
 .st.policy-pass{background:rgba(34,197,94,.12);color:#86efac;font-size:11px;padding:2px 6px;border-radius:4px}
@@ -402,6 +425,19 @@ body[data-provider=muse] [data-flow-only]{opacity:.42;pointer-events:none}
 body[data-provider=muse] .af-merge-note{display:block}
 .af-merge-note{display:none;color:var(--warn);font-size:13px;margin:8px 0 0}
 .af-create-scene-note{margin:10px 0 6px;padding:10px 12px;border-radius:var(--r-control);border:1px solid rgba(168,85,247,.45);background:rgba(168,85,247,.12);color:var(--text);font-size:13px;line-height:1.45}
+.af-lib-lede{margin:0 0 var(--space-3)}
+#af_library_card{margin-bottom:var(--space-4)}
+#af_library_host .pub-history{width:100%}
+#af_library_host td.col-hook{max-width:18rem;word-break:break-word}
+#af_library_table th.col-sel,#af_library_table td.col-sel{width:2.35rem;text-align:center;padding:4px 6px}
+button.af-lib-open{background:none;border:none;padding:0;margin:0;font:inherit;color:var(--primary);cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:2px}
+button.af-lib-open:hover{color:#c4b5fd}
+#af_library_table tbody tr.af-lib-row{cursor:pointer}
+#af_library_table tbody tr.af-lib-row td.col-sel{cursor:default}
+#af_library_table th.col-path,#af_library_table td.col-path{font-size:11px;line-height:1.35;white-space:nowrap;font-family:ui-monospace,Consolas,monospace;max-width:14rem;overflow:hidden;text-overflow:ellipsis}
+#af_library_table td.col-path a.hist-path-link{color:var(--primary);text-decoration:underline}
+.af-editor-topbar{align-items:center;gap:var(--space-3)}
+.af-editor-title{font:600 14px var(--font);color:var(--text-muted)}
 .af-create-scene-note strong{color:var(--primary)}
 #af_preview.pulse{box-shadow:0 0 0 2px var(--primary),0 0 18px rgba(168,85,247,.4)}
 #platformGate{width:min(640px,calc(100vw - 24px));max-height:92vh;padding:0;overflow:hidden auto;border-color:rgba(168,85,247,.4);box-shadow:0 32px 80px rgba(0,0,0,.65),0 0 0 1px rgba(6,182,212,.15)}
@@ -621,7 +657,7 @@ body[data-provider=muse] .af-merge-note{display:block}
           <summary><span class="sect-title">Publish API</span><small class="sect-sum-end">OAuth</small></summary>
           <div class="studio-sect-body">
             <p class="lede">Đăng TikTok, YouTube Shorts, Facebook Reels qua <strong>API</strong> (không mở Chrome upload tay). Tạo app trên console từng nền tảng là <strong>miễn phí</strong>, nhưng TikTok/Meta thường cần <strong>duyệt quyền</strong>. Chi tiết: <code>docs/PUBLISH-API.md</code>.</p>
-            <p class="empty" id="pub_oauth_tunnel_note" style="margin-bottom:12px">Meta Facebook thường bắt redirect <strong>HTTPS</strong>. Chạy tunnel (xem doc), export <code>FLOW_MCP_OAUTH_PUBLIC_URL=https://….trycloudflare.com</code>, restart <code>npm run studio</code> — redirect bên dưới đổi theo.</p>
+            <p class="empty" id="pub_oauth_tunnel_note" style="margin-bottom:12px">Facebook: chỉ cần <strong>Page access token</strong> (Graph Explorer). YouTube/TikTok: <strong>Get token</strong> qua redirect; Meta OAuth cần HTTPS tunnel — xem <code>docs/PUBLISH-API.md</code>.</p>
             <div class="settings-publish-layout">
             <div class="card settings-engine-card">
               <label class="f">Publish engine</label>
@@ -635,9 +671,11 @@ body[data-provider=muse] .af-merge-note{display:block}
               <label class="f" for="set_yt_id">Client ID</label>
               <input type="text" id="set_yt_id" autocomplete="off" spellcheck="false">
               <label class="f" for="set_yt_secret">Client secret</label>
-              <input type="password" id="set_yt_secret" autocomplete="off" placeholder="Nhập mới để đổi — không gửi lên MCP">
+              <input type="text" id="set_yt_secret" autocomplete="off" spellcheck="false">
+              <label class="f" for="set_yt_token">OAuth token (chỉ đọc)</label>
+              <input type="text" id="set_yt_token" class="input-token-ro" readonly tabindex="-1" autocomplete="off" spellcheck="false" placeholder="Chưa có — Save app rồi bấm Get token">
               <p class="empty" id="set_yt_status"></p>
-              <div class="rowbtns"><button type="button" class="btn small" id="set_yt_connect">Connect Google / YouTube</button><button type="button" class="btn small ghost" id="set_yt_disconnect">Disconnect</button></div>
+              <div class="rowbtns"><button type="button" class="btn small" id="set_yt_connect">Get token</button></div>
             </div>
             <div class="card">
               <h2 style="font-size:18px;margin:0 0 10px">TikTok</h2>
@@ -645,23 +683,25 @@ body[data-provider=muse] .af-merge-note{display:block}
               <label class="f" for="set_tt_key">Client key</label>
               <input type="text" id="set_tt_key" autocomplete="off">
               <label class="f" for="set_tt_secret">Client secret</label>
-              <input type="password" id="set_tt_secret" autocomplete="off">
+              <input type="text" id="set_tt_secret" autocomplete="off" spellcheck="false">
+              <label class="f" for="set_tt_token">OAuth token (chỉ đọc)</label>
+              <input type="text" id="set_tt_token" class="input-token-ro" readonly tabindex="-1" autocomplete="off" spellcheck="false" placeholder="Chưa có — Save app rồi bấm Get token">
               <p class="empty" id="set_tt_status"></p>
-              <div class="rowbtns"><button type="button" class="btn small" id="set_tt_connect">Connect TikTok</button><button type="button" class="btn small ghost" id="set_tt_disconnect">Disconnect</button></div>
+              <div class="rowbtns"><button type="button" class="btn small" id="set_tt_connect">Get token</button></div>
             </div>
             </div>
             <div class="settings-publish-fb">
             <div class="card">
               <h2 style="font-size:18px;margin:0 0 10px">Facebook Page (Meta)</h2>
-              <p class="empty">Redirect: <code id="pub_redir_fb">http://127.0.0.1:8787/oauth/callback/facebook</code></p>
               <div class="grid2">
                 <div><label class="f" for="set_fb_id">App ID</label><input type="text" id="set_fb_id" autocomplete="off"></div>
                 <div><label class="f" for="set_fb_page">Facebook Page ID (optional)</label><input type="text" id="set_fb_page" autocomplete="off" placeholder="Để trống = trang đầu tiên của bạn"></div>
               </div>
               <label class="f" for="set_fb_secret">App secret</label>
-              <input type="password" id="set_fb_secret" autocomplete="off">
+              <input type="text" id="set_fb_secret" autocomplete="off" spellcheck="false">
+              <label class="f" for="set_fb_token">Page access token</label>
+              <input type="text" id="set_fb_token" autocomplete="off" spellcheck="false">
               <p class="empty" id="set_fb_status"></p>
-              <div class="rowbtns"><button type="button" class="btn small" id="set_fb_connect">Connect Facebook</button><button type="button" class="btn small ghost" id="set_fb_disconnect">Disconnect</button></div>
             </div>
             </div>
             <div class="rowbtns" style="margin-top:16px"><button type="button" class="btn primary" id="set_publish_save">Save settings</button></div>
@@ -679,12 +719,10 @@ body[data-provider=muse] .af-merge-note{display:block}
         <div class="card">
           <label class="f" for="pub_video">Film</label>
           <select id="pub_video"></select>
-          <p class="empty" id="pub_videohint" style="margin-top:6px">Local merged films (Film Histories). Display name and caption use the hook.</p>
-          <div id="pub_clip_posted" class="pub-chips" aria-live="polite" hidden></div>
           <label class="f" for="pub_caption">Caption</label>
           <input type="text" id="pub_caption" spellcheck="false" autocomplete="off" title="Caption for social posts — filled from the film hook when you pick a merged final.">
           <label class="f" for="pub_tags">Hashtags (optional)</label>
-          <input type="text" id="pub_tags" placeholder="#AI #ShortFilm #TedVerse" spellcheck="false" autocomplete="off">
+          <input type="text" id="pub_tags" placeholder="#ai #trend #xuhuong #uagivay #thegioikyla" spellcheck="false" autocomplete="off">
           <p class="empty" style="margin-top:4px">Remembered per project.</p>
           <label class="f">Platforms</label>
           <label class="check"><input type="checkbox" id="pub_tiktok">TikTok</label>
@@ -739,6 +777,22 @@ body[data-provider=muse] .af-merge-note{display:block}
 
       <!-- AUTO FILM -->
       <section class="panel on" data-panel="film">
+        <p class="lede af-lib-lede" id="af_library_lede">Click <strong>No</strong> or <strong>Hook</strong> to open a draft. On the list, tick films (or leave none ticked for all <em>New</em> / <em>Failed</em>) and press <strong>Generate film</strong> below. <strong>Import</strong> / <strong>Export</strong> template for batch scripts.</p>
+        <div class="card" id="af_library_card">
+          <div class="rowbtns" style="margin-bottom:10px">
+            <button type="button" class="btn small go" id="af_library_new">New film</button>
+            <button type="button" class="btn small ghost" id="af_library_delete" title="Delete ticked drafts, or every draft if none are ticked">Delete</button>
+            <button type="button" class="btn small ghost" id="af_export_xlsx" title="Excel: selected rows, or one blank sheet if none ticked">Export template</button>
+            <button type="button" class="btn small ghost" id="af_import_xlsx" title="Import .xlsx — each sheet = one film (sheet name = No)">Import template</button>
+            <button type="button" class="btn small ghost" id="af_library_refresh" title="Reload the list">Refresh</button>
+          </div>
+          <div id="af_library_host"><p class="empty">Loading…</p></div>
+        </div>
+        <div id="af_editor_wrap" hidden>
+        <div class="rowbtns af-editor-topbar" style="margin:0 0 var(--space-3)">
+          <button type="button" class="btn small ghost" id="af_back_list">Back</button>
+          <span id="af_editor_title" class="af-editor-title"></span>
+        </div>
         <details class="studio-sect" id="af_film_sect" open>
           <summary><span class="sect-title">Film</span></summary>
           <div class="studio-sect-body">
@@ -748,7 +802,7 @@ body[data-provider=muse] .af-merge-note{display:block}
               <div class="af-no-hook-row">
                 <div>
                   <label class="f" for="af_project">No</label>
-                  <input type="text" id="af_project" placeholder="0001" autocomplete="off" maxlength="4" inputmode="numeric" title="Film number (4 digits). Each Create scene allocates the next new No; New film does the same without parsing.">
+                  <input type="text" id="af_project" placeholder="0001" autocomplete="off" maxlength="4" inputmode="numeric" readonly title="Film No (4 digits). Assigned automatically on New film / Create scene / import.">
                 </div>
                 <div>
                   <label class="f" for="af_hook">Hook</label>
@@ -760,12 +814,9 @@ body[data-provider=muse] .af-merge-note{display:block}
               <p class="af-create-scene-note" id="af_create_note">Required: press <strong>Create scene</strong> to split scenes, fill <strong>Hook</strong>, then <strong>Generate film</strong>.</p>
               <div class="rowbtns">
                 <button type="button" class="btn small go" id="af_preview">Create scene</button>
-                <button type="button" class="btn small" id="af_paste">Paste script</button>
-                <button type="button" class="btn small ghost" id="af_import">Import TXT</button>
                 <button type="button" class="btn small ghost" id="af_copy_format" title="Copy Prompt Format V3 for ChatGPT or Copilot">Copy format</button>
                 <button type="button" class="btn small ghost" id="af_clear">Clear</button>
               </div>
-              <input type="file" id="af_file" accept=".txt,text/plain" hidden>
               <p class="empty" id="af_warn" style="margin-top:10px"></p>
               <p class="empty" id="af_policy" style="margin-top:6px;display:none"></p>
             </div>
@@ -804,6 +855,7 @@ body[data-provider=muse] .af-merge-note{display:block}
             </div>
           </div>
         </details>
+        </div><!-- #af_editor_wrap -->
 
       </section>
     </main>
@@ -851,6 +903,10 @@ body[data-provider=muse] .af-merge-note{display:block}
         <summary><span class="sect-title">Film Histories</span><small class="sect-sum-end">after merge</small></summary>
         <div class="studio-sect-body">
           <div class="card" id="af_film_history_card">
+            <div class="rowbtns" style="margin-bottom:8px">
+              <button type="button" class="btn small ghost" id="af_film_history_export">Export CSV</button>
+              <button type="button" class="btn small ghost" id="af_film_history_delete" title="Delete ticked rows, or every row if none are ticked">Delete</button>
+            </div>
             <div id="af_film_history_host"><p class="empty">Loading…</p></div>
           </div>
         </div>
@@ -922,12 +978,40 @@ body[data-provider=muse] .af-merge-note{display:block}
     <button type="button" class="btn small primary" id="confirmDlgOk">Yes</button>
   </div>
 </dialog>
+<dialog id="afImportDlg" aria-labelledby="afImportDlgTitle">
+  <div class="confirm-in">
+    <h2 id="afImportDlgTitle">Import film template</h2>
+    <div class="af-import-note">
+      <p>Each sheet in the workbook becomes one Auto Film. The sheet name is the film <strong>No</strong> (e.g. 0001, 0002).</p>
+      <p>Choose up to 3 characters from the open Flow project. They are saved as references on every film in this import.</p>
+    </div>
+    <label class="f">Reference characters (max 3)</label>
+    <div id="af_import_char_list" class="af-import-chars" aria-busy="false"></div>
+    <label class="f">Excel file (.xlsx)</label>
+    <div class="af-import-file-row">
+      <button type="button" class="btn small ghost" id="af_import_pick_file">Choose file…</button>
+      <span id="af_import_file_name" class="empty">No file chosen</span>
+    </div>
+    <input type="file" id="af_import_xlsx_file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+  </div>
+  <div class="confirm-bar">
+    <button type="button" class="btn small ghost" id="af_import_cancel">Cancel</button>
+    <button type="button" class="btn small primary" id="af_import_go">Import</button>
+  </div>
+</dialog>
 <dialog id="picker"><h2>Pick from Flow</h2><p class="empty">Media already in the open Flow project.</p><div class="lib" id="pickList"></div><div style="margin-top:16px"><button class="btn small ghost" onclick="picker.close()">Close</button></div></dialog>
 <dialog id="viewer"><div class="viewbar"><button type="button" class="btn small ghost" id="viewerTrash" style="border-color:var(--bad);color:var(--bad)">Move to <span data-place="bin">the Mac's Trash</span></button><button type="button" class="btn small" onclick="viewer.close()" autofocus>Close</button></div><div id="viewerBody"></div><p class="empty" id="viewerPath"></p></dialog>
 <input type="file" id="file" hidden>
 <script type="module">
-import { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey, hookFromFilmScript, extractFirstVietnameseSentence, isPromptFormatV2, isPromptFormatV3, promptHasNoSubtitlesClause, promptHasVisualTextRestrictionBlock, promptHasFullNoTextPolicy, ensurePromptVisualTextRestriction, validateFilmScript, validateScenePolicy, policyStatusLabel } from "/film-script.js";
-window.FilmScript = { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey, hookFromFilmScript, extractFirstVietnameseSentence, isPromptFormatV2, isPromptFormatV3, promptHasNoSubtitlesClause, promptHasVisualTextRestrictionBlock, promptHasFullNoTextPolicy, ensurePromptVisualTextRestriction, validateFilmScript, validateScenePolicy, policyStatusLabel };
+import { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey, hookFromFilmScript, extractFirstVietnameseSentence, isPromptFormatV2, isPromptFormatV3, promptHasNoSubtitlesClause, promptHasVisualTextRestrictionBlock, promptHasFullNoTextPolicy, promptHasDialogueDensityBlock, ensurePromptVisualTextRestriction, ensurePromptDialogueDensity, validateFilmScript, validateScenePolicy, policyStatusLabel } from "/film-script.js";
+function ensureFilmScenePrompt(p) {
+  let out = typeof ensurePromptVisualTextRestriction === "function" ? ensurePromptVisualTextRestriction(p) : p;
+  if (typeof ensurePromptDialogueDensity === "function" && typeof isPromptFormatV2 === "function" && isPromptFormatV2(out)) {
+    out = ensurePromptDialogueDensity(out);
+  }
+  return out;
+}
+window.FilmScript = { parseFilmScript, shotCost, omniModel, sceneAction, queueGate, moveItem, sceneReferenceSlots, mergePickerRows, listedAssetKind, assetKindLabel, voiceStatus, promptPreview, statusBadge, sceneReadyOnFlow, dropFilmVoice, tableWindow, cleanDisplayName, migrateRefSlot, isRefId, sortClipsForMerge, mergePlayOrderKey, hookFromFilmScript, extractFirstVietnameseSentence, isPromptFormatV2, isPromptFormatV3, promptHasNoSubtitlesClause, promptHasVisualTextRestrictionBlock, promptHasFullNoTextPolicy, promptHasDialogueDensityBlock, ensurePromptVisualTextRestriction, ensurePromptDialogueDensity, validateFilmScript, validateScenePolicy, policyStatusLabel, ensureFilmScenePrompt };
 </script>
 <script>
 let SESSION_TOKEN = "__FLOW_TOKEN__";
@@ -1204,6 +1288,8 @@ const DEFAULTS = {
   cut: { project: "MyFilm", music: null, voiceover: null, hold: true, clips: [] },
   captions: { video: null, style: "bold", position: "bottom", size: 100, colors: {}, text: "" },
   publish: { project: "MyFilm", flowProjectId: "", flowVideoId: "", video: "", scheduleAt: "", publishMode: "now", captionByProject: {}, tiktok: false, youtube: false, facebook: false, hashtagsByProject: {} },
+  autoFilmView: "list",
+  autoFilmActiveId: "",
 };
 // A slot is only media when it names a Flow asset or a local file. Empty objects / leftover keys must not ride into generate.
 const slotOk = (v) => Boolean(v && (v.assetId || v.asset || v.path));
@@ -1239,6 +1325,8 @@ const S = {
   narrate: { ...DEFAULTS.narrate, ...(saved.narrate || {}) },
   cut: { ...DEFAULTS.cut, ...(saved.cut || {}) },
   captions: { ...DEFAULTS.captions, ...(saved.captions || {}) },
+  autoFilmView: saved.autoFilmView === "edit" ? "edit" : "list",
+  autoFilmActiveId: String(saved.autoFilmActiveId || ""),
   publish: {
     ...DEFAULTS.publish,
     ...(saved.publish || {}),
@@ -1255,7 +1343,12 @@ if (!["kokoro", "gemini"].includes(S.narrate.engine)) S.narrate.engine = "kokoro
 const REMOVED_TABS = new Set(["restyle", "cut", "captions", "library"]);
 if (REMOVED_TABS.has(S.tab)) S.tab = "film";
 let TECH = [], VOICES = { kokoro: [], gemini: [] }, CAST = [], LIB = [], GAL = [], castImage = null, pickTarget = null, busy = false;
+function newFilmId() {
+  return `af_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
 const filmBlank = () => ({
+  id: newFilmId(),
+  updatedAt: "",
   project: "", script: "", hook: "", parsedFromScript: "", preamble: "", warnings: [], scenes: [], page: 0, open: -1, draft: "", scroll: 0,
   applyRefs: true, refs: [],
   settings: { model: "Omni 1.1 Flash", aspect: "9:16", duration: 8, resolution: "720p", variants: 1, budget: 300, autoRetry: false, autoMerge: true },
@@ -1299,7 +1392,7 @@ function showTab(name) {
   const cols = $(".cols");
   if (cols) cols.classList.toggle("cols-single", !filmSide);
   if (name === "film") {
-    renderFilm();
+    applyAutoFilmView();
     void loadFilmHistory();
     if (flowSignedIn && ACTIVE_PROVIDER !== "muse") schedulePublishPrefetch(800);
   }
@@ -1373,6 +1466,24 @@ function slotHtml(kind, i, val, label) {
   return `<div class="slot" data-slot="${kind}" data-i="${i}">${pic ? `<img src="${media(val.path)}">` : ""}
     ${val ? `<button class="x" data-clear="${kind}" data-i="${i}">×</button><span class="tag"${idTip}>${esc(name)}${slotDetail(val)}</span>`
           : `<span>${label}</span><span class="two"><button type="button" data-src="upload">Upload</button><button type="button" data-src="flow">${/music|voiceover/.test(kind) ? "My narrations" : "From Flow"}</button></span>`}</div>`;
+}
+function pickerRowToRef(a) {
+  if (!a || !window.FilmScript) return null;
+  const kind = window.FilmScript.listedAssetKind(a);
+  const displayName = a.displayName || a.assetName || a.name;
+  if (!displayName) return null;
+  return {
+    displayName,
+    asset: displayName,
+    assetName: displayName,
+    assetId: a.characterId || a.assetId,
+    projectId: a.projectId,
+    thumbnail: a.thumbnail,
+    assetType: kind === "character" ? "character" : a.assetType || a.kind,
+    kind: a.kind || kind,
+    voice: a.voice ?? null,
+    needsReselect: !(a.assetId || a.characterId),
+  };
 }
 function putRef(list, index, val) {
   const next = [...list];
@@ -1451,21 +1562,8 @@ async function openPicker(audioOnly) {
 }
 $("#pickList").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-n]"); if (!b) return;
-  const a = LIB[+b.dataset.n];
-  const kind = window.FilmScript.listedAssetKind(a);
-  const displayName = a.displayName || a.assetName || a.name;
-  const picked = {
-    displayName,
-    asset: displayName,
-    assetName: displayName,
-    assetId: a.characterId || a.assetId,
-    projectId: a.projectId,
-    thumbnail: a.thumbnail,
-    assetType: kind === "character" ? "character" : a.assetType || a.kind,
-    kind: a.kind || kind,
-    voice: a.voice ?? null,
-    needsReselect: !a.assetId && !a.characterId,
-  };
+  const picked = pickerRowToRef(LIB[+b.dataset.n]);
+  if (!picked) return;
   setSlot(pickTarget.kind, pickTarget.i, picked);
   picker.close();
 });
@@ -1770,12 +1868,13 @@ function sceneFlowTitle(scene, i) {
   return filmNoClipTitle(scene, i);
 }
 const FILM_NO_LOCAL_KEY = "tedverse-film-no-next";
-function localFilmAllocate() {
-  let n = Number(localStorage.getItem(FILM_NO_LOCAL_KEY) || "0");
-  if (!Number.isFinite(n) || n < 1) n = 1;
-  const no = String(n).padStart(4, "0");
-  localStorage.setItem(FILM_NO_LOCAL_KEY, String(n + 1));
-  return no;
+function maxFilmNoFromRows(rows) {
+  let max = 0;
+  for (const r of rows || []) {
+    const n = Number(String(r.no ?? "").trim());
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  return max;
 }
 function syncLocalFilmNoCounter(serverNext) {
   const sn = Number(serverNext);
@@ -1783,6 +1882,14 @@ function syncLocalFilmNoCounter(serverNext) {
   const local = Number(localStorage.getItem(FILM_NO_LOCAL_KEY) || "0");
   const merged = Math.max(sn, Number.isFinite(local) ? local : 0);
   localStorage.setItem(FILM_NO_LOCAL_KEY, String(merged));
+}
+function localFilmNoFromHistory(rows) {
+  const fromHist = maxFilmNoFromRows(rows);
+  const floor = Number(localStorage.getItem(FILM_NO_LOCAL_KEY) || "0");
+  const max = Math.max(fromHist, Number.isFinite(floor) ? floor - 1 : 0);
+  const serial = max + 1;
+  localStorage.setItem(FILM_NO_LOCAL_KEY, String(serial + 1));
+  return String(serial).padStart(4, "0");
 }
 async function ensureFilmNumber({ force = false } = {}) {
   const p = String(film.project || "").trim();
@@ -1795,22 +1902,23 @@ async function ensureFilmNumber({ force = false } = {}) {
     if (note) toast(note, true);
     return true;
   };
+  if (force && LIVE) {
+    try {
+      await loadFilmHistory();
+    } catch { /* optional */ }
+  }
   if (LIVE) {
     try {
-      const out = await api("film_allocate", {});
+      const out = await api("film_next_from_history", {});
       if (out?.no && applyNo(out.no)) {
         if (out.next) syncLocalFilmNoCounter(out.next);
         return;
       }
     } catch (err) {
-      console.warn("[TedVerse] film_allocate failed:", err);
+      console.warn("[TedVerse] film_next_from_history failed:", err);
     }
-    try {
-      const reg = await api("film_numbers", {});
-      if (reg?.next) syncLocalFilmNoCounter(reg.next);
-    } catch { /* optional */ }
   }
-  if (!applyNo(localFilmAllocate(), LIVE ? "No assigned locally only. Run npm run build and restart Studio (npm run studio) to persist in ~/.flow-mcp/film-numbers.json." : null)) {
+  if (!applyNo(localFilmNoFromHistory(filmHistoryCache), LIVE ? "No from local list only. Run npm run build and restart Studio (npm run studio) for film history sync." : null)) {
     toast("Could not assign film No.", true);
   }
 }
@@ -1861,7 +1969,71 @@ function filmLogAutoFilm(msg, extra) {
     ...(extra || {}),
   });
 }
+function autoFilmListCreditEstimate(rows) {
+  const lib = window.FilmScript;
+  if (!lib || !rows?.length) return { total: 0, unknown: false };
+  const { runnable } = autoFilmListRunPlan(rows);
+  let total = 0;
+  let unknown = false;
+  for (const { draft, mode } of runnable) {
+    const f = draft.scenes ? draft : mergeSavedFilm(draft);
+    const s = f.settings || filmBlank().settings;
+    const omni = String(s.model || "").startsWith("Omni");
+    const per = lib.shotCost(s.model, s.resolution, Number(omni ? s.duration : 8), Number(s.variants || 1));
+    if (per == null) {
+      unknown = true;
+      continue;
+    }
+    const pool = (f.scenes || []).filter((sc) => sc.selected !== false);
+    const todo = pool.filter(
+      (sc) =>
+        sc.prompt?.trim() &&
+        sc.status !== "skipped" &&
+        sc.status !== "completed" &&
+        !lib.sceneReadyOnFlow(sc),
+    );
+    const n =
+      mode === "retry"
+        ? pool.filter((sc) => sc.status === "failed" || sc.status === "download_failed").length
+        : todo.length;
+    total += n * per;
+  }
+  return { total, unknown };
+}
+function filmListRollState() {
+  const hint = (t) => ({ label: "Generate film", disabled: true, hint: t, act: null, secondary: null, mode: "list" });
+  if (filmRun.running) {
+    if (filmRun.stop) {
+      return { label: "Stopping…", disabled: true, hint: "Finishing the current scene on Flow", act: null, secondary: null, mode: "list" };
+    }
+    return {
+      label: "Stop",
+      disabled: false,
+      hint: autoFilmBatchRunning ? "Stops after this film’s current scene" : "Stops after the current scene",
+      act: "stop",
+      secondary: null,
+      mode: "list",
+    };
+  }
+  if (autoFilmBatchRunning) return hint("Generating films from the list…");
+  if (!LIVE) return hint("Not connected — start TedVerse first.");
+  if (!window.FilmScript) return hint("Script tools not loaded — refresh after build.");
+  const rows = autoFilmLibraryCache;
+  const { runnable, selectedMode } = autoFilmListRunPlan(rows);
+  if (!runnable.length) {
+    const ticked = autoFilmLibrarySelected.size;
+    return hint(ticked ? "Tick New or Failed films to generate" : "No New or Failed films on the list");
+  }
+  const parts = [];
+  parts.push(selectedMode || autoFilmLibrarySelected.size ? `${runnable.length} ticked` : `${runnable.length} on list`);
+  const genN = runnable.filter((r) => r.mode === "generate").length;
+  const retryN = runnable.filter((r) => r.mode === "retry").length;
+  if (genN) parts.push(`${genN} generate`);
+  if (retryN) parts.push(`${retryN} retry`);
+  return { label: "Generate film", disabled: false, hint: parts.join(" · "), act: "generate_list", secondary: null, mode: "list" };
+}
 function filmRollState() {
+  if (S.autoFilmView !== "edit") return filmListRollState();
   const script = filmScriptText();
   const plan = filmPlan();
   const budget = Number(film.settings.budget) || 0;
@@ -1946,18 +2118,7 @@ async function retryFilmFailed() {
   await runFilm(ids, { skipConfirm: true });
 }
 async function startNewFilm() {
-  if (filmRun.running) return toast("Wait until generation stops.", true);
-  if (!(await confirmApp("Start a new film? The script and scene list reset on this page. Clips in Google Flow are not deleted.", { ok: "Start new", title: "New film" }))) return;
-  film = filmBlank();
-  await ensureFilmNumber({ force: true });
-  if (!isFilmBatchNo(film.project)) {
-    toast("Could not allocate film No.", true);
-    return;
-  }
-  filmRefsHydrated = false;
-  $("#af_script").value = "";
-  scheduleFilmSave();
-  renderFilm();
+  await createNewAutoFilmDraft();
 }
 function filmSettingsSummary() {
   const s = film.settings;
@@ -2010,7 +2171,12 @@ async function analyzeFilmScript({ preview = false, force = false, newBatch = fa
   film.scenes = result.scenes.map((s) =>
     filmScene({
       ...s,
-      prompt: typeof lib.ensurePromptVisualTextRestriction === "function" ? lib.ensurePromptVisualTextRestriction(s.prompt) : s.prompt,
+      prompt:
+        typeof lib.ensureFilmScenePrompt === "function"
+          ? lib.ensureFilmScenePrompt(s.prompt)
+          : typeof lib.ensurePromptVisualTextRestriction === "function"
+            ? lib.ensurePromptVisualTextRestriction(s.prompt)
+            : s.prompt,
     }),
   );
   film.parsedFromScript = text;
@@ -2073,15 +2239,21 @@ function estimate() {
     $("#estSub").textContent = `${ready.length} shot(s) ready`;
     btn.disabled = busy || !ready.length;
   } else if (tab === "film") {
-    const plan = filmPlan();
-    const budget = Number(film.settings.budget) || 0;
     const state = filmRollState();
-    const ex = filmExecutionMode();
-    const used = plan.spent;
-    const genEst = plan.todo.length && plan.per != null ? plan.todo.length * plan.per : 0;
-    $("#estNum").textContent = plan.per == null && ex.needGen > 0 ? "No price" : ex.needGen > 0 ? `≈ ${genEst} credits` : "0 credits";
-    $("#estSub").textContent = `${ex.selected} selected · ${ex.onFlow} on Flow · ${ex.needGen} to generate · ${used} spent · ${ex.mode}`;
     btn.textContent = state.label;
+    if (S.autoFilmView !== "edit") {
+      const est = autoFilmListCreditEstimate(autoFilmLibraryCache);
+      $("#estNum").textContent =
+        est.unknown && est.total === 0 ? "≈ ? credits" : est.total > 0 ? `≈ ${est.total} credits` : "0 credits";
+      $("#estSub").textContent = state.hint || "";
+    } else {
+      const plan = filmPlan();
+      const ex = filmExecutionMode();
+      const used = plan.spent;
+      const genEst = plan.todo.length && plan.per != null ? plan.todo.length * plan.per : 0;
+      $("#estNum").textContent = plan.per == null && ex.needGen > 0 ? "No price" : ex.needGen > 0 ? `≈ ${genEst} credits` : "0 credits";
+      $("#estSub").textContent = `${ex.selected} selected · ${ex.onFlow} on Flow · ${ex.needGen} to generate · ${used} spent · ${ex.mode}`;
+    }
     const stopNow = filmRun.running && state.act === "stop";
     btn.disabled = state.disabled || (busy && !stopNow);
     btn.classList.toggle("stop", !!stopNow);
@@ -2141,8 +2313,14 @@ $("#roll").onclick = async () => {
       await runMergeOnly({ force: state.act === "retry_merge" });
       return;
     }
+    if (state.act === "generate_list") {
+      if (!guard()) return;
+      await runAutoFilmsFromLibrary();
+      return;
+    }
     if (state.act === "generate" || state.act === "continue") {
       if (!guard()) return;
+      if (S.autoFilmView !== "edit") return;
       const analyzed = await analyzeFilmScript();
       if (!analyzed.ok) {
         if (!analyzed.cancelled && analyzed.error) toast(analyzed.error, true);
@@ -2222,10 +2400,12 @@ RULES:
 - Each scene starts on its own line: === SCENE 001 ===, === SCENE 002 === (three-digit numbers only).
 - Everything from one header until the next is ONE prompt for one video clip (~6 seconds). Headers are not sent to the AI.
 - Use @CharacterName when TedVerse will attach a Flow character (e.g. @Teddy Ngo). Replace with the user's character when needed.
-- Keep ALL-CAPS section labels exactly: SCENE:, CHARACTER:, LANGUAGE AND AUDIO:, DIALOGUE:, PERFORMANCE:, CAMERA:, AUDIO:
-- Every speaking scene MUST include LANGUAGE AND AUDIO and AUDIO sections (see template). Do not translate Vietnamese dialogue.
+- Keep ALL-CAPS section labels exactly: SCENE:, CHARACTER:, LANGUAGE AND AUDIO:, DIALOGUE:, DIALOGUE DENSITY:, PERFORMANCE:, CAMERA:, AUDIO:
+- Every speaking scene MUST include LANGUAGE AND AUDIO, DIALOGUE DENSITY, and AUDIO sections (see template). Do not translate Vietnamese dialogue.
 - Dialogue is ONLY in Vietnamese inside straight double quotes. No English spoken lines.
-- Identify who speaks in DIALOGUE. No overlapping speech. ~6 seconds per scene — one or two short lines fit best.
+- Identify who speaks in DIALOGUE. No overlapping speech.
+- Each clip is about 6 seconds: spoken Vietnamese must cover MORE than 80% of that time (under 20% silence). Write enough quoted lines; use a SPOKEN TIMELINE with second ranges under DIALOGUE (0.0-1.4s, 1.4-5.8s, …).
+- No long silent acting, staring, walking, or music-only beats — characters keep talking.
 - Policy-aware fictional satire: include "This is a fictional alternate-universe social comedy scenario." and "All policies and events depicted are imaginary." No fake breaking news or verified real-world claims.
 - Prefer: "Clearly fictional comedy sketch." and "No news broadcast or documentary presentation."
 - Every scene MUST include the VISUAL TEXT RESTRICTION block (below) and end with: No subtitles, no captions, no text on screen.
@@ -2254,9 +2434,17 @@ Do not translate or paraphrase the dialogue.
 No English speech.
 No English narration.
 No background music.
+Spoken Vietnamese must fill more than 80% of the clip (under 20% silence).
 
 DIALOGUE:
-[Who speaks, in order.]
+[Who speaks, in order — enough quoted lines to fill the clip.]
+
+SPOKEN TIMELINE (map lines to seconds; speech must total 80%+ of the clip):
+0.0-[X]s: [Character] says:
+"[Vietnamese line]"
+[X]-[Y]s: [Other character] says:
+"[Vietnamese line]"
+…continue until the end of the clip.
 
 [Character] says:
 "[Vietnamese line]"
@@ -2264,9 +2452,14 @@ DIALOGUE:
 [Other character] replies:
 "[Vietnamese line]"
 
+DIALOGUE DENSITY:
+Spoken Vietnamese must fill more than 80% of the total clip duration (under 20% silence or dead air).
+Characters talk almost continuously; only brief pauses between speakers.
+No reaction-only shots without speech.
+
 PERFORMANCE:
-Natural Vietnamese comedic timing.
-Realistic facial expressions.
+Natural Vietnamese comedic timing, rapid back-and-forth.
+Realistic facial expressions while speaking.
 Characters speak clearly without overlapping.
 
 CAMERA:
@@ -2277,7 +2470,7 @@ No zoom, no tracking, no camera shake.
 AUDIO:
 Natural Vietnamese speech only.
 Accurate Vietnamese lip synchronization.
-Clear dialogue.
+Clear dialogue, nearly wall-to-wall speech (80%+ of clip duration).
 
 VISUAL TEXT RESTRICTION:
 ABSOLUTELY NO TEXT ON SCREEN.
@@ -2332,18 +2525,34 @@ Do not translate or paraphrase the dialogue.
 No English speech.
 No English narration.
 No background music.
+Spoken Vietnamese must fill more than 80% of the clip (under 20% silence).
 
 DIALOGUE:
 
+SPOKEN TIMELINE (6 seconds total — about 5.2 seconds of speech):
+0.0-2.2s: @Teddy Ngo looks at the camera and says:
+"Nếu Việt Nam bắt buộc công khai lương thì sao? Mọi người sẽ nhìn nhau kiểu gì?"
+2.2-4.8s: His friend raises his phone and says:
+"Ê Teddy! Tao biết lương mày rồi! Công khai thật luôn hả?"
+4.8-6.0s: @Teddy Ngo blurts while leaning back:
+"Đùa thôi mà! Sao mày vào được vậy?"
+
 @Teddy Ngo looks directly at the camera and says:
-"Nếu Việt Nam bắt buộc công khai lương thì sao?"
+"Nếu Việt Nam bắt buộc công khai lương thì sao? Mọi người sẽ nhìn nhau kiểu gì?"
 
 His friend raises his phone and says:
-"Ê Teddy! Tao biết lương mày rồi!"
+"Ê Teddy! Tao biết lương mày rồi! Công khai thật luôn hả?"
+
+@Teddy Ngo blurts while leaning back:
+"Đùa thôi mà! Sao mày vào được vậy?"
+
+DIALOGUE DENSITY:
+Spoken Vietnamese must fill more than 80% of the total clip duration (under 20% silence or dead air).
+Characters talk almost continuously; only brief pauses between speakers.
 
 PERFORMANCE:
-Natural Vietnamese comedic timing.
-Teddy reacts with a surprised facial expression.
+Natural Vietnamese comedic timing, rapid back-and-forth.
+Teddy reacts while speaking, not in silence.
 Both characters speak clearly without overlapping.
 
 CAMERA:
@@ -2354,7 +2563,7 @@ No zoom, no tracking, no camera shake.
 AUDIO:
 Natural Vietnamese speech only.
 Accurate Vietnamese lip synchronization.
-Clear dialogue.
+Clear dialogue, nearly wall-to-wall speech (80%+ of clip duration).
 
 VISUAL TEXT RESTRICTION:
 ABSOLUTELY NO TEXT ON SCREEN.
@@ -2384,17 +2593,548 @@ No subtitles, no captions, no text on screen.`;
 let filmForce = false, filmSig = "", filmPaint = false;
 function filmDb() {
   return new Promise((ok, fail) => {
-    const req = indexedDB.open("flow-studio-film", 1);
-    req.onupgradeneeded = () => req.result.createObjectStore("films");
+    const req = indexedDB.open("flow-studio-film", 2);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains("films")) db.createObjectStore("films");
+    };
     req.onsuccess = () => ok(req.result);
     req.onerror = () => fail(req.error);
   });
 }
+function idbGetFilm(db, key) {
+  return new Promise((ok, fail) => {
+    const req = db.transaction("films", "readonly").objectStore("films").get(key);
+    req.onsuccess = () => ok(req.result);
+    req.onerror = () => fail(req.error);
+  });
+}
+function idbPutFilm(db, value, key) {
+  return new Promise((ok, fail) => {
+    const tx = db.transaction("films", "readwrite");
+    tx.objectStore("films").put(value, key);
+    tx.oncomplete = () => ok();
+    tx.onerror = () => fail(tx.error);
+  });
+}
+function idbDeleteFilm(db, key) {
+  return new Promise((ok, fail) => {
+    const tx = db.transaction("films", "readwrite");
+    tx.objectStore("films").delete(key);
+    tx.oncomplete = () => ok();
+    tx.onerror = () => fail(tx.error);
+  });
+}
+function idbAllFilms(db) {
+  return new Promise((ok, fail) => {
+    const req = db.transaction("films", "readonly").objectStore("films").getAll();
+    req.onsuccess = () => ok(req.result || []);
+    req.onerror = () => fail(req.error);
+  });
+}
+function mergeSavedFilm(saved) {
+  if (!saved || typeof saved !== "object") return filmBlank();
+  const cleaned = window.FilmScript?.dropFilmVoice(saved) ?? saved;
+  const base = filmBlank();
+  const merged = {
+    ...base,
+    ...cleaned,
+    id: cleaned.id || base.id,
+    settings: { ...base.settings, ...(cleaned.settings || {}) },
+    refs: Array.isArray(cleaned.refs) ? cleaned.refs : [],
+    scenes: Array.isArray(cleaned.scenes) ? cleaned.scenes : [],
+    applyRefs: cleaned.applyRefs ?? cleaned.applyMain !== false,
+    parsedFromScript: cleaned.parsedFromScript ?? cleaned.script ?? "",
+    draft: "",
+  };
+  delete merged.voice;
+  delete merged.primary;
+  delete merged.applyMain;
+  delete merged.main;
+  delete merged.support;
+  if (!merged.refs.length && (saved.main || saved.support)) {
+    merged.refs = [saved.main, saved.support].filter(Boolean).map((name) => ({ asset: name, assetName: name, assetType: "character", kind: "character" }));
+  }
+  for (const scene of merged.scenes) {
+    if (scene.refMode) continue;
+    if (scene.override === "none") scene.refMode = "none";
+    else if (scene.override || scene.support) {
+      scene.refMode = "custom";
+      scene.refs = [scene.override, scene.support].filter((name) => name && name !== "none").map((name) => ({ asset: name, assetName: name, assetType: "character", kind: "character" }));
+    } else scene.refMode = "film";
+  }
+  if (!isFilmBatchNo(String(merged.project || "").trim())) merged.project = "";
+  if (!merged.hook && merged.script?.trim() && window.FilmScript?.hookFromFilmScript) {
+    merged.hook = window.FilmScript.hookFromFilmScript(merged.script.trim());
+  }
+  return merged;
+}
+async function migrateFilmStore() {
+  const db = await filmDb();
+  const legacy = await idbGetFilm(db, "current");
+  if (!legacy || typeof legacy !== "object") return;
+  const copy = mergeSavedFilm(legacy);
+  const id = copy.id || newFilmId();
+  copy.id = id;
+  copy.updatedAt = copy.updatedAt || new Date().toISOString();
+  await idbPutFilm(db, copy, id);
+  await idbDeleteFilm(db, "current");
+  save();
+}
+async function listStoredAutoFilms() {
+  const db = await filmDb();
+  const raw = await idbAllFilms(db);
+  return raw
+    .filter((f) => f && typeof f === "object" && f.id && f.id !== "current")
+    .map((f) => mergeSavedFilm(f))
+    .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")) || String(b.project || "").localeCompare(String(a.project || "")));
+}
+function autoFilmDraftPath(f) {
+  const p = String(f.finalOutput || f.composition?.cached_video_path || "").trim();
+  return p;
+}
+/** Batch list queue (strict order: finish generate + merge for film N before film N+1). */
+let autoFilmBatchOrder = [];
+let autoFilmBatchIndex = -1;
+function autoFilmWorkflowStatusForList(f) {
+  if (autoFilmBatchRunning && autoFilmBatchOrder.length && autoFilmBatchIndex >= 0) {
+    const pos = autoFilmBatchOrder.indexOf(f.id);
+    if (pos !== -1) {
+      if (pos > autoFilmBatchIndex) return "queued";
+      if (pos === autoFilmBatchIndex) return "in-progress";
+    }
+  }
+  return autoFilmWorkflowStatus(f);
+}
+/** List workflow: new | in-progress | failed | done */
+function autoFilmWorkflowStatus(f) {
+  const scenes = f.scenes || [];
+  const selected = scenes.filter((s) => s.selected !== false);
+  const pool = selected.length ? selected : scenes;
+  const path = autoFilmDraftPath(f);
+  if (f.publishStatus === "ready_to_publish" || f.composition?.publish_status === "ready_to_publish" || path) {
+    return "done";
+  }
+  if (f.mergeFailed || f.composition?.merge_status === "failed") return "failed";
+  if (pool.some((s) => s.status === "failed" || s.status === "download_failed")) return "failed";
+  if (filmRun.running && S.autoFilmActiveId === f.id) return "in-progress";
+  if (f.composition?.merge_status === "in_progress") return "in-progress";
+  if (pool.some((s) => s.status === "generating" || s.status === "waiting_flow")) return "in-progress";
+  const started = (s) =>
+    s.status === "generating" ||
+    s.status === "waiting_flow" ||
+    s.status === "completed" ||
+    s.status === "generated_on_flow" ||
+    (s.jobId && s.status !== "failed" && s.status !== "download_failed");
+  const startedN = pool.filter(started).length;
+  if (startedN > 0) return "in-progress";
+  return "new";
+}
+function autoFilmStatusBadge(code) {
+  const label = { new: "New", "in-progress": "In progress", queued: "Queue", failed: "Failed", done: "Done" }[code] || code;
+  const cls = { new: "skipped", "in-progress": "generating", queued: "queued", failed: "failed", done: "completed" }[code] || "skipped";
+  return `<span class="st ${cls}">${esc(label)}</span>`;
+}
+function autoFilmDraftPathCell(videoPath) {
+  if (!videoPath) return `<td class="col-path"><span class="muted">—</span></td>`;
+  const p = esc(videoPath);
+  const short = esc(videoPath.length > 42 ? `…${videoPath.slice(-40)}` : videoPath);
+  return `<td class="col-path" title="${p}"><a href="#" class="hist-path-link" data-path="${p}">${short}</a></td>`;
+}
+function formatFilmUpdated(iso) {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "—";
+  }
+}
+let autoFilmLibraryCache = [];
+const autoFilmLibrarySelected = new Set();
+function bindAutoFilmLibrarySelection(root) {
+  const prune = () => {
+    const visible = new Set(autoFilmLibraryCache.map((f) => f.id));
+    for (const id of [...autoFilmLibrarySelected]) {
+      if (!visible.has(id)) autoFilmLibrarySelected.delete(id);
+    }
+  };
+  prune();
+  const head = root.querySelector("#af_library_head");
+  const allOn = autoFilmLibraryCache.length && autoFilmLibraryCache.every((f) => autoFilmLibrarySelected.has(f.id));
+  if (head) head.checked = !!allOn;
+  head?.addEventListener("change", (e) => {
+    const on = e.target.checked;
+    autoFilmLibraryCache.forEach((f) => {
+      if (on) autoFilmLibrarySelected.add(f.id);
+      else autoFilmLibrarySelected.delete(f.id);
+    });
+    root.querySelectorAll("input[data-af-sel]").forEach((el) => {
+      el.checked = on;
+    });
+    estimate();
+  });
+  root.querySelectorAll("input[data-af-sel]").forEach((el) => {
+    el.addEventListener("change", () => {
+      const id = el.getAttribute("data-af-sel");
+      if (el.checked) autoFilmLibrarySelected.add(id);
+      else autoFilmLibrarySelected.delete(id);
+      if (head && autoFilmLibraryCache.length) {
+        head.checked = autoFilmLibraryCache.every((f) => autoFilmLibrarySelected.has(f.id));
+      }
+      estimate();
+    });
+  });
+  root.querySelectorAll(".af-lib-open").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openAutoFilmEditor(btn.getAttribute("data-af-id"));
+    });
+  });
+  root.querySelectorAll("tr.af-lib-row").forEach((tr) => {
+    tr.addEventListener("click", (e) => {
+      if (e.target.closest("input[type=checkbox], .col-sel, label")) return;
+      if (e.target.closest(".af-lib-open, .hist-path-link")) return;
+      const id = tr.getAttribute("data-af-id");
+      if (id) openAutoFilmEditor(id);
+    });
+  });
+  root.querySelectorAll(".hist-path-link").forEach((a) => {
+    a.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const path = a.getAttribute("data-path");
+      if (!path) return;
+      try {
+        await api("open_local_path", { path });
+      } catch (err) {
+        toast(err.message || "Could not open file.", true);
+      }
+    });
+  });
+}
+async function renderAutoFilmLibrary() {
+  const host = $("#af_library_host");
+  if (!host) return;
+  try {
+    const rows = await listStoredAutoFilms();
+    autoFilmLibraryCache = rows;
+    if (!rows.length) {
+      autoFilmLibrarySelected.clear();
+      host.innerHTML = `<p class="empty">No Auto Film drafts yet. Press <strong>New film</strong> to start.</p>`;
+      return;
+    }
+    host.innerHTML = `<div class="pub-history-wrap"><table class="pub-history" id="af_library_table">
+      <thead><tr>
+        <th class="col-sel"><input type="checkbox" id="af_library_head" aria-label="Select all drafts"></th>
+        <th>No</th><th class="col-hook">Hook</th><th>Scenes</th><th>Updated</th><th>Status</th><th class="col-path">Path</th>
+      </tr></thead>
+      <tbody>${rows
+        .map((f) => {
+          const noRaw = isFilmBatchNo(f.project) ? f.project : "—";
+          const hookRaw = (f.hook || "").trim().slice(0, 120) || "—";
+          const noBtn = `<button type="button" class="af-lib-open" data-af-id="${esc(f.id)}">${esc(noRaw)}</button>`;
+          const hookBtn = `<button type="button" class="af-lib-open" data-af-id="${esc(f.id)}">${esc(hookRaw)}</button>`;
+          const n = (f.scenes || []).length;
+          const wf = autoFilmWorkflowStatusForList(f);
+          const stBadge = autoFilmStatusBadge(wf);
+          const up = esc(formatFilmUpdated(f.updatedAt));
+          const checked = autoFilmLibrarySelected.has(f.id) ? "checked" : "";
+          return `<tr class="af-lib-row" data-af-id="${esc(f.id)}">
+            <td class="col-sel"><input type="checkbox" data-af-sel="${esc(f.id)}" aria-label="Select draft ${esc(noRaw)}" ${checked}></td>
+            <td class="num">${noBtn}</td>
+            <td class="col-hook">${hookBtn}</td>
+            <td>${n}</td>
+            <td>${up}</td>
+            <td>${stBadge}</td>
+            ${autoFilmDraftPathCell(autoFilmDraftPath(f))}
+          </tr>`;
+        })
+        .join("")}</tbody></table></div>`;
+    bindAutoFilmLibrarySelection(host);
+    if (S.tab === "film" && S.autoFilmView === "list") estimate();
+  } catch (err) {
+    host.innerHTML = `<p class="empty err">${esc(err.message || "Could not load drafts.")}</p>`;
+  }
+}
+async function persistActiveFilmIfAny() {
+  if (S.autoFilmView !== "edit" || !film.id) return;
+  const hasWork = !!(film.project || film.script?.trim() || film.scenes.length);
+  if (!hasWork) return;
+  await saveFilmNow();
+}
+function syncFilmFieldsFromModel() {
+  setFilmField("#af_project", film.project);
+  setFilmField("#af_hook", film.hook || "");
+  setFilmField("#af_script", film.script || "");
+  setFilmField("#af_budget", String(film.settings.budget));
+  if ($("#af_model")) $("#af_model").value = film.settings.model;
+}
+async function loadAutoFilmDraftForRun(id) {
+  const db = await filmDb();
+  const saved = await idbGetFilm(db, id);
+  if (!saved) return false;
+  film = mergeSavedFilm(saved);
+  film.id = id;
+  S.autoFilmActiveId = id;
+  save();
+  filmRefsHydrated = false;
+  syncFilmFieldsFromModel();
+  await syncFilmCompositionFromServer();
+  await recoverFilmScenesFromFlow();
+  await hydrateFilmRefs();
+  await saveFilmNow();
+  return true;
+}
+function autoFilmListRunPlan(rows) {
+  const selected = [...autoFilmLibrarySelected];
+  const picked = selected.length ? rows.filter((f) => selected.includes(f.id)) : rows;
+  const runnable = [];
+  const skipped = [];
+  for (const f of picked) {
+    const st = autoFilmWorkflowStatus(f);
+    if (st === "in-progress") {
+      skipped.push({ no: f.project, why: "in progress" });
+      continue;
+    }
+    if (st === "done") {
+      skipped.push({ no: f.project, why: "done" });
+      continue;
+    }
+    if (!selected.length && st !== "new" && st !== "failed") {
+      skipped.push({ no: f.project, why: st });
+      continue;
+    }
+    if (selected.length && st !== "new" && st !== "failed") {
+      skipped.push({ no: f.project, why: st });
+      continue;
+    }
+    runnable.push({ draft: f, mode: st === "failed" ? "retry" : "generate" });
+  }
+  return { runnable, skipped, selectedMode: selected.length > 0 };
+}
+async function runOneAutoFilmFromList({ draft, mode }) {
+  const no = draft.project || draft.id;
+  filmRun.stop = false;
+  if (!(await loadAutoFilmDraftForRun(draft.id))) throw new Error("Draft not found.");
+  await renderAutoFilmLibrary();
+  syncFilmFieldsFromModel();
+  if (!film.scenes.length) {
+    const analyzed = await analyzeFilmScript();
+    if (!analyzed.ok) throw new Error(analyzed.error || "No scenes — open the film and run Create scene.");
+  }
+  const needPick = [...(film.refs || []), ...film.scenes.flatMap((s) => s.refs || [])].filter((r) => r?.needsReselect);
+  if (needPick.length) {
+    throw new Error(`Re-pick in References: ${[...new Set(needPick.map(slotName))].join(", ")}`);
+  }
+  if (mode === "retry" || filmHasFailed()) {
+    await retryFilmFailed();
+    return `${no}: re-generated failed scene(s)`;
+  }
+  const plan = filmPlan();
+  if (!plan.selected.length) throw new Error("No scenes selected.");
+  const policy = selectedPolicySummary(plan.selected);
+  if (policy.block) throw new Error("Policy check blocked one or more scenes.");
+  const budget = Number(film.settings.budget) || 0;
+  if (plan.per == null && plan.todo.length) throw new Error("No credit price for this model.");
+  if (plan.todo.length && plan.spent + plan.estimate > budget) throw new Error(`Over budget (${budget} credits).`);
+  if (plan.todo.length) {
+    await runFilm(null, { skipConfirm: true });
+    return `${no}: generated`;
+  }
+  if (film.mergeFailed || film.composition?.merge_status === "failed") {
+    await runMergeOnly({ force: false });
+    return `${no}: merge retried`;
+  }
+  return `${no}: nothing left to run`;
+}
+let autoFilmBatchRunning = false;
+function sortAutoFilmBatchRunnable(runnable) {
+  return [...runnable].sort((a, b) => {
+    const na = String(a.draft.project || "");
+    const nb = String(b.draft.project || "");
+    if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
+    return String(a.draft.id || "").localeCompare(String(b.draft.id || ""));
+  });
+}
+async function runAutoFilmsFromLibrary() {
+  if (S.autoFilmView === "edit") return;
+  if (autoFilmBatchRunning || filmRun.running) return toast("Wait until the current run finishes.", true);
+  if (!LIVE) return toast("Not connected.", true);
+  if (!window.FilmScript) return toast("Script parser not loaded. Refresh the page.", true);
+  if (!guard()) return;
+  await persistActiveFilmIfAny();
+  const rows = autoFilmLibraryCache.length ? autoFilmLibraryCache : await listStoredAutoFilms();
+  let { runnable, skipped, selectedMode } = autoFilmListRunPlan(rows);
+  runnable = sortAutoFilmBatchRunnable(runnable);
+  if (!runnable.length) {
+    const why = skipped.length
+      ? skipped.map((s) => `${s.no || "?"} (${s.why})`).slice(0, 4).join(", ")
+      : "no drafts";
+    return toast(selectedMode ? `No ticked films to run (${why}).` : `No New or Failed films to run (${why}).`, true);
+  }
+  const nos = runnable.map((r) => r.draft.project || "?").join(", ");
+  const skipNote = skipped.length ? `\n\nSkipping ${skipped.length}: in progress, done, or not New/Failed.` : "";
+  if (
+    !(await confirmApp(
+      `Generate ${runnable.length} film(s) on Flow?\n\n${nos}${skipNote}\n\nCompleted scenes are not sent again.`,
+      { ok: "Generate", title: "Generate films" },
+    ))
+  ) {
+    return;
+  }
+  autoFilmBatchRunning = true;
+  autoFilmBatchOrder = runnable.map((r) => r.draft.id);
+  autoFilmBatchIndex = 0;
+  estimate();
+  await renderAutoFilmLibrary();
+  const notes = [];
+  try {
+    for (let i = 0; i < runnable.length; i++) {
+      autoFilmBatchIndex = i;
+      const item = runnable[i];
+      const no = item.draft.project || "?";
+      setRollHint(`Film ${i + 1}/${runnable.length}: ${no} — generate then merge`);
+      await renderAutoFilmLibrary();
+      estimate();
+      let stopped = false;
+      try {
+        notes.push(await runOneAutoFilmFromList(item));
+      } catch (err) {
+        notes.push(`${no}: ${err.message || "failed"}`);
+      }
+      if (filmRun.stop) {
+        notes.push(`${no}: stop requested`);
+        stopped = true;
+      }
+      await renderAutoFilmLibrary();
+      estimate();
+      if (stopped) break;
+    }
+    toast(`Generate finished. ${notes.join(" · ")}`);
+  } finally {
+    autoFilmBatchRunning = false;
+    autoFilmBatchOrder = [];
+    autoFilmBatchIndex = -1;
+    setRollHint("");
+    film = filmBlank();
+    S.autoFilmActiveId = "";
+    save();
+    await renderAutoFilmLibrary();
+    estimate();
+  }
+}
+function applyAutoFilmView() {
+  const list = S.autoFilmView !== "edit";
+  const lib = $("#af_library_lede");
+  const card = $("#af_library_card");
+  const editor = $("#af_editor_wrap");
+  const side = $("#film_side");
+  if (lib) lib.hidden = !list;
+  if (card) card.hidden = !list;
+  if (editor) editor.hidden = list;
+  if (side) side.hidden = S.tab !== "film" || list;
+  const cols = $(".cols");
+  if (cols) cols.classList.toggle("cols-single", S.tab !== "film" || list);
+  const title = $("#af_editor_title");
+  if (title && !list) {
+    const no = isFilmBatchNo(film.project) ? film.project : "Draft";
+    title.textContent = no + (film.hook ? ` · ${film.hook.slice(0, 48)}${film.hook.length > 48 ? "…" : ""}` : "");
+  }
+  if (list) void renderAutoFilmLibrary();
+  else renderFilm();
+  estimate();
+  syncAutoFilmCardHeights();
+}
+async function showAutoFilmList() {
+  await persistActiveFilmIfAny();
+  S.autoFilmView = "list";
+  S.autoFilmActiveId = "";
+  save();
+  applyAutoFilmView();
+}
+async function openAutoFilmEditor(id) {
+  if (!id) return;
+  await persistActiveFilmIfAny();
+  const db = await filmDb();
+  const saved = await idbGetFilm(db, id);
+  if (!saved) {
+    toast("That draft was not found.", true);
+    await renderAutoFilmLibrary();
+    return;
+  }
+  film = mergeSavedFilm(saved);
+  film.id = id;
+  S.autoFilmActiveId = id;
+  S.autoFilmView = "edit";
+  save();
+  filmRefsHydrated = false;
+  applyAutoFilmView();
+  await syncFilmCompositionFromServer();
+  await recoverFilmScenesFromFlow();
+  void hydrateFilmRefs();
+}
+async function createNewAutoFilmDraft({ skipConfirm = false } = {}) {
+  if (filmRun.running) return toast("Wait until generation stops.", true);
+  if (
+    !skipConfirm &&
+    !(await confirmApp("Start a new Auto Film draft? The current draft is saved; clips on Google Flow are not deleted.", {
+      ok: "New film",
+      title: "New film",
+    }))
+  ) {
+    return;
+  }
+  await persistActiveFilmIfAny();
+  film = filmBlank();
+  await ensureFilmNumber({ force: true });
+  if (!isFilmBatchNo(film.project)) {
+    toast("Could not allocate film No.", true);
+    return;
+  }
+  S.autoFilmActiveId = film.id;
+  S.autoFilmView = "edit";
+  save();
+  filmRefsHydrated = false;
+  $("#af_script").value = "";
+  await saveFilmNow();
+  applyAutoFilmView();
+}
+async function deleteAutoFilmDrafts() {
+  const rows = autoFilmLibraryCache.length ? autoFilmLibraryCache : await listStoredAutoFilms();
+  if (!rows.length) return toast("No Auto Film drafts to delete.", true);
+  const selected = [...autoFilmLibrarySelected];
+  const deleteAll = !selected.length;
+  const ids = deleteAll ? rows.map((f) => f.id) : selected;
+  const n = ids.length;
+  const msg = deleteAll
+    ? `Delete all ${n} Auto Film draft(s)? Clips on Google Flow and merged files on disk are not removed.`
+  : `Delete ${n} selected Auto Film draft(s)? Clips on Google Flow and merged files on disk are not removed.`;
+  const title = deleteAll ? "Delete all drafts" : "Delete selected drafts";
+  if (!(await confirmApp(msg, { ok: "Delete", danger: true, title }))) return;
+  const db = await filmDb();
+  for (const id of ids) await idbDeleteFilm(db, id);
+  if (deleteAll) autoFilmLibrarySelected.clear();
+  else selected.forEach((id) => autoFilmLibrarySelected.delete(id));
+  if (ids.includes(S.autoFilmActiveId)) {
+    film = filmBlank();
+    S.autoFilmActiveId = "";
+    S.autoFilmView = "list";
+    save();
+  }
+  toast(`Deleted ${n} draft(s).`);
+  applyAutoFilmView();
+}
 function scheduleFilmSave() {
+  if (S.autoFilmView !== "edit") return;
   clearTimeout(filmSaveTimer);
   filmSaveTimer = setTimeout(() => { saveFilmNow().catch((err) => toast(err.message, true)); }, 400);
 }
 async function saveFilmNow() {
+  if (!film.id) film.id = newFilmId();
+  film.updatedAt = new Date().toISOString();
   const db = await filmDb();
   delete film.voice;
   delete film.primary;
@@ -2405,12 +3145,10 @@ async function saveFilmNow() {
   delete copy.applyMain;
   delete copy.main;
   delete copy.support;
-  await new Promise((ok, fail) => {
-    const tx = db.transaction("films", "readwrite");
-    tx.objectStore("films").put(copy, "current");
-    tx.oncomplete = () => ok();
-    tx.onerror = () => fail(tx.error);
-  });
+  await idbPutFilm(db, copy, film.id);
+  S.autoFilmActiveId = film.id;
+  save();
+  if (S.tab === "film" && S.autoFilmView === "list") void renderAutoFilmLibrary();
 }
 async function syncFilmCompositionFromServer() {
   if (!LIVE || !film.project?.trim()) return;
@@ -2432,45 +3170,23 @@ async function syncFilmCompositionFromServer() {
 }
 async function loadFilm() {
   try {
-    const db = await filmDb();
-    const saved = await new Promise((ok, fail) => {
-      const req = db.transaction("films", "readonly").objectStore("films").get("current");
-      req.onsuccess = () => ok(req.result);
-      req.onerror = () => fail(req.error);
-    });
-    if (saved && typeof saved === "object") {
-      const cleaned = window.FilmScript?.dropFilmVoice(saved) ?? saved;
-      film = {
-        ...filmBlank(), ...cleaned,
-        settings: { ...filmBlank().settings, ...(cleaned.settings || {}) },
-        refs: Array.isArray(cleaned.refs) ? cleaned.refs : [],
-        scenes: Array.isArray(cleaned.scenes) ? cleaned.scenes : [],
-        applyRefs: cleaned.applyRefs ?? cleaned.applyMain !== false,
-        parsedFromScript: cleaned.parsedFromScript ?? cleaned.script ?? "",
-        draft: "",
-      };
-      delete film.voice;
-      delete film.primary;
-      delete film.applyMain;
-      delete film.main;
-      delete film.support;
-      if (!film.refs.length && (saved.main || saved.support)) {
-        film.refs = [saved.main, saved.support].filter(Boolean).map((name) => ({ asset: name, assetName: name, assetType: "character", kind: "character" }));
+    await migrateFilmStore();
+    if (S.autoFilmView === "edit" && S.autoFilmActiveId) {
+      const db = await filmDb();
+      const saved = await idbGetFilm(db, S.autoFilmActiveId);
+      if (saved) film = mergeSavedFilm(saved);
+      else {
+        S.autoFilmView = "list";
+        S.autoFilmActiveId = "";
+        save();
+        film = filmBlank();
       }
-      for (const scene of film.scenes) {
-        if (scene.refMode) continue;
-        if (scene.override === "none") scene.refMode = "none";
-        else if (scene.override || scene.support) {
-          scene.refMode = "custom";
-          scene.refs = [scene.override, scene.support].filter((name) => name && name !== "none").map((name) => ({ asset: name, assetName: name, assetType: "character", kind: "character" }));
-        } else scene.refMode = "film";
-      }
-      if (!isFilmBatchNo(String(film.project || "").trim())) film.project = "";
-      if (!film.hook && film.script?.trim() && window.FilmScript?.hookFromFilmScript) {
-        film.hook = window.FilmScript.hookFromFilmScript(film.script.trim());
-      }
+    } else {
+      film = filmBlank();
     }
-  } catch { /* a blocked database keeps the empty film */ }
+  } catch {
+    film = filmBlank();
+  }
 }
 function filmPerShot() {
   const lib = window.FilmScript;
@@ -2593,7 +3309,7 @@ function syncAutoFilmCardHeights() {
     const scenesCard = $("#af_scenes_sect .af-scenes-card");
     const filmOpen = $("#af_film_sect")?.open;
     const scenesOpen = $("#af_scenes_sect")?.open;
-    if (!filmCard || !scenesCard || S.tab !== "film" || window.innerWidth < 1040 || !filmOpen || !scenesOpen) {
+    if (!filmCard || !scenesCard || S.tab !== "film" || S.autoFilmView !== "edit" || window.innerWidth < 1040 || !filmOpen || !scenesOpen) {
       if (filmCard) filmCard.style.minHeight = "";
       if (scenesCard) scenesCard.style.minHeight = "";
       return;
@@ -2608,6 +3324,8 @@ function syncAutoFilmCardHeights() {
 function renderFilm() {
   if (!$("#af_script")) return;
   setFilmField("#af_project", film.project);
+  const afNo = $("#af_project");
+  if (afNo) afNo.readOnly = true;
   setFilmField("#af_hook", film.hook || "");
   setFilmField("#af_script", film.script);
   const createNote = $("#af_create_note");
@@ -2957,10 +3675,6 @@ $("#af_clear").addEventListener("click", async () => {
   scheduleFilmSave();
   renderFilm();
 });
-$("#af_paste").addEventListener("click", async () => {
-  try { $("#af_script").value = await navigator.clipboard.readText(); film.script = $("#af_script").value; scheduleFilmSave(); }
-  catch (err) { toast(err.message, true); }
-});
 $("#af_copy_format")?.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(FILM_SCRIPT_FORMAT_SAMPLE);
@@ -2969,14 +3683,240 @@ $("#af_copy_format")?.addEventListener("click", async () => {
     toast(err.message || "Could not copy to the clipboard.", true);
   }
 });
-$("#af_import").addEventListener("click", () => $("#af_file").click());
-$("#af_file").addEventListener("change", async () => {
-  const file = $("#af_file").files?.[0]; $("#af_file").value = ""; if (!file) return;
-  film.script = await file.text();
-  $("#af_script").value = film.script;
-  scheduleFilmSave();
-  toast("Script imported. Press Create scene, then Generate film.");
+function downloadBase64File({ filename, mime, data }) {
+  const bin = atob(data);
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  const blob = new Blob([u8], { type: mime || "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "download";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function fileToBase64(file) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const step = 0x8000;
+  for (let i = 0; i < bytes.length; i += step) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
+  }
+  return btoa(binary);
+}
+function filmTemplateRowsFromDraft(f) {
+  const hook = (f.hook || "").trim();
+  if (!(f.scenes || []).length) {
+    return Array.from({ length: 5 }, (_, i) => ({ scene_no: i + 1, hook, prompt: "" }));
+  }
+  return f.scenes.map((s, i) => {
+    const sceneNo = s.number ?? i + 1;
+    return { scene_no: sceneNo, hook, prompt: s.prompt || "" };
+  });
+}
+async function buildDraftFromTemplateItem(item, { refs } = {}) {
+  const lib = window.FilmScript;
+  if (!lib) throw new Error("Script parser not loaded. Refresh the page.");
+  if (!item?.script?.trim()) throw new Error(`Film ${item.no}: empty script.`);
+  const all = await listStoredAutoFilms();
+  const existing = all.find((f) => f.project === item.no);
+  const draft = existing ? mergeSavedFilm(existing) : { ...filmBlank(), id: newFilmId() };
+  draft.project = item.no;
+  draft.hook = (item.hook || "").trim();
+  draft.script = item.script;
+  if (Array.isArray(refs) && refs.length) {
+    draft.refs = refs.slice(0, 3);
+    draft.applyRefs = true;
+  }
+  const result = lib.parseFilmScript(item.script);
+  if (!result.scenes.length) throw new Error(`Film ${item.no}: no scenes in script.`);
+  draft.scenes = result.scenes.map((s) =>
+    filmScene({
+      ...s,
+      prompt:
+        typeof lib.ensureFilmScenePrompt === "function"
+          ? lib.ensureFilmScenePrompt(s.prompt)
+          : typeof lib.ensurePromptVisualTextRestriction === "function"
+            ? lib.ensurePromptVisualTextRestriction(s.prompt)
+            : s.prompt,
+    }),
+  );
+  draft.parsedFromScript = item.script.trim();
+  draft.preamble = result.preamble;
+  draft.warnings = [...(item.warnings || []), ...(result.warnings || [])];
+  if (!draft.hook && lib.hookFromFilmScript) draft.hook = lib.hookFromFilmScript(item.script) || "";
+  draft.updatedAt = new Date().toISOString();
+  const db = await filmDb();
+  await idbPutFilm(db, draft, draft.id);
+  return { draft, sceneCount: draft.scenes.length };
+}
+async function exportFilmExcelTemplate() {
+  if (!LIVE) return toast("Not connected.", true);
+  try {
+    const selected = [...autoFilmLibrarySelected];
+    const fromCache = autoFilmLibraryCache.filter((f) => selected.includes(f.id));
+    let body;
+    if (fromCache.length) {
+      body = {
+        films: fromCache.map((f) => ({
+          no: isFilmBatchNo(f.project) ? f.project : "0001",
+          rows: filmTemplateRowsFromDraft(f),
+        })),
+      };
+    } else {
+      const next = await api("film_next_from_history", {});
+      const no = next?.no && isFilmBatchNo(next.no) ? next.no : "0001";
+      body = { no, rows: filmTemplateRowsFromDraft({ hook: "", scenes: [] }) };
+    }
+    const out = await api("film_template_export", body);
+    if (!out?.data) throw new Error("Server did not return a file.");
+    downloadBase64File(out);
+    const sheets = body.films?.length ?? 1;
+    toast(`Exported ${out.filename} (${sheets} sheet${sheets > 1 ? "s" : ""}).`);
+  } catch (err) {
+    toast(err.message || "Export failed.", true);
+  }
+}
+async function importFilmExcelTemplate(file, refs = []) {
+  if (!LIVE) return toast("Not connected.", true);
+  if (!file) return;
+  try {
+    await whenFilmScript();
+    const data = await fileToBase64(file);
+    const out = await api("film_template_import", { data });
+    const films = Array.isArray(out.films) ? out.films : out.no ? [out] : [];
+    if (!films.length) throw new Error("No films in the file.");
+    const filmRefs = (refs || []).slice(0, 3);
+    let ok = 0;
+    const notes = [];
+    for (const item of films) {
+      try {
+        const { draft, sceneCount } = await buildDraftFromTemplateItem(item, { refs: filmRefs });
+        ok += 1;
+        const refNote = filmRefs.length ? `, refs: ${filmRefs.map((r) => r.displayName || r.asset).join(", ")}` : "";
+        notes.push(`${draft.project}: ${sceneCount} scene(s)${refNote}`);
+      } catch (err) {
+        notes.push(`${item.no || "?"}: ${err.message || "failed"}`);
+      }
+    }
+    if (out.errors?.length) toast(out.errors.join(" "), true);
+    await renderAutoFilmLibrary();
+    if (!ok) return toast(notes.join(" · "), true);
+    toast(`Imported ${ok} film(s). ${notes.join(" · ")}`);
+  } catch (err) {
+    toast(err.message || "Import failed.", true);
+  }
+}
+let afImportPendingFile = null;
+let afImportCharacterRows = [];
+let afImportLoadTimer = null;
+function stopAfImportCharLoading() {
+  if (afImportLoadTimer) {
+    clearInterval(afImportLoadTimer);
+    afImportLoadTimer = null;
+  }
+  const host = $("#af_import_char_list");
+  if (host) host.setAttribute("aria-busy", "false");
+  const go = $("#af_import_go");
+  if (go) go.disabled = false;
+}
+function startAfImportCharLoading() {
+  stopAfImportCharLoading();
+  const host = $("#af_import_char_list");
+  const go = $("#af_import_go");
+  if (!host) return;
+  host.setAttribute("aria-busy", "true");
+  if (go) go.disabled = true;
+  host.innerHTML =
+    '<p class="af-import-loading"><span class="spin" aria-hidden="true"></span><span>Reading characters</span><span class="af-dots" aria-hidden="true"></span></p>';
+  const dots = host.querySelector(".af-dots");
+  let step = 0;
+  afImportLoadTimer = setInterval(() => {
+    step = (step + 1) % 4;
+    if (dots) dots.textContent = step ? ".".repeat(step) : "";
+  }, 450);
+}
+function afImportSelectedRefs() {
+  const boxes = $$("#af_import_char_list input[type=checkbox][data-ci]:checked");
+  return boxes.map((el) => pickerRowToRef(afImportCharacterRows[+el.dataset.ci])).filter(Boolean);
+}
+function enforceAfImportCharLimit(changed) {
+  const boxes = $$("#af_import_char_list input[type=checkbox][data-ci]");
+  const checked = boxes.filter((b) => b.checked);
+  if (checked.length > 3) {
+    if (changed) changed.checked = false;
+    toast("At most 3 reference characters.", true);
+  }
+}
+async function openAfImportDialog() {
+  if (!LIVE) return toast("Not connected.", true);
+  const dialog = $("#afImportDlg");
+  if (!dialog) return;
+  afImportPendingFile = null;
+  $("#af_import_file_name").textContent = "No file chosen";
+  $("#af_import_xlsx_file").value = "";
+  dialog.showModal();
+  startAfImportCharLoading();
+  try {
+    const host = $("#af_import_char_list");
+    const { characters: cast } = await api("picker_list");
+    afImportCharacterRows = window.FilmScript
+      ? window.FilmScript.mergePickerRows(cast || [], []).filter((r) => window.FilmScript.listedAssetKind(r) === "character")
+      : cast || [];
+    stopAfImportCharLoading();
+    if (!afImportCharacterRows.length) {
+      host.innerHTML = `<p class="empty" style="padding:12px">No characters in this Flow project yet — create them in Cast, or import without references.</p>`;
+      return;
+    }
+    host.innerHTML = afImportCharacterRows
+      .map((c, ci) => {
+        const name = c.displayName || c.name;
+        const thumb = c.thumbnail && /^https?:/i.test(c.thumbnail) ? esc(c.thumbnail) : "";
+        const voice = c.voice ? `<small>${esc(c.voice)}</small>` : "";
+        return `<label class="af-import-char"><input type="checkbox" data-ci="${ci}" style="flex:0 0 auto">${thumb ? `<img alt="" src="${thumb}" onerror="this.remove()">` : ""}<span class="grow"><b>${esc(name)}</b>${voice}</span></label>`;
+      })
+      .join("");
+  } catch (err) {
+    stopAfImportCharLoading();
+    const host = $("#af_import_char_list");
+    if (host) host.innerHTML = `<p class="empty" style="padding:12px;color:var(--bad)">${esc(err.message)}</p>`;
+  }
+}
+$("#af_export_xlsx")?.addEventListener("click", () => exportFilmExcelTemplate());
+$("#af_import_xlsx")?.addEventListener("click", () => openAfImportDialog());
+$("#af_import_pick_file")?.addEventListener("click", () => $("#af_import_xlsx_file").click());
+$("#af_import_xlsx_file")?.addEventListener("change", () => {
+  const file = $("#af_import_xlsx_file").files?.[0];
+  afImportPendingFile = file || null;
+  $("#af_import_file_name").textContent = file ? file.name : "No file chosen";
 });
+$("#af_import_char_list")?.addEventListener("change", (e) => {
+  const box = e.target.closest('input[type="checkbox"][data-ci]');
+  if (!box) return;
+  enforceAfImportCharLimit(box);
+});
+$("#af_import_cancel")?.addEventListener("click", () => {
+  stopAfImportCharLoading();
+  $("#afImportDlg").close();
+});
+$("#afImportDlg")?.addEventListener("cancel", (e) => {
+  e.preventDefault();
+  stopAfImportCharLoading();
+  $("#afImportDlg").close();
+});
+$("#afImportDlg")?.addEventListener("close", () => stopAfImportCharLoading());
+$("#af_import_go")?.addEventListener("click", async () => {
+  if (!afImportPendingFile) return toast("Choose an Excel file first.", true);
+  const refs = afImportSelectedRefs();
+  $("#afImportDlg").close();
+  await importFilmExcelTemplate(afImportPendingFile, refs);
+  afImportPendingFile = null;
+});
+$("#af_library_new")?.addEventListener("click", () => createNewAutoFilmDraft({ skipConfirm: true }));
+$("#af_library_delete")?.addEventListener("click", () => deleteAutoFilmDrafts());
+$("#af_library_refresh")?.addEventListener("click", () => renderAutoFilmLibrary());
+$("#af_back_list")?.addEventListener("click", () => showAutoFilmList());
 for (const [id, apply] of [["#af_project", (v) => (film.project = v.trim())], ["#af_hook", (v) => (film.hook = v.trim())], ["#af_script", (v) => (film.script = v)], ["#af_budget", (v) => (film.settings.budget = Math.max(0, Number(v) || 0))]]) {
   $(id).addEventListener("input", (e) => {
     apply(e.target.value);
@@ -3062,6 +4002,7 @@ async function runMergeOnly(opts = {}) {
   filmRun.merging = true;
   filmRun.stop = false;
   setFilmStep("Downloading and stitching on this PC…", 85);
+  await saveFilmNow();
   renderFilm();
   estimate();
   const uiTick = setInterval(() => {
@@ -3082,6 +4023,7 @@ async function runMergeOnly(opts = {}) {
       film.mergeFailed = true;
       film.lastMergeError = err.message || String(err);
       filmLogAutoFilm("merge-only failed", { error: film.lastMergeError, skippedGeneration: true });
+      await saveFilmNow();
     }
   } finally {
     clearInterval(uiTick);
@@ -3121,6 +4063,7 @@ async function runFilm(onlyIds, opts = {}) {
   filmRun.paused = false;
   filmRun.stop = false;
   setFilmStep("Preparing queue…", 10);
+  await saveFilmNow();
   renderFilm();
   estimate();
   if (filmRun.stop) {
@@ -3202,6 +4145,7 @@ async function runFilm(onlyIds, opts = {}) {
   } finally {
     filmRun.running = false;
     filmRun.paused = false;
+    await saveFilmNow();
     renderFilm();
     estimate();
   }
@@ -3217,15 +4161,17 @@ async function runFilm(onlyIds, opts = {}) {
       film.mergeFailed = false;
       film.lastMergeError = "";
       setFilmStep(film.publishStatus === "ready_to_publish" ? "Ready to Publish" : "Done", 100);
+      await saveFilmNow();
       if (film.publishStatus === "ready_to_publish") {
         void prefetchPublishCatalog({ force: true });
-        showTab("publish");
+        if (!autoFilmBatchRunning && S.autoFilmView === "edit") showTab("publish");
       }
     } catch (err) {
       film.mergeFailed = true;
       film.lastMergeError = err.message || String(err);
       setFilmStep(`Merge failed: ${film.lastMergeError}`, 92);
       toast(film.lastMergeError, true);
+      await saveFilmNow();
     }
   } else if (stopped || filmRun.stop) {
     setFilmStep("Stopped — completed clips kept", filmStep.pct);
@@ -3233,6 +4179,7 @@ async function runFilm(onlyIds, opts = {}) {
     setFilmStep("Failed — merge skipped", 100);
     const failed = selected.filter((s) => s.status === "failed");
     toast(`Failed: scene ${failed.map((s) => s.number).join(", ")}. Press Retry failed when ready.`, true);
+    await saveFilmNow();
   }
   renderFilm();
 }
@@ -3341,6 +4288,7 @@ async function mergeFilm(opts = {}) {
     film.lastMergeError = err.message || String(err);
     setFilmStep(`Merge failed: ${film.lastMergeError}`, filmStep.pct);
     toast(film.lastMergeError, true);
+    await saveFilmNow();
     throw err;
   } finally {
     if (filmRun.mergeAbort === mergeController) filmRun.mergeAbort = null;
@@ -3398,7 +4346,6 @@ let publishPollTimer = null;
 let publishCompositionReady = false;
 let publishPrefetchAt = 0;
 let publishPrefetchPromise = null;
-let publishCatalogNote = "";
 let publishPrefetchTimer = null;
 const PUBLISH_PREFETCH_TTL_MS = 120_000;
 
@@ -3480,9 +4427,13 @@ function publishCaptionName() {
   const no = /^\d{4}$/.test(p) ? p : publishFilmNo();
   return S.publish.captionByProject?.[p] || filmHookForNo(no) || "";
 }
+const DEFAULT_PUBLISH_HASHTAGS = "#ai #trend #xuhuong #uagivay #thegioikyla";
 function publishHashtagsRaw() {
   const p = publishProjectName();
-  return S.publish.hashtagsByProject?.[p] ?? "";
+  if (!p) return DEFAULT_PUBLISH_HASHTAGS;
+  const map = S.publish.hashtagsByProject;
+  if (map && Object.prototype.hasOwnProperty.call(map, p)) return map[p] ?? "";
+  return DEFAULT_PUBLISH_HASHTAGS;
 }
 
 function normalizeHashtagsClient(raw) {
@@ -3502,38 +4453,6 @@ function normalizeHashtagsClient(raw) {
 }
 
 let publishVideoList = [];
-
-function renderClipPostedChips(platforms) {
-  const box = $("#pub_clip_posted");
-  if (!box) return;
-  if (!platforms) {
-    box.hidden = true;
-    box.innerHTML = "";
-    return;
-  }
-  const items = [
-    ["tiktok", "TikTok"],
-    ["youtube", "YouTube"],
-    ["facebook", "Facebook"],
-  ];
-  box.innerHTML = items
-    .map(([id, label]) => {
-      const st = platforms[id] || "not_published";
-      const cls =
-        st === "published" || st === "scheduled" ? "ok" : st === "failed" || st === "auth_required" || st === "needs_attention" ? "bad" : st === "unknown" || st === "publishing" || st === "scheduling" || st === "uploading" || st === "processing" || st === "preparing" ? "pending" : "";
-      const note =
-        st === "published" || st === "scheduled" ? " ✓" : st === "not_published" ? "" : ` · ${PUBLISH_STATUS_LABEL[st] || st}`;
-      return `<span class="pub-chip ${cls}">${esc(label)}${esc(note)}</span>`;
-    })
-    .join("");
-  box.hidden = false;
-}
-
-function renderClipPostedForSelection() {
-  const handle = $("#pub_video")?.value;
-  const row = publishVideoList.find((v) => v.handle === handle);
-  renderClipPostedChips(row?.published_on);
-}
 
 function selectedPublishPlatforms() {
   const out = [];
@@ -3905,7 +4824,7 @@ function renderPublishStatusRows() {
       row?.url && (st === "published" || st === "scheduled")
         ? `<small style="display:block;width:100%;margin-top:4px;color:var(--accent)">${esc(row.url)}</small>`
         : "";
-    const err = row?.error && st !== "published" ? `<small style="display:block;width:100%;margin-top:4px;color:var(--bad)">${esc(row.error)}</small>` : "";
+    const err = row?.error && st !== "published" ? `<span class="pub-err">${esc(row.error)}</span>` : "";
     return `<div class="publish-row"><div style="min-width:0;flex:1"><b>${esc(p.label)}</b>${sched}${url}${err}</div><span class="pill">${esc(label)}</span>${canRetry ? `<button type="button" class="btn small ghost pub-retry" data-platform="${p.id}">Retry</button>` : ""}</div>`;
   }).join("");
 }
@@ -3922,8 +4841,6 @@ async function refreshPublishStatus() {
     publishRunning = Boolean(snap.running);
     publishRecord =
       (snap.records ?? []).find((r) => r.video === localPath) ?? snap.records?.[0] ?? null;
-    if (snap.clip?.platforms) renderClipPostedChips(snap.clip.platforms);
-    else renderClipPostedForSelection();
   } catch (err) {
     $("#pub_out").textContent = err.message;
   }
@@ -3946,7 +4863,6 @@ function renderPublishFilmSelect(rows) {
     sel.innerHTML = `<option value="">No merged films on this PC yet</option>`;
     S.publish.flowVideoId = "";
     S.publish.video = "";
-    renderClipPostedChips(null);
     return;
   }
   sel.innerHTML = list
@@ -3962,7 +4878,6 @@ function renderPublishFilmSelect(rows) {
   S.publish.project = pick;
   const row = list.find((r) => String(r.no) === pick);
   S.publish.video = row?.video_path || sel.selectedOptions?.[0]?.dataset?.path || "";
-  renderClipPostedForSelection();
   applyPublishCaptionFromHook();
   save();
 }
@@ -3970,7 +4885,6 @@ function renderPublishFilmSelect(rows) {
 async function loadPublishFilms({ background = false } = {}) {
   if (!$("#pub_video")) return;
   if (!LIVE) return;
-  const hint = $("#pub_videohint");
   if (!background) setPublishFieldsBusy(true);
   try {
     await ensureFilmHistoryForPublish();
@@ -3978,17 +4892,12 @@ async function loadPublishFilms({ background = false } = {}) {
     if (!list.length) {
       $("#pub_video").innerHTML = `<option value="">No merged films yet</option>`;
       publishVideoList = [];
-      if (hint) hint.textContent = "Merge in Auto Film first — finished .mp4 files show here from Film Histories.";
       return;
     }
     renderPublishFilmSelect(filmHistoryCache);
-    const msg = `${list.length} film(s) on this PC (Film Histories).`;
-    publishCatalogNote = msg;
-    if (hint) hint.textContent = msg;
     publishPrefetchAt = Date.now();
   } catch (err) {
     if (!background) toast(err.message, true);
-    if (hint) hint.textContent = err.message;
   } finally {
     if (!background) setPublishFieldsBusy(false);
   }
@@ -4001,7 +4910,6 @@ async function refreshPublishTab() {
   syncPublishControls();
   if (!LIVE) {
     $("#pub_video").innerHTML = `<option value="">Connect TedVerse to load films</option>`;
-    $("#pub_videohint").textContent = "Start the studio server to list films from Film Histories.";
     return;
   }
   const historyP = loadPublishHistory();
@@ -4009,8 +4917,6 @@ async function refreshPublishTab() {
 
   if (publishCacheWarm()) {
     renderPublishFilmSelect(filmHistoryCache);
-    const hint = $("#pub_videohint");
-    if (hint && publishCatalogNote) hint.textContent = publishCatalogNote;
     applyPublishCaptionFromHook();
     syncPublishControls();
     await historyP.catch(() => {});
@@ -4023,8 +4929,6 @@ async function refreshPublishTab() {
     await publishPrefetchPromise.catch(() => {});
     if (publishCacheWarm()) {
       renderPublishFilmSelect(filmHistoryCache);
-      const hint = $("#pub_videohint");
-      if (hint && publishCatalogNote) hint.textContent = publishCatalogNote;
       applyPublishCaptionFromHook();
       syncPublishControls();
       await historyP.catch(() => {});
@@ -4066,7 +4970,6 @@ $("#pub_video")?.addEventListener("change", () => {
   S.publish.project = $("#pub_video").value || S.publish.project;
   S.publish.video = $("#pub_video").selectedOptions?.[0]?.dataset?.path || "";
   applyPublishCaptionFromHook();
-  renderClipPostedForSelection();
   save();
   refreshPublishStatus();
   syncPublishControls();
@@ -4135,8 +5038,10 @@ $("#pub_go")?.addEventListener("click", async () => {
       startPublishPoll();
       toast(mode === "schedule" ? "Scheduling on platforms… watch Chrome for security checks." : "Publishing… watch Chrome for security checks.");
     } catch (err) {
-      toast(err.message, true);
-      $("#pub_out").textContent = err.message;
+      const msg = err.message || String(err);
+      toast(msg.slice(0, 160), true);
+      $("#pub_out").textContent = msg;
+      $("#pub_out").style.whiteSpace = "pre-wrap";
     } finally {
       await refreshPublishStatus();
     }
@@ -4409,20 +5314,20 @@ function publishOAuthRedirect(platform) {
   if (r && r[platform]) return r[platform];
   return `http://127.0.0.1:${PUBLISH_API_PORT}/oauth/callback/${platform}`;
 }
-function platStatusLine(p, label) {
+function platStatusLine(p, label, fbTokenOnly) {
   if (!p) return `${label}: not configured`;
   if (p.connected) {
     const extra = p.channelTitle || p.pageName || "";
     return `${label}: connected${extra ? ` · ${extra}` : ""}`;
   }
-  if (p.clientId) return `${label}: app saved — press Connect`;
+  if (fbTokenOnly) return p.clientId ? `${label}: thiếu token — dán Page token rồi Save` : `${label}: điền App ID + token`;
+  if (p.clientId) return `${label}: app saved — bấm Get token`;
   return `${label}: add app id/key`;
 }
 function renderPublishApiSettingsUI() {
   const v = publishApiView;
   if (v) publishApiEngine = v.engine === "api" ? "api" : "browser";
   if ($("#pub_redir_yt")) $("#pub_redir_yt").textContent = publishOAuthRedirect("youtube");
-  if ($("#pub_redir_fb")) $("#pub_redir_fb").textContent = publishOAuthRedirect("facebook");
   if ($("#pub_redir_tt")) $("#pub_redir_tt").textContent = publishOAuthRedirect("tiktok");
   const tun = $("#pub_oauth_tunnel_note");
   if (tun) {
@@ -4431,14 +5336,32 @@ function renderPublishApiSettingsUI() {
       ? `OAuth public URL: <code>${esc(pub)}</code> — dán redirect bên dưới vào Meta/Google/TikTok. Studio UI vẫn mở <code>http://127.0.0.1:${PUBLISH_API_PORT}</code>.`
       : `Meta Facebook thường bắt redirect <strong>HTTPS</strong>. Chạy tunnel (xem <code>docs/PUBLISH-API.md</code>), rồi: <code>export FLOW_MCP_OAUTH_PUBLIC_URL=https://….trycloudflare.com</code> và restart studio.`;
   }
-  if (v?.youtube && $("#set_yt_id") && document.activeElement !== $("#set_yt_id")) $("#set_yt_id").value = v.youtube.clientId || "";
-  if (v?.facebook && $("#set_fb_id") && document.activeElement !== $("#set_fb_id")) {
-    $("#set_fb_id").value = v.facebook.clientId || "";
-    $("#set_fb_page").value = v.facebook.pageId || "";
+  if (v?.youtube) {
+    if ($("#set_yt_id") && document.activeElement !== $("#set_yt_id")) $("#set_yt_id").value = v.youtube.clientId || "";
+    if ($("#set_yt_secret") && document.activeElement !== $("#set_yt_secret")) {
+      $("#set_yt_secret").value = v.youtube.clientSecret || "";
+    }
+    if ($("#set_yt_token")) $("#set_yt_token").value = v.youtube.oauthToken || "";
   }
-  if (v?.tiktok && $("#set_tt_key") && document.activeElement !== $("#set_tt_key")) $("#set_tt_key").value = v.tiktok.clientId || "";
+  if (v?.facebook) {
+    if ($("#set_fb_id") && document.activeElement !== $("#set_fb_id")) $("#set_fb_id").value = v.facebook.clientId || "";
+    if ($("#set_fb_page") && document.activeElement !== $("#set_fb_page")) $("#set_fb_page").value = v.facebook.pageId || "";
+    if ($("#set_fb_secret") && document.activeElement !== $("#set_fb_secret")) {
+      $("#set_fb_secret").value = v.facebook.appSecret || "";
+    }
+    if ($("#set_fb_token") && document.activeElement !== $("#set_fb_token")) {
+      $("#set_fb_token").value = v.facebook.accessToken || "";
+    }
+  }
+  if (v?.tiktok) {
+    if ($("#set_tt_key") && document.activeElement !== $("#set_tt_key")) $("#set_tt_key").value = v.tiktok.clientId || "";
+    if ($("#set_tt_secret") && document.activeElement !== $("#set_tt_secret")) {
+      $("#set_tt_secret").value = v.tiktok.clientSecret || "";
+    }
+    if ($("#set_tt_token")) $("#set_tt_token").value = v.tiktok.oauthToken || "";
+  }
   if ($("#set_yt_status")) $("#set_yt_status").textContent = platStatusLine(v?.youtube, "YouTube");
-  if ($("#set_fb_status")) $("#set_fb_status").textContent = platStatusLine(v?.facebook, "Facebook");
+  if ($("#set_fb_status")) $("#set_fb_status").textContent = platStatusLine(v?.facebook, "Facebook", true);
   if ($("#set_tt_status")) $("#set_tt_status").textContent = platStatusLine(v?.tiktok, "TikTok");
   renderSegs();
 }
@@ -4468,42 +5391,37 @@ async function savePublishApiForm() {
   };
   const ytSec = $("#set_yt_secret")?.value?.trim();
   const fbSec = $("#set_fb_secret")?.value?.trim();
+  const fbTok = $("#set_fb_token")?.value?.trim();
   const ttSec = $("#set_tt_secret")?.value?.trim();
   if (ytSec) body.youtube.clientSecret = ytSec;
   if (fbSec) body.facebook.appSecret = fbSec;
+  if (fbTok) body.facebook.accessToken = fbTok;
   if (ttSec) body.tiktok.clientSecret = ttSec;
   publishApiView = await api("publish_settings_save", body);
-  if (ytSec) $("#set_yt_secret").value = "";
-  if (fbSec) $("#set_fb_secret").value = "";
-  if (ttSec) $("#set_tt_secret").value = "";
   renderPublishApiSettingsUI();
   toast("Publish API settings saved.");
 }
+let publishOAuthPoll = 0;
 async function openPublishOAuth(platform) {
   if (!LIVE) return toast("Connect Studio server first.", true);
   await savePublishApiForm();
-  const { url } = await api("publish_oauth_begin", { platform });
+  const { url, redirect_uri: redir } = await api("publish_oauth_begin", { platform });
   window.open(url, "_blank", "noopener");
-  toast(`Complete sign-in for ${platform} in the browser tab.`);
+  const redirNote = redir && platform === "tiktok" ? ` Redirect phải khớp Sandbox: ${redir}` : "";
+  toast(`Đăng nhập ${platform} trong tab mới — token sẽ hiện ở ô xám.${redirNote}`);
+  clearInterval(publishOAuthPoll);
+  let n = 0;
+  publishOAuthPoll = setInterval(() => {
+    n += 1;
+    if (n > 45) clearInterval(publishOAuthPoll);
+    void loadPublishApiSettingsUI();
+  }, 2000);
 }
 for (const [id, platform] of [
   ["set_yt_connect", "youtube"],
-  ["set_fb_connect", "facebook"],
   ["set_tt_connect", "tiktok"],
 ]) {
   $(`#${id}`)?.addEventListener("click", () => openPublishOAuth(platform));
-}
-for (const [id, platform] of [
-  ["set_yt_disconnect", "youtube"],
-  ["set_fb_disconnect", "facebook"],
-  ["set_tt_disconnect", "tiktok"],
-]) {
-  $(`#${id}`)?.addEventListener("click", async () => {
-    if (!LIVE) return;
-    publishApiView = await api("publish_oauth_disconnect", { platform });
-    renderPublishApiSettingsUI();
-    toast(`${platform} disconnected.`);
-  });
 }
 $("#set_publish_save")?.addEventListener("click", () => savePublishApiForm());
 
@@ -4514,7 +5432,8 @@ function renderAll() {
   $("#s_model").innerHTML = Object.keys(VIDEO_COST).map((m) => `<option ${m === S.shots.model ? "selected" : ""}>${m}</option>`).join("");
   renderSegs(); renderScenes(); renderCast(); renderNarrate();
   if ($("#n_style")) $("#n_style").value = S.narrate.style ?? "";
-  if ($("#af_list")) renderFilm();
+  if (S.tab === "film") applyAutoFilmView();
+  else if ($("#af_list")) renderFilm();
   estimate(); save();
 }
 $("#s_model").addEventListener("change", (e) => { S.shots.model = e.target.value; save(); renderAll(); });
@@ -4565,7 +5484,10 @@ $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
     if ($("#statusConnect")) $("#statusConnect").hidden = true;
     await loadFilm();
     await whenFilmScript();
-    renderAll(); showTab(hashTab() ?? "film"); return;
+    renderAll();
+    applyAutoFilmView();
+    showTab(hashTab() ?? "film");
+    return;
   }
   await syncSessionToken();
   await syncProviderFromServer();
@@ -4573,18 +5495,23 @@ $("#af_script")?.addEventListener("mouseup", () => syncAutoFilmCardHeights());
   const flowLink = ensureFlowConnected();
   const techVoices = Promise.all([api("techniques"), api("voices")]).catch(() => null);
   await loadFilm();
-  await ensureFilmNumber();
+  if (S.autoFilmView === "edit") await ensureFilmNumber();
   const tv = await techVoices;
   if (tv) [TECH, VOICES] = tv;
   else VOICES = { kokoro: [], gemini: [] };
   applyPlace(VOICES.place);
   await flowLink.catch(() => {});
   if (flowSignedIn && ACTIVE_PROVIDER !== "muse") schedulePublishPrefetch(400);
-  await syncFilmCompositionFromServer();
-  await recoverFilmScenesFromFlow();
+  if (S.autoFilmView === "edit") {
+    await syncFilmCompositionFromServer();
+    await recoverFilmScenesFromFlow();
+  }
   await whenFilmScript();
-  loadCast().then((c) => { CAST = c; renderCast(); if (S.tab === "film") renderFilm(); }).catch(() => {});
-  renderAll(); showTab(hashTab() ?? S.tab); loadNarrationOutputs();
+  loadCast().then((c) => { CAST = c; renderCast(); if (S.tab === "film" && S.autoFilmView === "edit") renderFilm(); }).catch(() => {});
+  renderAll();
+  applyAutoFilmView();
+  showTab(hashTab() ?? S.tab);
+  loadNarrationOutputs();
   if (S.tab === "film") void loadFilmHistory();
 })();
 </script>

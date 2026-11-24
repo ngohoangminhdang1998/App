@@ -1,23 +1,45 @@
+import { createHash, randomBytes } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
 import { publishOAuthRedirect } from "./oauth-base.js";
 import { loadPublishApiSettings, savePublishApiSettings, type PlatformApiFields } from "./settings.js";
+
+const PKCE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+/** TikTok desktop/web Login Kit: PKCE with SHA-256 code_challenge as hex (not base64url). */
+export function tiktokPkcePair(): { verifier: string; challenge: string } {
+  const bytes = randomBytes(64);
+  let verifier = "";
+  for (let i = 0; i < 64; i++) verifier += PKCE_CHARS[bytes[i]! % PKCE_CHARS.length];
+  const challenge = createHash("sha256").update(verifier).digest("hex");
+  return { verifier, challenge };
+}
 
 function redirectUri() {
   return publishOAuthRedirect("tiktok");
 }
 
-const SCOPES = ["video.upload", "video.publish"];
+const SCOPES = ["user.info.basic", "video.upload", "video.publish"];
 
-export function tiktokAuthorizeUrl(state: string): string {
+/** Unaudited / sandbox: SELF_ONLY + TikTok account must be Private in the app. After app audit: PUBLIC_TO_EVERYONE. */
+function tiktokPrivacyLevel(): string {
+  const v = process.env.FLOW_MCP_TIKTOK_PRIVACY?.trim();
+  if (v) return v;
+  return "SELF_ONLY";
+}
+
+export function tiktokAuthorizeUrl(state: string, codeChallenge: string): string {
   const tt = loadPublishApiSettings().tiktok;
   const key = (tt.clientKey || tt.clientId)?.trim();
   if (!key) throw new Error("TikTok: add Client key in Settings → Publish API.");
+  if (key.length < 8) throw new Error("TikTok Client key looks too short — copy “Client key” from TikTok app Credentials (not Client secret).");
   const q = new URLSearchParams({
     client_key: key,
     scope: SCOPES.join(","),
     response_type: "code",
     redirect_uri: redirectUri(),
     state,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
   });
   return `https://www.tiktok.com/v2/auth/authorize/?${q}`;
 }
@@ -33,7 +55,7 @@ async function tokenPost(body: Record<string, string>) {
   return data;
 }
 
-export async function tiktokExchangeCode(code: string): Promise<void> {
+export async function tiktokExchangeCode(code: string, codeVerifier: string): Promise<void> {
   const tt = loadPublishApiSettings().tiktok;
   const key = tt.clientKey || tt.clientId;
   const secret = tt.clientSecret;
@@ -44,6 +66,7 @@ export async function tiktokExchangeCode(code: string): Promise<void> {
     code,
     grant_type: "authorization_code",
     redirect_uri: redirectUri(),
+    code_verifier: codeVerifier,
   });
   savePublishApiSettings({
     platform: "tiktok",
@@ -86,7 +109,7 @@ export async function tiktokUploadVideo(opts: { videoPath: string; caption: stri
     body: JSON.stringify({
       post_info: {
         title: opts.caption.slice(0, 150),
-        privacy_level: "PUBLIC_TO_EVERYONE",
+        privacy_level: tiktokPrivacyLevel(),
         disable_duet: false,
         disable_comment: false,
         disable_stitch: false,
@@ -99,10 +122,18 @@ export async function tiktokUploadVideo(opts: { videoPath: string; caption: stri
     error?: { code?: string; message?: string };
   };
   if (!initRes.ok || init.error) {
-    const msg = init.error?.message ?? JSON.stringify(init).slice(0, 300);
-    throw new Error(
-      `TikTok init failed: ${msg}. Content Posting API needs TikTok app review — see docs/PUBLISH-API.md.`,
-    );
+    const code = init.error?.code ?? "";
+    const msg = init.error?.message ?? JSON.stringify(init).slice(0, 400);
+    let hint = "See docs/PUBLISH-API.md.";
+    if (code === "unaudited_client_can_only_post_to_private_accounts") {
+      hint =
+        "App chưa audit: trong app TikTok đặt tài khoản Private, Publish dùng SELF_ONLY (mặc định TedVerse). Sau audit: export FLOW_MCP_TIKTOK_PRIVACY=PUBLIC_TO_EVERYONE và restart studio.";
+    } else if (code === "scope_not_authorized") {
+      hint = "Thiếu scope video.publish — Get token lại sau khi thêm scope trên TikTok Developer.";
+    } else if (/integration guidelines/i.test(msg)) {
+      hint = `Sandbox/chưa audit: privacy=${tiktokPrivacyLevel()}, tài khoản TikTok phải Private. Sau audit mới đăng public.`;
+    }
+    throw new Error(`TikTok init failed [${code || initRes.status}]: ${msg} ${hint}`);
   }
   const uploadUrl = init.data?.upload_url;
   if (!uploadUrl) throw new Error("TikTok did not return upload_url.");

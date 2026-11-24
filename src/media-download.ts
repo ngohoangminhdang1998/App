@@ -2,9 +2,7 @@ import { execFileSync } from "node:child_process";
 import { closeSync, existsSync, mkdirSync, mkdtempSync, openSync, readSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, extname, join } from "node:path";
-import { extractZip } from "./platform.js";
-
-const FFPROBE = process.env.FLOW_MCP_FFPROBE ?? "ffprobe";
+import { extractZip, FFMPEG_HINT, resolveFfmpegBinary } from "./platform.js";
 
 export type MediaSniff =
   | { kind: "mp4"; ext: ".mp4"; video: true }
@@ -45,9 +43,17 @@ export function validatePlayableVideo(file: string): number {
   const sniff = sniffMediaFile(file);
   if (!sniff.video) throw new Error(`"${basename(file)}" is not a video (${sniff.kind}).`);
   let stdout: string;
+  const ffprobe = resolveFfmpegBinary("ffprobe");
   try {
-    stdout = execFileSync(FFPROBE, ["-v", "error", "-show_entries", "stream=codec_type:format=duration", "-of", "json", file], { encoding: "utf8" });
-  } catch {
+    stdout = execFileSync(ffprobe, ["-v", "error", "-show_entries", "stream=codec_type:format=duration", "-of", "json", file], { encoding: "utf8" });
+  } catch (err) {
+    try {
+      execFileSync(ffprobe, ["-version"], { stdio: "ignore", timeout: 8000 });
+    } catch {
+      throw new Error(
+        `ffprobe is not installed (merge & publish need ffmpeg). Try: ${FFMPEG_HINT}, or download ffmpeg+ffprobe from https://evermeet.cx/ffmpeg/ into ~/bin and add to PATH.`,
+      );
+    }
     throw new Error(`"${basename(file)}" isn't a playable video — ffprobe could not read it.`);
   }
   const data = JSON.parse(stdout) as { streams?: { codec_type: string; duration?: string }[]; format?: { duration?: string } };

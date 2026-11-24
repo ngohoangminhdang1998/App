@@ -27,6 +27,8 @@ import {
   promptHasVisualTextRestrictionBlock,
   promptHasFullNoTextPolicy,
   ensurePromptVisualTextRestriction,
+  ensurePromptDialogueDensity,
+  promptHasDialogueDensityBlock,
   validateScenePolicy,
   validateFilmScript,
   policyStatusLabel,
@@ -271,6 +273,10 @@ const v2OneEnsured = ensurePromptVisualTextRestriction(v2One.scenes[0].prompt);
 assert.ok(promptHasVisualTextRestrictionBlock(v2OneEnsured));
 assert.ok(promptHasFullNoTextPolicy(v2OneEnsured));
 assert.equal(ensurePromptVisualTextRestriction(v2OneEnsured), v2OneEnsured);
+const v2Density = ensurePromptDialogueDensity(v2OneEnsured);
+assert.ok(promptHasDialogueDensityBlock(v2Density));
+assert.equal(ensurePromptDialogueDensity(v2Density), v2Density);
+assert.ok(!promptHasDialogueDensityBlock(ensurePromptDialogueDensity("OLD FORMAT without sections.")));
 assert.ok(v2One.scenes[0].prompt.includes("Nếu Việt Nam bắt buộc công khai lương thì sao?"));
 assert.ok(v2One.scenes[0].prompt.includes("@Teddy Ngo"));
 assert.ok(!v2One.scenes[0].prompt.includes("=== SCENE"));

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { assemble } from "./assemble.js";
@@ -14,6 +14,29 @@ import { downloadAsset, getFlowState, listAssets } from "./flow.js";
 
 const OUTPUT_ROOT = process.env.FLOW_MCP_OUTPUT ?? join(homedir(), "flow-mcp-out");
 const projectDir = (project: string) => resolve(OUTPUT_ROOT, project.replace(/[^\w.-]+/g, "_"));
+
+/** Drop per-scene downloads after a successful local merge; keeps the assembled final only. */
+function removeDownloadedSceneFiles(dir: string, finalOutput: string, stems: string[], usedPaths: string[]) {
+  const keep = resolve(finalOutput);
+  const seen = new Set<string>();
+  const tryUnlink = (file: string) => {
+    const abs = resolve(file);
+    if (abs === keep || seen.has(abs) || !existsSync(abs)) return;
+    try {
+      unlinkSync(abs);
+      seen.add(abs);
+    } catch {
+      /* best-effort */
+    }
+  };
+  for (const p of usedPaths) tryUnlink(p);
+  for (const stem of stems) {
+    const base = join(dir, stem.replace(/\.mp4$/i, ""));
+    tryUnlink(`${base}.mp4`);
+    for (let v = 2; v <= 4; v++) tryUnlink(`${base}-v${v}.mp4`);
+    tryUnlink(`${base}-takes.zip`);
+  }
+}
 
 export type LocalMergeInput = {
   tedverseProject: string;
@@ -89,6 +112,7 @@ export async function mergeClipsLocally(input: LocalMergeInput): Promise<FlowCom
       dir,
       clips: localPaths,
       output_name: outputStem,
+      music_volume: 0,
       hold_last_frame: true,
       loudness: -14,
       remove_watermark: true,
@@ -101,6 +125,12 @@ export async function mergeClipsLocally(input: LocalMergeInput): Promise<FlowCom
     rec.updated_at = new Date().toISOString();
     rec.error = undefined;
     saveComposition(rec);
+    removeDownloadedSceneFiles(
+      dir,
+      result.output,
+      titles.map((t) => t.stem),
+      localPaths,
+    );
     return rec;
   } catch (err) {
     rec.merge_status = "failed";

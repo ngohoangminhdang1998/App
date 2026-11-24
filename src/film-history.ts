@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { HOME_DIR } from "./chrome.js";
 import { getComposition } from "./flow-composition.js";
-import { filmFinalSceneName, isFilmNo, listFilmNumbers } from "./film-numbers.js";
+import { ensureFilmSerialNext, filmFinalSceneName, formatFilmNo, isFilmNo, listFilmNumbers } from "./film-numbers.js";
 import { buildPublishHistory, type HistoryPlatformCell, type PublishHistoryRow } from "./publish-history.js";
 import { guessDefaultVideo } from "./publish.js";
 
@@ -167,6 +167,31 @@ const EMPTY_PLAT: Record<"tiktok" | "youtube" | "facebook", HistoryPlatformCell>
   youtube: "—",
   facebook: "—",
 };
+
+/** Highest 4-digit film serial known from history + film-numbers registry. */
+export function maxKnownFilmSerial(): number {
+  syncFilmHistoryFromNumbers();
+  const hist = load();
+  const reg = listFilmNumbers();
+  let max = 0;
+  for (const f of hist.films) {
+    const n = Number(String(f.no).trim());
+    if (isFilmNo(f.no) && Number.isFinite(n)) max = Math.max(max, n);
+  }
+  for (const f of reg.films) {
+    const n = Number(String(f.no).trim());
+    if (isFilmNo(f.no) && Number.isFinite(n)) max = Math.max(max, n);
+  }
+  if (Number.isFinite(reg.next) && reg.next > 1) max = Math.max(max, reg.next - 1);
+  return max;
+}
+
+/** Next No for a new batch: max(history) + 1; does not register the batch until merge. */
+export function nextFilmNoFromHistory(): { no: string; next: number } {
+  const serial = maxKnownFilmSerial() + 1;
+  const { next } = ensureFilmSerialNext(serial + 1);
+  return { no: formatFilmNo(serial), next };
+}
 
 export function buildFilmHistory(limit = 100): FilmHistoryRow[] {
   syncFilmHistoryFromNumbers();

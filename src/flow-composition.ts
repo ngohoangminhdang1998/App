@@ -21,7 +21,7 @@ export interface FlowCompositionRecord {
   scene_count: number;
   merge_status: MergeStatus;
   publish_status: ProjectPublishStatus;
-  aspect_ratio: "9:16";
+  aspect_ratio: "9:16" | "16:9";
   content_hash: string;
   updated_at: string;
   cached_video_path?: string;
