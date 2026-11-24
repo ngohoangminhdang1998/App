@@ -14,13 +14,65 @@ Không có phí “đăng bài từng video” kiểu trả tiền cho Google/Me
 
 ## Redirect OAuth (bắt buộc)
 
-Mỗi app phải khai báo **chính xác** (localhost):
+Redirect phải **khớp từng ký tự** với URL TedVerse gửi lúc Connect. Mở **Settings → Publish API** — dòng **OAuth redirect** (hoặc sau Save settings) là nguồn đúng.
+
+### Mặc định (không tunnel)
 
 - YouTube: `http://127.0.0.1:8787/oauth/callback/youtube`
-- Facebook: `http://127.0.0.1:8787/oauth/callback/facebook`
+- Facebook: `http://127.0.0.1:8787/oauth/callback/facebook` — **Meta Login for Business thường từ chối `http://`** → dùng tunnel bên dưới
 - TikTok: `http://127.0.0.1:8787/oauth/callback/tiktok`
 
-Nếu đổi cổng Studio (`FLOW_MCP_PORT`), đổi redirect tương ứng.
+Đổi cổng Studio: `FLOW_MCP_PORT` (mặc định 8787).
+
+### Facebook + HTTPS tunnel (`FLOW_MCP_OAUTH_PUBLIC_URL`)
+
+Meta yêu cầu **HTTPS** trong Valid OAuth Redirect URIs. TedVerse vẫn chạy HTTP trên máy; tunnel public → local.
+
+**1. Cloudflare Tunnel (miễn phí, nhanh)**
+
+```bash
+# Cài (macOS): brew install cloudflared
+# Terminal 1 — Studio
+cd /path/to/flow-mcp-main
+npm run studio
+
+# Terminal 2 — tunnel tới cổng Studio
+cloudflared tunnel --url http://127.0.0.1:8787
+```
+
+Copy URL dạng `https://xxxx-yyyy.trycloudflare.com` (HTTPS, **không** slash cuối).
+
+**2. Bật redirect public**
+
+```bash
+export FLOW_MCP_OAUTH_PUBLIC_URL=https://xxxx-yyyy.trycloudflare.com
+# restart npm run studio cùng terminal hoặc export trước khi chạy
+```
+
+**3. Meta Developer**
+
+- **Facebook Login for Business → Settings → Valid OAuth Redirect URIs**
+- Thêm: `https://xxxx-yyyy.trycloudflare.com/oauth/callback/facebook`
+- **Save**
+
+**4. TedVerse**
+
+- Restart studio **sau** khi export biến môi trường
+- Settings → Publish API → redirect Facebook hiển thị URL **https** — phải giống Meta
+- **Connect Facebook** — sau Allow, tab có thể mở URL tunnel (vẫn về máy bạn)
+
+**5. Ngrok (thay cloudflared)**
+
+```bash
+ngrok http 8787
+export FLOW_MCP_OAUTH_PUBLIC_URL=https://YOUR_ID.ngrok-free.app
+```
+
+**Lưu ý**
+
+- Studio UI vẫn dùng `http://127.0.0.1:8787`; chỉ **OAuth callback** qua HTTPS.
+- URL trycloudflare **đổi mỗi lần** chạy cloudflared — cập nhật lại Meta + env khi đổi tunnel.
+- Giữ tunnel **mở** trong lúc Connect; có thể tắt sau khi đã lưu token trong `~/.flow-mcp/publish-api.json`.
 
 ## YouTube Shorts
 

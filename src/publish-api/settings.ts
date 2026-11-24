@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { join } from "node:path";
 import { HOME_DIR } from "../chrome.js";
 import type { PublishPlatform } from "../publish.js";
+import { oauthPublicOrigin, publishOAuthRedirect } from "./oauth-base.js";
 
 export type PublishEngine = "browser" | "api";
 
@@ -101,6 +102,12 @@ export function publicPublishApiSettings() {
   });
   return {
     engine: s.engine,
+    oauth_public_url: oauthPublicOrigin(),
+    oauth_redirects: {
+      youtube: publishOAuthRedirect("youtube"),
+      facebook: publishOAuthRedirect("facebook"),
+      tiktok: publishOAuthRedirect("tiktok"),
+    },
     youtube: map(s.youtube),
     facebook: map(s.facebook, true),
     tiktok: { ...map(s.tiktok), clientId: s.tiktok.clientKey ?? s.tiktok.clientId ?? "" },

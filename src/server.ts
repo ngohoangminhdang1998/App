@@ -80,9 +80,13 @@ export type ServerRole = "owner" | "client" | "none";
 export async function startServer(core: Core): Promise<ServerRole> {
   mkdirSync(UPLOAD_DIR, { recursive: true });
   const token = loadOrCreateToken();
+  const { oauthTunnelHosts } = await import("./publish-api/oauth-base.js");
+  const tunnelHosts = new Set(oauthTunnelHosts());
   const allowedHost = (host: string | undefined) => {
     const h = (host ?? "").toLowerCase();
-    return h === `127.0.0.1:${PORT}` || h === `localhost:${PORT}` || h === `[::1]:${PORT}`;
+    if (h === `127.0.0.1:${PORT}` || h === `localhost:${PORT}` || h === `[::1]:${PORT}`) return true;
+    if (tunnelHosts.has(h)) return true;
+    return false;
   };
 
   const server = createServer(async (req, res) => {

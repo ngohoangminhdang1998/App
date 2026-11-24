@@ -621,6 +621,7 @@ body[data-provider=muse] .af-merge-note{display:block}
           <summary><span class="sect-title">Publish API</span><small class="sect-sum-end">OAuth</small></summary>
           <div class="studio-sect-body">
             <p class="lede">Đăng TikTok, YouTube Shorts, Facebook Reels qua <strong>API</strong> (không mở Chrome upload tay). Tạo app trên console từng nền tảng là <strong>miễn phí</strong>, nhưng TikTok/Meta thường cần <strong>duyệt quyền</strong>. Chi tiết: <code>docs/PUBLISH-API.md</code>.</p>
+            <p class="empty" id="pub_oauth_tunnel_note" style="margin-bottom:12px">Meta Facebook thường bắt redirect <strong>HTTPS</strong>. Chạy tunnel (xem doc), export <code>FLOW_MCP_OAUTH_PUBLIC_URL=https://….trycloudflare.com</code>, restart <code>npm run studio</code> — redirect bên dưới đổi theo.</p>
             <div class="settings-publish-layout">
             <div class="card settings-engine-card">
               <label class="f">Publish engine</label>
@@ -4404,6 +4405,8 @@ let publishApiEngine = "api";
 let publishApiView = null;
 const PUBLISH_API_PORT = location.port || "8787";
 function publishOAuthRedirect(platform) {
+  const r = publishApiView?.oauth_redirects;
+  if (r && r[platform]) return r[platform];
   return `http://127.0.0.1:${PUBLISH_API_PORT}/oauth/callback/${platform}`;
 }
 function platStatusLine(p, label) {
@@ -4421,6 +4424,13 @@ function renderPublishApiSettingsUI() {
   if ($("#pub_redir_yt")) $("#pub_redir_yt").textContent = publishOAuthRedirect("youtube");
   if ($("#pub_redir_fb")) $("#pub_redir_fb").textContent = publishOAuthRedirect("facebook");
   if ($("#pub_redir_tt")) $("#pub_redir_tt").textContent = publishOAuthRedirect("tiktok");
+  const tun = $("#pub_oauth_tunnel_note");
+  if (tun) {
+    const pub = v?.oauth_public_url;
+    tun.innerHTML = pub
+      ? `OAuth public URL: <code>${esc(pub)}</code> — dán redirect bên dưới vào Meta/Google/TikTok. Studio UI vẫn mở <code>http://127.0.0.1:${PUBLISH_API_PORT}</code>.`
+      : `Meta Facebook thường bắt redirect <strong>HTTPS</strong>. Chạy tunnel (xem <code>docs/PUBLISH-API.md</code>), rồi: <code>export FLOW_MCP_OAUTH_PUBLIC_URL=https://….trycloudflare.com</code> và restart studio.`;
+  }
   if (v?.youtube && $("#set_yt_id") && document.activeElement !== $("#set_yt_id")) $("#set_yt_id").value = v.youtube.clientId || "";
   if (v?.facebook && $("#set_fb_id") && document.activeElement !== $("#set_fb_id")) {
     $("#set_fb_id").value = v.facebook.clientId || "";

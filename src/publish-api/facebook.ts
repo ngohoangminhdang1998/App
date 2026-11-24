@@ -1,11 +1,11 @@
 import { readFileSync, statSync } from "node:fs";
+import { publishOAuthRedirect } from "./oauth-base.js";
 import { loadPublishApiSettings, savePublishApiSettings, type PlatformApiFields } from "./settings.js";
 
-const STUDIO_PORT = Number(process.env.FLOW_MCP_PORT ?? 8787);
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 function redirectUri() {
-  return `http://127.0.0.1:${STUDIO_PORT}/oauth/callback/facebook`;
+  return publishOAuthRedirect("facebook");
 }
 
 const SCOPES = [

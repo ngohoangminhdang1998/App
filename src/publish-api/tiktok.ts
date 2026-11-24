@@ -1,10 +1,9 @@
 import { readFileSync, statSync } from "node:fs";
+import { publishOAuthRedirect } from "./oauth-base.js";
 import { loadPublishApiSettings, savePublishApiSettings, type PlatformApiFields } from "./settings.js";
 
-const STUDIO_PORT = Number(process.env.FLOW_MCP_PORT ?? 8787);
-
 function redirectUri() {
-  return `http://127.0.0.1:${STUDIO_PORT}/oauth/callback/tiktok`;
+  return publishOAuthRedirect("tiktok");
 }
 
 const SCOPES = ["video.upload", "video.publish"];

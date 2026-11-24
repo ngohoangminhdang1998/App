@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { statSync } from "node:fs";
 
-const STUDIO_PORT = Number(process.env.FLOW_MCP_PORT ?? 8787);
+import { publishOAuthRedirect } from "./oauth-base.js";
 import { loadPublishApiSettings, savePublishApiSettings, type PlatformApiFields } from "./settings.js";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -9,7 +9,7 @@ const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const UPLOAD_INIT = "https://www.googleapis.com/upload/youtube/v3/videos";
 
 function redirectUri() {
-  return `http://127.0.0.1:${STUDIO_PORT}/oauth/callback/youtube`;
+  return publishOAuthRedirect("youtube");
 }
 
 const SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly"];
