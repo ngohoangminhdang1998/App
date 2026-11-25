@@ -33,9 +33,13 @@ async function showWindow(client) {
   const w = await windowOf(client);
   if (w) {
     try {
-      if ((w.bounds.left || 0) <= OFF / 2 || w.bounds.windowState === 'minimized') {
+      const offScreen = (w.bounds.left || 0) <= OFF / 2;
+      const tiny = (w.bounds.width || 0) < 400 || (w.bounds.height || 0) < 300;
+      if (offScreen || w.bounds.windowState === 'minimized' || tiny) {
         await client.send('Browser.setWindowBounds', { windowId: w.windowId, bounds: { windowState: 'normal' } });
-        await client.send('Browser.setWindowBounds', { windowId: w.windowId, bounds: { left: 80, top: 60, ...SIZE } });
+        const left = Math.max(40, Math.round((1728 - SIZE.width) / 2));
+        const top = 60;
+        await client.send('Browser.setWindowBounds', { windowId: w.windowId, bounds: { left, top, width: SIZE.width, height: SIZE.height } });
       }
       // minimize then restore: what makes Windows actually raise a window over others
       await client.send('Browser.setWindowBounds', { windowId: w.windowId, bounds: { windowState: 'minimized' } });

@@ -8,7 +8,13 @@ import {
   normalizeHashtags,
   validatePublishTextForPlatforms,
 } from "../dist/publish-text.js";
+import { parsePublishSchedule, zonedLocalToUtc } from "../dist/publish/shared/schedule.js";
 import { publishManager } from "../dist/publish.js";
+
+const hcm = zonedLocalToUtc("2026-06-01T15:30", "Asia/Ho_Chi_Minh");
+assert.ok(Math.abs(hcm.getTime() - Date.parse("2026-06-01T08:30:00.000Z")) < 120_000);
+const sched = parsePublishSchedule("2030-01-01T12:00", "UTC");
+assert.equal(sched.at.toISOString(), "2030-01-01T12:00:00.000Z");
 
 assert.deepEqual(normalizeHashtags("#AI #ShortFilm #AI"), ["#AI", "#ShortFilm"]);
 assert.deepEqual(normalizeHashtags("AI, ShortFilm"), ["#AI", "#ShortFilm"]);

@@ -41,8 +41,9 @@
 | Image-to-video | Yes | Yes (`refs` / prior image in chat) |
 | Text-to-image | Yes | Yes |
 | Reference images | Yes (Flow assets) | Yes (local file attach) |
-| Flow characters (`asset:`) | Yes | **No** — use image refs |
-| Flow scene merge | Yes | **No** |
+| Flow characters (`asset:`) / Cast tab | Yes | **Hidden** — upload stills only in Auto Film |
+| Flow scene merge | Yes | **No** (no Flow timeline) |
+| Auto Film local merge (ffmpeg) | Yes | **Yes** (clips on disk) |
 | Local ffmpeg assemble | Yes | Yes (same Cut tab) |
 | Publish | Yes | Yes (local file path) |
 | Credits readout | Yes | **No** (free-tier % not exposed in API) |
@@ -69,8 +70,8 @@ Rule for future Muse work: add files under `src/providers/muse/` and `third-part
 | Muse CDP driver vendored | **Done** |
 | `npm run login:muse` | **Done** |
 | Queue → Muse for Shots / Auto Film generate | **Done** (basic path) |
-| Muse merge | **Not supported** — UI warns; Flow merge disabled in Muse mode |
-| Cast / Flow-only tabs | **Dimmed** in Muse mode |
+| Muse merge | **Done** — `mergeMuseClipsLocally` stitches Muse scene files (no Flow download) |
+| Cast tab | **Hidden** in Muse mode; Auto Film refs are upload-only images |
 | MCP tool docs for provider | Partial (`provider_*` API on Studio server) |
 
 ## Tests

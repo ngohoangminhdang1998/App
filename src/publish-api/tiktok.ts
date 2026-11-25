@@ -97,7 +97,7 @@ async function tiktokAccessToken(): Promise<string> {
   return data.access_token!;
 }
 
-export async function tiktokUploadVideo(opts: { videoPath: string; caption: string }) {
+export async function tiktokUploadVideo(opts: { videoPath: string; caption: string; publishAt?: Date }) {
   const token = await tiktokAccessToken();
   const size = statSync(opts.videoPath).size;
   const initRes = await fetch("https://open.tiktokapis.com/v2/post/publish/video/init/", {
@@ -113,6 +113,9 @@ export async function tiktokUploadVideo(opts: { videoPath: string; caption: stri
         disable_duet: false,
         disable_comment: false,
         disable_stitch: false,
+        ...(opts.publishAt
+          ? { schedule_time: Math.floor(opts.publishAt.getTime() / 1000) }
+          : {}),
       },
       source_info: { source: "FILE_UPLOAD", video_size: size, chunk_size: size, total_chunk_count: 1 },
     }),

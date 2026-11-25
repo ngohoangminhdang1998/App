@@ -249,6 +249,20 @@ export function sceneReadyOnFlow(scene: {
   return false;
 }
 
+/** Ready to stitch in Auto Film — Flow grid ref or Muse local clip path. */
+export function sceneReadyForMerge(scene: {
+  status?: string;
+  flowTitle?: string;
+  flow_title?: string;
+  flowAssetId?: string;
+  flow_asset_id?: string;
+  file?: string;
+}): boolean {
+  if (sceneReadyOnFlow(scene)) return true;
+  const st = String(scene.status || "").toLowerCase();
+  return st === "completed" && Boolean(String(scene.file || "").trim());
+}
+
 /** TedVerse Prompt Format V2 — explicit LANGUAGE AND AUDIO + AUDIO blocks (tested for Vietnamese on Google Flow). */
 export function isPromptFormatV2(prompt: string): boolean {
   const t = String(prompt ?? "").replace(/\r\n/g, "\n");

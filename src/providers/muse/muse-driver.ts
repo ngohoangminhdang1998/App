@@ -50,6 +50,19 @@ export function getMuse(show = false, lang: "vi" | "en" = "en"): MuseFacade {
   return facade;
 }
 
+async function presentMuseChromeWindow(port: number) {
+  const { connectBrowser } = kitRequire(join(KIT, "cdp.cjs")) as {
+    connectBrowser: (p: number) => Promise<{ close: () => void }>;
+  };
+  const { showWindow } = kitRequire(join(KIT, "window.cjs")) as { showWindow: (c: { close: () => void }) => Promise<void> };
+  const client = await connectBrowser(port);
+  try {
+    await showWindow(client);
+  } finally {
+    client.close();
+  }
+}
+
 /** Opens the Muse Chrome profile on muse.ai (visible window) without waiting on Muse chat status. */
 export async function openMuseBrowser() {
   const { ensureProfileChrome } = kitRequire(join(KIT, "chrome.cjs")) as {
@@ -57,7 +70,12 @@ export async function openMuseBrowser() {
   };
   const profileDir = museProfileDir();
   mkdirSync(profileDir, { recursive: true });
-  await ensureProfileChrome({ profileDir, url: "https://muse.ai/", offscreen: false });
+  const port = await ensureProfileChrome({ profileDir, url: "https://muse.ai/", offscreen: false });
+  await presentMuseChromeWindow(port);
+}
+
+export async function presentMuseLoginWindow(port: number) {
+  await presentMuseChromeWindow(port);
 }
 
 export async function museStatus() {

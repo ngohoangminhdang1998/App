@@ -21,25 +21,56 @@ export async function runApiPlatformPublish(
   input: PlatformJobInput,
   touch: PlatformTouch,
 ): Promise<void> {
-  if (input.mode === "schedule") {
-    throw new Error(`${platform}: API mode supports Publish now only. Use browser mode for native scheduling.`);
-  }
   const description = input.finalText;
   const title = titleFromText(description);
-  touch({ status: "uploading", step: "api-upload" });
+  const publishAt = input.mode === "schedule" ? input.schedule?.at : undefined;
+  if (input.mode === "schedule" && !publishAt) {
+    throw new Error(`${platform}: missing schedule time.`);
+  }
+  touch({ status: publishAt ? "scheduling" : "uploading", step: publishAt ? "api-schedule" : "api-upload" });
   if (platform === "youtube") {
-    const out = await youtubeUploadVideo({ videoPath: input.videoPath, title, description });
-    touch({ status: "published", url: out.url, uncertain: false, step: "api-done" });
+    const out = await youtubeUploadVideo({ videoPath: input.videoPath, title, description, publishAt });
+    if (publishAt) {
+      touch({
+        status: "scheduled",
+        scheduled_at: publishAt.toISOString(),
+        url: out.url,
+        uncertain: false,
+        step: "api-scheduled",
+      });
+    } else {
+      touch({ status: "published", url: out.url, uncertain: false, step: "api-done" });
+    }
     return;
   }
   if (platform === "facebook") {
-    const out = await facebookUploadReel({ videoPath: input.videoPath, description });
-    touch({ status: "published", url: out.url, uncertain: false, step: "api-done" });
+    const out = await facebookUploadReel({ videoPath: input.videoPath, description, publishAt });
+    if (publishAt) {
+      touch({
+        status: "scheduled",
+        scheduled_at: publishAt.toISOString(),
+        url: out.url,
+        uncertain: false,
+        step: "api-scheduled",
+      });
+    } else {
+      touch({ status: "published", url: out.url, uncertain: false, step: "api-done" });
+    }
     return;
   }
   if (platform === "tiktok") {
-    const out = await tiktokUploadVideo({ videoPath: input.videoPath, caption: description });
-    touch({ status: "published", url: out.url, uncertain: false, step: "api-done" });
+    const out = await tiktokUploadVideo({ videoPath: input.videoPath, caption: description, publishAt });
+    if (publishAt) {
+      touch({
+        status: "scheduled",
+        scheduled_at: publishAt.toISOString(),
+        url: out.url,
+        uncertain: false,
+        step: "api-scheduled",
+      });
+    } else {
+      touch({ status: "published", url: out.url, uncertain: false, step: "api-done" });
+    }
     return;
   }
   throw new Error(`Unknown platform: ${platform}`);

@@ -113,8 +113,10 @@ Nếu init trả lỗi quota/review, TikTok chưa bật posting cho app của b�
 
 ## Chế độ Browser vs API
 
-- **Browser**: Playwright + Chrome Flow profile (cũ) — hỗ trợ **lên lịch** trên từng nền tảng
-- **API**: upload HTTPS — chỉ **Publish now**; lên lịch vẫn dùng browser
+- **API** (mặc định trong Settings): upload + **lên lịch** qua API (YouTube `publishAt`, Facebook `scheduled_publish_time`, TikTok `schedule_time` khi app hỗ trợ).
+- **Browser**: Playwright + Chrome Flow profile (legacy) — điền form lên lịch trên từng trang.
+
+Studio: chọn **Schedule**, nhập **Date & time** + **Timezone** — mặc định **Vietnam (GMT+7)** / `Asia/Ho_Chi_Minh` (cùng giờ với `Asia/Bangkok`).
 
 Env override: `FLOW_MCP_PUBLISH_ENGINE=api` hoặc `browser`
 

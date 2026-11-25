@@ -123,7 +123,12 @@ function ensureProfileChrome(o) {
       '--disable-renderer-backgrounding',
     ];
     const offscreen = o.offscreen != null ? o.offscreen : o.show === false; // show:false ⇒ hidden off-screen
-    if (offscreen) args.push(...require('./window').hiddenWindowArgs()); // off-screen at desktop size, see window.js
+    if (offscreen) {
+      args.push(...require('./window').hiddenWindowArgs()); // off-screen at desktop size, see window.js
+    } else {
+      const { SIZE } = require('./window');
+      args.push(`--window-size=${SIZE.width},${SIZE.height}`);
+    }
     if (o.proxy) args.push(`--proxy-server=${o.proxy}`, '--force-webrtc-ip-handling-policy=disable_non_proxied_udp');
     if (o.extraArgs) args.push(...o.extraArgs);
     if (o.url) args.push(o.url);

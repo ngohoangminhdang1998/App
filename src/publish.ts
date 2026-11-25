@@ -234,6 +234,7 @@ export class PublishManager {
     flow_video_name?: string;
     mode?: PublishMode;
     schedule_at?: string;
+    schedule_timezone?: string;
     /** @deprecated use mode=schedule */
     schedule_at_local?: string;
   }) {
@@ -246,8 +247,8 @@ export class PublishManager {
     let schedule: PlatformSchedule | undefined;
     if (mode === "schedule") {
       const at = opts.schedule_at ?? opts.schedule_at_local;
-      if (!at) throw new Error("Pick a date and time for native scheduling.");
-      schedule = parsePublishSchedule(at);
+      if (!at) throw new Error("Pick a date and time for scheduling.");
+      schedule = parsePublishSchedule(at, opts.schedule_timezone);
     }
 
     const key = stateKey(opts.project, opts.video);

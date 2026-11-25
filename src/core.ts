@@ -72,8 +72,30 @@ import { providerPayload } from "./providers/registry.js";
 import { BIN, COMPUTER, moveToBin } from "./platform.js";
 import { cleanMediaRef, cleanMediaRefs, describeJobAssets as formatJobAssets, encodeFlowRef, isLocalClip } from "./media-ref.js";
 import { allocateFilmNo, ensureFilmSerialNext, listFilmNumbers, peekFilmNo } from "./film-numbers.js";
-import { exportFilmTemplatePayload, importFilmTemplatePayload, type FilmTemplateRow } from "./film-excel.js";
+import {
+  exportFilmTemplatePayload,
+  importFilmTemplatePayload,
+  type FilmTemplatePublishMeta,
+  type FilmTemplateRow,
+} from "./film-excel.js";
 import { TECHNIQUES, techniqueById } from "./techniques.js";
+
+const filmTemplatePublishShape = z
+  .object({
+    caption: z.string().optional(),
+    hashtags: z.string().optional(),
+    tiktok: z.boolean().optional(),
+    youtube: z.boolean().optional(),
+    facebook: z.boolean().optional(),
+    publish_mode: z.enum(["now", "schedule"]).optional(),
+    schedule_at: z.string().optional(),
+    schedule_timezone: z.string().optional(),
+    video_path: z.string().optional(),
+    tiktok_status: z.string().optional(),
+    youtube_status: z.string().optional(),
+    facebook_status: z.string().optional(),
+  })
+  .optional();
 
 export const OUTPUT_ROOT = process.env.FLOW_MCP_OUTPUT ?? join(homedir(), "flow-mcp-out");
 const words = (s: string) => s.split(/[^a-z0-9]+/i).filter((w) => w.length > 3).map((w) => w.toLowerCase());
@@ -573,8 +595,12 @@ export const shapes = {
     platforms: z.array(z.enum(["tiktok", "youtube", "facebook"])).min(1),
     hashtags: z.string().optional().describe("Optional hashtags; normalized before posting."),
     confirm_uncertain: z.boolean().optional().describe("Retry after an uncertain outcome without republishing successful platforms."),
-    mode: z.enum(["now", "schedule"]).default("now").describe("Publish Now or native platform scheduling."),
-    schedule_at: z.string().optional().describe("datetime-local or ISO — this PC's local time; platforms use the browser clock."),
+    mode: z.enum(["now", "schedule"]).default("now").describe("Publish Now or API/browser schedule."),
+    schedule_at: z.string().optional().describe("YYYY-MM-DDTHH:mm (wall clock in schedule_timezone)."),
+    schedule_timezone: z
+      .string()
+      .optional()
+      .describe("IANA timezone for schedule_at. Studio default: Asia/Ho_Chi_Minh (Vietnam GMT+7)."),
   },
   publish_status: {
     project: z.string().min(1),
@@ -620,7 +646,13 @@ export const shapes = {
   flow_merge: {
     project: z.string().min(1),
     clips: z
-      .array(z.object({ stem: z.string().min(1), flow_title: z.string().optional() }))
+      .array(
+        z.object({
+          stem: z.string().min(1),
+          flow_title: z.string().optional(),
+          local_path: z.string().min(1).optional().describe("Absolute path when the clip is already on disk (Muse)."),
+        }),
+      )
       .min(1)
       .describe("Scene stems in play order; flow_title defaults to <project>-<stem> in Flow."),
     force: z
@@ -662,11 +694,13 @@ export const shapes = {
             )
             .max(100)
             .optional(),
+          publish: filmTemplatePublishShape.describe("Caption, platforms, schedule, video path, platform status."),
         }),
       )
       .max(50)
       .optional()
       .describe("Multi-sheet workbook: one entry per sheet (name = no)."),
+    publish: filmTemplatePublishShape.describe("Publish block for a single-sheet export."),
   },
   film_template_import: {
     data: z.string().min(1).describe("Base64-encoded .xlsx (one sheet per film; sheet name = 4-digit No)."),
@@ -1274,6 +1308,8 @@ export class LocalCore implements Core {
     record.cached_video_hash = record.content_hash;
     record.updated_at = new Date().toISOString();
     saveComposition(record);
+    const { pruneProjectVideosExceptFinal } = await import("./film-merge-local.js");
+    pruneProjectVideosExceptFinal(dir, path);
     return path;
   }
 
@@ -1440,9 +1476,6 @@ export class LocalCore implements Core {
   }
 
   async flow_merge({ project, clips, force, hook }: Args<"flow_merge">) {
-    if (isMuseProvider()) {
-      throw new Error("Merge while Muse is selected: clips must already be in the project folder; use the same merge API after generate.");
-    }
     if (this.queue.busy) throw new Error(BUSY);
     const { sortClipsForMerge } = await import("./film-script.js");
     const orderedClips = sortClipsForMerge([...clips]);
@@ -1468,21 +1501,35 @@ export class LocalCore implements Core {
         reused: true,
       };
     }
-    const credits_remaining = await refreshFlowCreditsOnce().catch(() => undefined);
-    const useFlowTimeline = process.env.FLOW_MCP_MERGE_IN_FLOW === "1";
-    const composition = useFlowTimeline
-      ? await mergeClipsIntoFlowScene({
-          tedverseProject: project,
-          clips: orderedClips,
-          aspect_ratio: "9:16",
-        })
-      : await (await import("./film-merge-local.js")).mergeClipsLocally({
+    const credits_remaining = isMuseProvider()
+      ? undefined
+      : await refreshFlowCreditsOnce().catch(() => undefined);
+    const useFlowTimeline = !isMuseProvider() && process.env.FLOW_MCP_MERGE_IN_FLOW === "1";
+    const composition = isMuseProvider()
+      ? await (await import("./film-merge-local.js")).mergeMuseClipsLocally({
           tedverseProject: project,
           clips: orderedClips,
           aspect_ratio: "9:16",
           force: Boolean(force),
-        });
+        })
+      : useFlowTimeline
+        ? await mergeClipsIntoFlowScene({
+            tedverseProject: project,
+            clips: orderedClips,
+            aspect_ratio: "9:16",
+          })
+        : await (await import("./film-merge-local.js")).mergeClipsLocally({
+            tedverseProject: project,
+            clips: orderedClips,
+            aspect_ratio: "9:16",
+            force: Boolean(force),
+          });
     maybeRecordHistory(composition);
+    if (composition.merge_status === "completed" && composition.cached_video_path) {
+      const dir = projectDir(project);
+      const { pruneProjectVideosExceptFinal } = await import("./film-merge-local.js");
+      pruneProjectVideosExceptFinal(dir, composition.cached_video_path);
+    }
     return {
       composition,
       merge_status: composition.merge_status,
@@ -1504,6 +1551,7 @@ export class LocalCore implements Core {
     caption,
     mode,
     schedule_at,
+    schedule_timezone,
   }: Args<"publish">) {
     if (this.queue.busy) throw new Error(BUSY);
     const dir = projectDir(project);
@@ -1544,6 +1592,7 @@ export class LocalCore implements Core {
         flow_video_name: flowTitle,
         mode: mode ?? "now",
         schedule_at,
+        schedule_timezone,
       });
       prunePublishHistoryStores(PUBLISH_HISTORY_KEEP);
       return record;
@@ -1720,19 +1769,21 @@ export class LocalCore implements Core {
     return { path: resolved };
   }
 
-  async film_template_export({ no, rows, films }: Args<"film_template_export"> = {}) {
+  async film_template_export({ no, rows, films, publish }: Args<"film_template_export"> = {}) {
     if (films?.length) {
-      return exportFilmTemplatePayload({
+      return await exportFilmTemplatePayload({
         films: films.map((f) => ({
           no: isFilmNo(String(f.no).trim()) ? String(f.no).trim() : "0001",
           rows: f.rows as FilmTemplateRow[] | undefined,
+          publish: f.publish as FilmTemplatePublishMeta | undefined,
         })),
       });
     }
     const batch = String(no ?? "").trim();
-    return exportFilmTemplatePayload({
+    return await exportFilmTemplatePayload({
       no: isFilmNo(batch) ? batch : "0001",
       rows: rows as FilmTemplateRow[] | undefined,
+      publish: publish as FilmTemplatePublishMeta | undefined,
     });
   }
 

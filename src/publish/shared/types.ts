@@ -2,8 +2,10 @@ export type PublishPlatform = "tiktok" | "youtube" | "facebook";
 export type PublishMode = "now" | "schedule";
 
 export interface PlatformSchedule {
-  /** When to publish — local date/time as picked in Studio (same clock as the Chrome profile). */
+  /** Absolute UTC instant for platform APIs (or browser pickers when engine=browser). */
   at: Date;
+  /** IANA timezone used to interpret `schedule_at` from Studio (e.g. Asia/Ho_Chi_Minh). */
+  timeZone?: string;
 }
 
 export interface PlatformJobInput {

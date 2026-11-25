@@ -97,7 +97,12 @@ export async function youtubeRefreshChannelMeta(accessToken?: string) {
   });
 }
 
-export async function youtubeUploadVideo(opts: { videoPath: string; title: string; description: string }) {
+export async function youtubeUploadVideo(opts: {
+  videoPath: string;
+  title: string;
+  description: string;
+  publishAt?: Date;
+}) {
   const token = await youtubeAccessToken();
   const title = opts.title.slice(0, 100) || "Short";
   const description = opts.description.slice(0, 4900);
@@ -114,7 +119,8 @@ export async function youtubeUploadVideo(opts: { videoPath: string; title: strin
       body: JSON.stringify({
         snippet: { title, description, categoryId: "22" },
         status: {
-          privacyStatus: "public",
+          privacyStatus: opts.publishAt ? "private" : "public",
+          ...(opts.publishAt ? { publishAt: opts.publishAt.toISOString() } : {}),
           selfDeclaredMadeForKids: process.env.FLOW_MCP_YOUTUBE_MADE_FOR_KIDS === "yes",
         },
       }),

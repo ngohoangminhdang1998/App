@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
-import { sceneAction, sceneReadyOnFlow } from "../dist/film-script.js";
+import { sceneAction, sceneReadyOnFlow, sceneReadyForMerge } from "../dist/film-script.js";
 import { jobView } from "../dist/core.js";
 
 assert.equal(sceneReadyOnFlow({ status: "generated_on_flow", flowTitle: "MyFilm-scene-01" }), true);
 assert.equal(sceneReadyOnFlow({ status: "failed", flowTitle: "x" }), false);
 assert.equal(sceneReadyOnFlow({ status: "download_failed", flowTitle: "MyFilm-scene-01" }), true);
+assert.equal(sceneReadyOnFlow({ status: "completed", file: "/tmp/scene-01.mp4" }), false);
+assert.equal(sceneReadyForMerge({ status: "completed", file: "/tmp/scene-01.mp4" }), true);
 
 assert.equal(sceneAction({ selected: true, status: "generated_on_flow", prompt: "ok", jobId: "", flowTitle: "A" }, { spent: 0, next: 7, budget: 300 }), "skip");
 

@@ -14,6 +14,8 @@ const { ensureProfileChrome } = kitRequire(join(KIT, "chrome.cjs"));
 const profileDir = museProfileDir();
 mkdirSync(profileDir, { recursive: true });
 const port = await ensureProfileChrome({ profileDir, url: "https://muse.ai/", offscreen: false });
+const { presentMuseLoginWindow } = await import("./providers/muse/muse-driver.js");
+await presentMuseLoginWindow(port);
 console.log(`Chrome is open on https://muse.ai/ (CDP port ${port})`);
 console.log(`Muse profile: ${profileDir}`);
 console.log("Sign in to Muse in that window. One account should use only this profile.");

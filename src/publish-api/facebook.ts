@@ -179,7 +179,7 @@ function shouldFallbackFromReels(msg: string): boolean {
 async function publishViaPageVideos(
   pageId: string,
   token: string,
-  opts: { videoPath: string; description: string },
+  opts: { videoPath: string; description: string; publishAt?: Date },
   size: number,
 ): Promise<{ url: string; videoId: string }> {
   const startQ = new URLSearchParams({
@@ -210,10 +210,13 @@ async function publishViaPageVideos(
     upload_session_id: sessionId,
     title: desc.slice(0, 80) || "Video",
     description: desc,
-    published: "true",
+    published: opts.publishAt ? "false" : "true",
     is_ai_generated: "true",
     access_token: token,
   });
+  if (opts.publishAt) {
+    finish.set("scheduled_publish_time", String(Math.floor(opts.publishAt.getTime() / 1000)));
+  }
   const finishRes = await fetch(`${GRAPH}/${pageId}/videos?${finish}`, { method: "POST" });
   const finishBody = (await graphResponse(finishRes, "FB page video · publish")) as { id?: string };
   if (!finishBody.id) throw new Error("[FB page video · publish] · No video id in response.");
@@ -225,7 +228,7 @@ async function publishViaPageVideos(
 async function publishViaReelsApi(
   pageId: string,
   token: string,
-  opts: { videoPath: string; description: string },
+  opts: { videoPath: string; description: string; publishAt?: Date },
   size: number,
 ): Promise<{ url: string; videoId: string }> {
   const start = await fetch(`${GRAPH}/${pageId}/video_reels`, {
@@ -280,10 +283,13 @@ async function publishViaReelsApi(
     access_token: token,
     video_id: videoId,
     upload_phase: "finish",
-    video_state: "PUBLISHED",
+    video_state: opts.publishAt ? "SCHEDULED" : "PUBLISHED",
     is_ai_generated: "true",
   });
   if (desc) finishBodyForm.set("description", desc);
+  if (opts.publishAt) {
+    finishBodyForm.set("scheduled_publish_time", String(Math.floor(opts.publishAt.getTime() / 1000)));
+  }
   const finish = await fetch(`${GRAPH}/${pageId}/video_reels`, { method: "POST", body: finishBodyForm });
   const finishParsed = (await graphResponse(finish, "FB reel API · publish")) as { success?: boolean };
   if (finishParsed.success !== true) {
@@ -293,7 +299,7 @@ async function publishViaReelsApi(
 }
 
 /** Page video / Reel on Facebook (tries Reels API, falls back to classic Page video upload). */
-export async function facebookUploadReel(opts: { videoPath: string; description: string }) {
+export async function facebookUploadReel(opts: { videoPath: string; description: string; publishAt?: Date }) {
   const { token, pageId } = await pageToken();
   const me = await graphGet<{ id?: string }>("/me?fields=id", token);
   if (me.id && me.id !== pageId) {
